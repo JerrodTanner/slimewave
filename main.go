@@ -23,7 +23,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
     // Update the JSON file initially
-    handlers.UpdateJSON()
+    handlers.UpdateJSON("audio", "music.json")
 
     // Create a file watcher
     watcher, err := fsnotify.NewWatcher()
@@ -48,7 +48,7 @@ func main() {
                 }
                 if event.Op&fsnotify.Write == fsnotify.Write {
                     // Update the JSON file if there is a write event
-                    yourpackage.UpdateJSON()
+                    handlers.UpdateJSON("audio", "music.json")
                 }
             case err, ok := <-watcher.Errors:
                 if !ok {
