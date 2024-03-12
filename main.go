@@ -4,9 +4,8 @@ import (
     "log"
     "net/http"
     "strings"
-
     "github.com/fsnotify/fsnotify"
-    "handlers"
+    "gitlab.com/JerrodJTanner/slimewave/handlers"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +23,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
     // Update the JSON file initially
-    yourpackage.UpdateJSON()
+    handlers.UpdateJSON()
 
     // Create a file watcher
     watcher, err := fsnotify.NewWatcher()
