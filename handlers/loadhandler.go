@@ -7,18 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
-	"strings"
 )
 
-// Track represents a music track.
-type Track struct {
-	Artist string `json:"artist"`
-	Album  string `json:"album"`
-	Title  string `json:"title"`
-	File   string `json:"file"`
-	Image  string `json:"image"`
-}
 
 // LoadArtists loads all unique artists from the music.json file.
 func LoadArtists(w http.ResponseWriter, r *http.Request) {
