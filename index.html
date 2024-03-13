@@ -10,7 +10,9 @@
 <body>
     <h1>Artists</h1>
     <ul hx-get="/music" hx-target="#albums" hx-swap="outerHTML">
-        <li hx-get="/music?artist={{ artist }}">{{ artist }}</li>
+        <template hx-template>
+            <li hx-get="/music?artist={{ artist }}">{{ artist }}</li>
+        </template>
     </ul>
 
     <h1 id="albums"></h1>
