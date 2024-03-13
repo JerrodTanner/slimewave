@@ -1,3 +1,17 @@
+// handlers/albumhandler.go
+
+package handlers
+
+import (
+    "encoding/json"
+    "html/template"
+    "io/ioutil"
+    "log"
+    "net/http"
+    "path/filepath"
+)
+
+
 // AlbumHandler handles requests for album data.
 func AlbumHandler(w http.ResponseWriter, r *http.Request) {
     // Get the artist name from the query parameter
