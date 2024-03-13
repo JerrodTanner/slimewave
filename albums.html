@@ -1,0 +1,16 @@
+<!-- handlers/albums.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ .Artist }} Albums</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>{{ .Artist }} Albums</h1>
+    <ul>
+        {{ range $album, $image := .Albums }}
+        <li><a href="/songs?artist={{ .Artist }}&album={{ $album }}"><img src="data:image/jpeg;base64,{{ $image }}"></a></li>
+        {{ end }}
+    </ul>
+</body>
+</html>

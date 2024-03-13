@@ -1,3 +1,4 @@
+/* styles.css */
 body {
     background-color: #666666; /* Slightly lighter grey background color */
     margin: 0; /* Remove default margin */
@@ -16,22 +17,22 @@ h1 {
     color: #ffffff; /* White text color */
 }
 
-#music-list {
-    display: block; /* Use block layout for list */
+#artist-buttons {
+    display: flex; /* Use flexbox layout */
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center; /* Center items horizontally */
 }
 
-#music-list > div {
-    margin-bottom: 20px; /* Add space between items */
-    padding: 10px; /* Add padding to each item */
-    background-color: #888888; /* Lighter grey for item background */
-}
-
-audio {
-    width: 100%; /* Make audio player full width */
-    margin-bottom: 10px; /* Add some space below audio player */
-}
-
-img {
-    max-width: 100%; /* Make images responsive */
-    height: auto; /* Maintain aspect ratio */
+.button {
+    width: 80%; /* Set button width to 80% of the container */
+    height: 50px; /* Set button height */
+    margin-bottom: 10px; /* Add space between buttons */
+    background-color: #ffffff; /* White background color */
+    color: #000000; /* Black text color */
+    border: none; /* Remove button border */
+    cursor: pointer; /* Show pointer cursor on hover */
+    font-size: 16px; /* Set font size */
+    text-align: center; /* Center text */
+    line-height: 50px; /* Center text vertically */
+    text-decoration: none; /* Remove underline */
 }
