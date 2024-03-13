@@ -1,3 +1,5 @@
+// handlers/artistHandler.go
+
 package handlers
 
 import (
@@ -36,14 +38,14 @@ func ArtistHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    // Generate the HTML for the list of artists
-    html := "<ul>"
-    for _, artist := range artists {
-        html += "<li><a href='/albums?artist=" + artist + "'>" + artist + "</a></li>"
+    // Encode the artist list as JSON
+    artistJSON, err := json.Marshal(artists)
+    if err != nil {
+        log.Println(err)
+        http.Error(w, "Failed to marshal artist data", http.StatusInternalServerError)
+        return
     }
-    html += "</ul>"
 
-    // Write the HTML response
-    w.Header().Set("Content-Type", "text/html")
-    w.Write([]byte(html))
+    // Pass the artist JSON to the HTML template
+    tmpl.ExecuteTemplate(w, "artists.html", string(artistJSON))
 }
