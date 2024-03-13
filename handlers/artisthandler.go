@@ -7,6 +7,8 @@ import (
     "net/http"
     "io/ioutil"
     "log"
+    "html/template"
+
 )
 
 // ArtistHandler handles requests for artist data.
