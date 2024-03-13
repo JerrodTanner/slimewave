@@ -39,7 +39,7 @@ func ArtistHandler(w http.ResponseWriter, r *http.Request) {
     // Generate the HTML for the list of artists
     html := "<ul>"
     for _, artist := range artists {
-        html += "<li>" + artist + "</li>"
+        html += "<li><a href='/albums?artist=" + artist + "'>" + artist + "</a></li>"
     }
     html += "</ul>"
 
