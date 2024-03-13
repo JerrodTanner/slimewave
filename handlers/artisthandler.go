@@ -4,11 +4,10 @@ package handlers
 
 import (
     "encoding/json"
+    "html/template"
     "net/http"
     "io/ioutil"
     "log"
-    "html/template"
-
 )
 
 // ArtistHandler handles requests for artist data.
@@ -40,14 +39,19 @@ func ArtistHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    // Encode the artist list as JSON
-    artistJSON, err := json.Marshal(artists)
+    // Create a template and pass the artists to it
+    tmpl, err := template.ParseFiles("artists.html")
     if err != nil {
         log.Println(err)
-        http.Error(w, "Failed to marshal artist data", http.StatusInternalServerError)
+        http.Error(w, "Failed to parse template", http.StatusInternalServerError)
         return
     }
 
-    // Pass the artist JSON to the HTML template
-    tmpl.ExecuteTemplate(w, "../artists.html", string(artistJSON))
+    // Execute the template with the artists data
+    err = tmpl.Execute(w, artists)
+    if err != nil {
+        log.Println(err)
+        http.Error(w, "Failed to execute template", http.StatusInternalServerError)
+        return
+    }
 }

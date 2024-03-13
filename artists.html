@@ -1,28 +1,14 @@
 <!-- artists.html -->
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artists</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h1>Artists</h1>
-    <ul id="artist-list"></ul>
-
-    <script>
-        const artists = JSON.parse('{{ . }}');
-        const artistList = document.getElementById('artist-list');
-        artists.forEach(artist => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.href = '/albums?artist=' + encodeURIComponent(artist);
-            a.textContent = artist;
-            li.appendChild(a);
-            artistList.appendChild(li);
-        });
-    </script>
+    {{ range . }}
+        <a href="/albums?artist={{ . }}"><button style="width: 100px; height: 100px;">{{ . }}</button></a>
+    {{ end }}
 </body>
 </html>
