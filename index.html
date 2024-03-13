@@ -9,10 +9,8 @@
 </head>
 <body>
     <h1>Artists</h1>
-    <ul hx-get="/music" hx-target="#albums" hx-swap="outerHTML">
-        <template hx-template>
-            <li hx-get="/music?artist={{ artist }}">{{ artist }}</li>
-        </template>
+    <ul id="artist-list" hx-get="/artists" hx-swap="outerHTML">
+        <!-- Artists will be dynamically loaded here -->
     </ul>
 
     <h1 id="albums"></h1>
@@ -20,20 +18,14 @@
         <!-- Album covers will be dynamically loaded here -->
     </div>
 
-    <h1 id="songs"></h1>
-    <ul id="song-list" hx-boost>
-        <!-- Song list will be dynamically loaded here -->
-    </ul>
-
     <script src="https://unpkg.com/htmx.org/dist/htmx.js"></script>
     <script>
         document.body.addEventListener('click', function(event) {
             if (event.target.tagName === 'LI') {
                 document.getElementById('albums').innerText = event.target.innerText + ' Albums';
                 document.getElementById('album-covers').innerHTML = '';
-                document.getElementById('songs').innerText = '';
-
-                fetch('/music?artist=' + event.target.innerText)
+                
+                fetch('/albums?artist=' + event.target.innerText)
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(album => {
@@ -44,18 +36,8 @@
                             albumCover.style.cursor = 'pointer';
                             albumCover.style.marginRight = '10px';
                             albumCover.addEventListener('click', function() {
-                                document.getElementById('songs').innerText = album.album + ' Songs';
-                                fetch('/music?artist=' + album.artist + '&album=' + album.album)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        const songList = document.getElementById('song-list');
-                                        songList.innerHTML = '';
-                                        data.forEach(song => {
-                                            const songItem = document.createElement('li');
-                                            songItem.innerText = song.title;
-                                            songList.appendChild(songItem);
-                                        });
-                                    });
+                                alert('Album clicked: ' + album.album);
+                                // Add logic to load and display songs for the selected album
                             });
                             document.getElementById('album-covers').appendChild(albumCover);
                         });

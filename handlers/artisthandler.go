@@ -1,5 +1,3 @@
-// handlers/artistHandler.go
-
 package handlers
 
 import (
@@ -38,7 +36,14 @@ func ArtistHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    // Encode the artist list as JSON and write it to the response
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(artists)
+    // Generate the HTML for the list of artists
+    html := "<ul>"
+    for _, artist := range artists {
+        html += "<li>" + artist + "</li>"
+    }
+    html += "</ul>"
+
+    // Write the HTML response
+    w.Header().Set("Content-Type", "text/html")
+    w.Write([]byte(html))
 }
