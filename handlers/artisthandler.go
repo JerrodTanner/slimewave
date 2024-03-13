@@ -47,5 +47,5 @@ func ArtistHandler(w http.ResponseWriter, r *http.Request) {
     }
 
     // Pass the artist JSON to the HTML template
-    tmpl.ExecuteTemplate(w, "artists.html", string(artistJSON))
+    tmpl.ExecuteTemplate(w, "../artists.html", string(artistJSON))
 }
