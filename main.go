@@ -25,8 +25,8 @@ func main() {
         http.ServeFile(w, r, "music.json")
     })
     http.HandleFunc("/artists", handlers.ArtistHandler)
-    http.HandleFunc("/albums", handlers.LoadAlbums)
-    http.HandleFunc("/songs", handlers.LoadSongs)
+    //http.HandleFunc("/albums", handlers.LoadAlbums)
+    //http.HandleFunc("/songs", handlers.LoadSongs)
 
     log.Fatal(http.ListenAndServe(":8001", nil))
 }

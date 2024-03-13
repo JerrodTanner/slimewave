@@ -5,6 +5,8 @@ package handlers
 import (
     "encoding/json"
     "net/http"
+    "io/ioutil"
+    "log"
 )
 
 // ArtistHandler handles requests for artist data.
