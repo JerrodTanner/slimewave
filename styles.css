@@ -21,10 +21,11 @@ h1 {
     display: flex; /* Use flexbox layout */
     flex-direction: column; /* Stack buttons vertically */
     align-items: center; /* Center items horizontally */
+    width: 800px;
 }
 
 .button {
-    width: 80%; /* Set button width to 80% of the container */
+    width: 800px; /* Set button width to 90% of the container */
     height: 50px; /* Set button height */
     margin-bottom: 10px; /* Add space between buttons */
     background-color: #ffffff; /* White background color */

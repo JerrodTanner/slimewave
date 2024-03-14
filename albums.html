@@ -9,7 +9,10 @@
     <h1>{{ .Artist }} Albums</h1>
     <ul>
         {{ range $album, $image := .Albums }}
-        <li><a href="/songs?artist={{ .Artist }}&album={{ $album }}"><img src="data:image/jpeg;base64,{{ $image }}"></a></li>
+        <li>
+            <p>{{ $album }}</p>
+            <a href="/songs?artist={{ $.Artist }}&album={{ $album }}"><img src="/audio/{{ $.Artist }}/{{ $album }}/cover.jpg" alt="{{ $album }} cover"></a>
+        </li>
         {{ end }}
     </ul>
 </body>
