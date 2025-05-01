@@ -29,6 +29,10 @@ func main() {
 	http.HandleFunc("/songs", handlers.SongsHandler)
 
 	http.HandleFunc("/resume", handlers.ResumeHandler)
+	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
+		// Serve the HTML navigation page
+		http.ServeFile(w, r, "tableofcontents.html") // Ensure this points to the correct path of the HTML file
+	})
 
 	log.Fatal(http.ListenAndServe(":8001", nil))
 }
