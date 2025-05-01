@@ -1,0 +1,25 @@
+<!-- handlers/songs.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ .Album }} by {{ .Artist }}</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<h1>{{ .Album }} – {{ .Artist }}</h1>
+<div id="album-cover">
+  <img src="{{ .Image }}" alt="{{ .Album }} cover">
+</div><ul>
+  {{ range .Songs }}
+  <li>
+    <p>{{ . }}</p>
+    <audio controls>
+      <source src="/audio/{{ $.Artist }}/{{ $.Album }}/{{ . }}.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+  </li>
+  {{ end }}
+</ul>
+<a href="/artists">← Back to artists</a>
+</body>
+</html>
