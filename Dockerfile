@@ -1,38 +1,26 @@
-# Use the official Ubuntu base image
-FROM ubuntu:23.10
+# Production build for the Slimewave Go web app.
+# Multi-stage: compile a static binary, then run it on a minimal Alpine image.
 
-# Set the default working directory
-WORKDIR /opt/data
+FROM golang:1.22-alpine AS build
+WORKDIR /src
+# Only stdlib + local package, so module download is a no-op but kept for correctness.
+COPY go.mod go.sum* ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/slimewave .
 
-# Update Path
-ENV PATH=/opt/data/go/bin:/opt/data/nvim-linux64/bin:$PATH
-
-# Install fonts for lazyvim
-ADD https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/AnonymousPro/Regular/AnonymiceProNerdFontMono-Regular.ttf /usr/local/share/fonts/
-ADD https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf /usr/local/share/fonts/
-
-# Update packages and install necessary tools
-RUN apt-get update -y && \
-    apt-get install -y curl git build-essential ripgrep fd-find
-
-# Install Neo-vim
-ADD https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.tar.gz /opt/nvim/
-RUN tar xzvf /opt/nvim/nvim-linux64.tar.gz
-
-# Install lazyvim
-RUN git clone https://github.com/LazyVim/starter ~/.config/nvim && \
-    rm -rf ~/.config/nvim/.git
-
-# Install lazygit for lazyvim
-RUN LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*') && \
-    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" && \
-    tar xf lazygit.tar.gz lazygit && \
-    install lazygit /usr/local/bin
-
-# Install Go
-RUN curl -LO https://golang.org/dl/go1.22.1.linux-amd64.tar.gz && \
-    tar -C /opt/data -xzf go1.22.1.linux-amd64.tar.gz && \
-    rm go1.22.1.linux-amd64.tar.gz
-
-# Default to a shell, can always pass a command like nvim to the shell on launch
-ENTRYPOINT ["/bin/bash"]
+FROM alpine:3.20
+RUN adduser -D -u 10001 app
+WORKDIR /app
+# Runtime assets the handlers read by relative path.
+COPY --from=build /out/slimewave           /app/slimewave
+COPY --from=build /src/*.html              /app/
+COPY --from=build /src/styles.css          /app/
+COPY --from=build /src/music.json          /app/
+COPY --from=build /src/static              /app/static
+COPY --from=build /src/audio               /app/audio
+COPY --from=build /src/PDFs                /app/PDFs
+RUN chown -R app:app /app
+USER app
+EXPOSE 8001
+ENTRYPOINT ["/app/slimewave"]
