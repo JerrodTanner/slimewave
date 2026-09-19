@@ -1,13 +1,12 @@
 services:
   slimewave:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: slimewave:latest
+    image: ghcr.io/jerrodtanner/slimewave:latest
     container_name: slimewave
     restart: unless-stopped
     expose:
       - "8001"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -15,6 +14,15 @@ services:
     restart: unless-stopped
     command: tunnel run
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN:?TUNNEL_TOKEN must be set}
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN:?TUNNEL_TOKEN must be set in .env}
     depends_on:
       - slimewave
+
+  # Polls GHCR every 2 min; updates only containers labelled above, then cleans old images.
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 120 --cleanup --label-enable
