@@ -4,7 +4,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -18,7 +17,6 @@ func AlbumHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the artist name from the query parameter
 	artist := r.URL.Query().Get("artist")
-	fmt.Fprintf(w, "Artist: %s", artist)
 	if artist == "" {
 		http.Error(w, "Missing artist parameter", http.StatusBadRequest)
 		return
