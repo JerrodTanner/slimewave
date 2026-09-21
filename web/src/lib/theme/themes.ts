@@ -6,7 +6,14 @@
  * live in src/app.css under `[data-theme='<id>']`; this file only describes
  * them to the UI.
  */
-export type ThemeId = 'slimewave' | 'amber-crt' | 'deepwater' | 'xerox' | 'plate';
+export type ThemeId =
+	| 'newsprint'
+	| 'aero'
+	| 'slimewave'
+	| 'amber-crt'
+	| 'deepwater'
+	| 'xerox'
+	| 'plate';
 
 export interface Theme {
 	id: ThemeId;
@@ -18,9 +25,21 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
 	{
+		id: 'newsprint',
+		name: 'Newsprint',
+		blurb: 'Paper white, hairline black, one print green. The house style.',
+		swatch: ['#eceae2', '#0b7a34', '#1f39ff']
+	},
+	{
+		id: 'aero',
+		name: 'Aero',
+		blurb: 'Obsidian and amethyst, lit glass. The house style.',
+		swatch: ['#17171c', '#b98cff', '#4fe0d8']
+	},
+	{
 		id: 'slimewave',
 		name: 'Slimewave',
-		blurb: 'Acid green on wet black. The house style.',
+		blurb: 'Acid green on wet black. The old house style.',
 		swatch: ['#04090b', '#9dff3c', '#ff4fd8']
 	},
 	{
@@ -49,7 +68,7 @@ export const THEMES: Theme[] = [
 	}
 ];
 
-export const DEFAULT_THEME: ThemeId = 'slimewave';
+export const DEFAULT_THEME: ThemeId = 'newsprint';
 
 export const THEME_IDS = THEMES.map((t) => t.id);
 

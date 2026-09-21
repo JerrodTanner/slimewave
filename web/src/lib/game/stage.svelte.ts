@@ -2,6 +2,8 @@ import { browser } from '$app/environment';
 import { Engine } from '@babylonjs/core/Engines/engine';
 import { Scene } from '@babylonjs/core/scene';
 import { theme, type ScenePalette } from '$lib/theme/theme.svelte';
+import { crt } from './crt.svelte';
+import { isFramed } from './portals';
 import type { SceneFactory, SceneHandle } from './types';
 
 /**
@@ -174,9 +176,28 @@ class StageState {
 		}
 	}
 
+	/**
+	 * Hands the mouse and the keyboard to the scene.
+	 *
+	 * Focus matters as much as the lock. Babylon binds the camera's keys to the
+	 * canvas element, so locking the pointer while the focus is still on the
+	 * button that asked for it gives mouse-look and no WASD — which is exactly
+	 * what "activate" used to feel like.
+	 *
+	 * Must be called inside the gesture that asked for it: pointer lock is only
+	 * granted during real user activation.
+	 */
 	requestPointerLock() {
 		if (this.mode !== 'immersive') return;
-		void this.#canvas?.requestPointerLock?.();
+		const canvas = this.#canvas;
+		if (!canvas) return;
+
+		canvas.focus({ preventScroll: true });
+		// Chrome hands back a promise and rejects it when the lock was released
+		// moments ago. The pointer simply stays free; the keys still work, so
+		// there is nothing to report.
+		const lock: unknown = canvas.requestPointerLock?.();
+		if (lock instanceof Promise) lock.catch(() => {});
 	}
 
 	exitPointerLock() {
@@ -184,14 +205,28 @@ class StageState {
 	}
 
 	/**
-	 * The portal transition: fade the whole viewport out, navigate at the far
-	 * end, then fade back in.
+	 * Going through a door. Every route here goes through this one function —
+	 * a click on the rail, a click on a label over the render, and walking
+	 * into a doorway all land on it — so a door behaves the same however it
+	 * was opened.
 	 *
-	 * The smoothness here is animation, not state preservation — the route
-	 * genuinely changes. Only the canvas behind it survives, which is the
-	 * point.
+	 * Inside the frame that means the power cycle: both boxes switch off, the
+	 * route changes in the dark, and they come back on having swapped the
+	 * corridor for the page. Leaving the frame entirely (an arcade game takes
+	 * the whole screen) there is no pair of boxes to swap, so it stays a fade.
+	 *
+	 * The smoothness is animation, not state preservation — the route genuinely
+	 * changes. Only the canvas behind it survives, which is the point.
 	 */
 	async transitionTo(href: string, navigate: (href: string) => void | Promise<void>) {
+		const here = browser ? window.location.pathname : '/';
+
+		if (browser && isFramed(here) && isFramed(href)) {
+			this.exitPointerLock();
+			await crt.cycle(href, navigate, here);
+			return;
+		}
+
 		const reduced =
 			browser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		if (reduced) {

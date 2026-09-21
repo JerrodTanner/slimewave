@@ -19,35 +19,44 @@ import '@babylonjs/core/Culling/ray';
 import type { ScenePalette } from '$lib/theme/theme.svelte';
 import type { SceneContext, SceneHandle } from './types';
 import { hubMarkers, type PortalMarker } from './hubMarkers.svelte';
-import { PORTALS, type PortalSpec } from './portals';
+import { CORRIDOR, PORTALS, type PortalKey, type PortalSpec } from './portals';
+import { EXIT_CAPTION, EXIT_HREF, EXIT_LABEL, room } from './room.svelte';
 
 export { PORTALS };
 export type { PortalSpec };
 
-const RING_RADIUS = 19;
-const PORTAL_TRIGGER_DISTANCE = 2.4;
-const EYE_HEIGHT = 1.75;
-/**
- * Portals sit on an arc in front of the spawn point rather than a full ring.
- * A ring looks tidier on paper, but it puts most of the site's navigation
- * behind your head on arrival; an arc this wide fits all of them on screen at
- * the starting camera angle and still takes a look around to read the ends.
- */
-const ARC_HALF_SPAN = (44 * Math.PI) / 180;
-/** Wide enough to hold the whole arc; narrow enough not to fish-eye. */
-const CAMERA_FOV = 1.05;
-const SPAWN_Z = -9;
+const {
+	halfWidth: HALF_W,
+	height: HEIGHT,
+	doorWidth: DOOR_W,
+	doorHeight: DOOR_H,
+	wallThickness: WALL_T,
+	startZ: START_Z,
+	endZ: END_Z,
+	spawnZ: SPAWN_Z,
+	eyeHeight: EYE_HEIGHT
+} = CORRIDOR;
 
-interface Portal {
+/**
+ * A corridor rather than an arena, so navigation is something you walk
+ * through rather than something you survey. Narrower FOV than an open space
+ * wants: the walls are close, and a wide angle fish-eyes them badly.
+ */
+const CAMERA_FOV = 0.95;
+/** How close to the wall plane counts as having stepped into a doorway. */
+const DOOR_TRIGGER_INSET = 0.7;
+/** Ceiling lamps, as distances down the corridor. */
+const LAMP_DEPTHS = [-2, 5, 12, 19, 25];
+
+interface Door {
 	spec: PortalSpec;
-	root: Mesh;
-	ring: Mesh;
 	surface: Mesh;
-	light: PointLight;
-	ringMaterial: StandardMaterial;
 	surfaceMaterial: StandardMaterial;
+	light: PointLight;
+	/** Centre of the opening, on the wall plane. */
 	position: Vector3;
-	/** Accent colour index, alternating across the arc. */
+	/** Label anchor, above the opening. */
+	anchor: Vector3;
 	alt: boolean;
 }
 
@@ -58,18 +67,18 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 	scene.collisionsEnabled = true;
 	scene.gravity = new Vector3(0, -0.6, 0);
 	scene.fogMode = Scene.FOGMODE_EXP2;
-	scene.fogDensity = 0.022;
+	scene.fogDensity = 0.03;
 
 	const camera = new FreeCamera('hub-camera', new Vector3(0, EYE_HEIGHT, SPAWN_Z), scene);
-	camera.setTarget(new Vector3(0, EYE_HEIGHT, 0));
+	camera.setTarget(new Vector3(0, EYE_HEIGHT, SPAWN_Z + 10));
 	camera.fov = CAMERA_FOV;
 	camera.minZ = 0.1;
-	camera.speed = 0.55;
+	camera.speed = 0.5;
 	camera.angularSensibility = 2600;
 	camera.inertia = 0.82;
 	camera.checkCollisions = true;
 	camera.applyGravity = true;
-	camera.ellipsoid = new Vector3(0.6, EYE_HEIGHT / 2, 0.6);
+	camera.ellipsoid = new Vector3(0.5, EYE_HEIGHT / 2, 0.5);
 	// WASD in addition to the arrow keys Babylon binds by default.
 	camera.keysUp = [87, 38];
 	camera.keysDown = [83, 40];
@@ -77,137 +86,321 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 	camera.keysRight = [68, 39];
 
 	const ambient = new HemisphericLight('hub-ambient', new Vector3(0, 1, 0), scene);
-	ambient.intensity = 0.45;
+	ambient.intensity = 0.5;
 
-	const glow = new GlowLayer('hub-glow', scene, { blurKernelSize: 48 });
-	glow.intensity = 0.7;
+	const glow = new GlowLayer('hub-glow', scene, { blurKernelSize: 40 });
+	glow.intensity = 0.62;
 
-	// --- ground ---
-	const ground = MeshBuilder.CreateGround('hub-ground', { width: 140, height: 140 }, scene);
-	ground.checkCollisions = true;
-	const groundMaterial = new StandardMaterial('hub-ground-mat', scene);
-	groundMaterial.specularColor = Color3.Black();
-	ground.material = groundMaterial;
+	// --- materials ---
+	// The walls carry no texture. Panel seams and trim are real (thin) geometry
+	// instead, because a box's UVs run 0–1 per face: one shared wall texture
+	// would stretch differently on every segment length.
+	const concrete = new StandardMaterial('hub-concrete', scene);
+	concrete.specularColor = Color3.Black();
+	concrete.maxSimultaneousLights = 8;
 
-	const gridTexture = new DynamicTexture('hub-grid', { width: 512, height: 512 }, scene, true);
-	gridTexture.wrapU = Texture.WRAP_ADDRESSMODE;
-	gridTexture.wrapV = Texture.WRAP_ADDRESSMODE;
-	gridTexture.uScale = 28;
-	gridTexture.vScale = 28;
-	groundMaterial.diffuseTexture = gridTexture;
+	const concreteDark = new StandardMaterial('hub-concrete-dark', scene);
+	concreteDark.specularColor = Color3.Black();
+	concreteDark.maxSimultaneousLights = 8;
 
-	// An invisible wall keeps the camera inside the arena without the player
-	// ever seeing a boundary.
-	const wall = MeshBuilder.CreateCylinder(
-		'hub-bounds',
-		{ diameter: RING_RADIUS * 2 + 16, height: 30, sideOrientation: 1 },
+	const seamMaterial = new StandardMaterial('hub-seam', scene);
+	seamMaterial.specularColor = Color3.Black();
+	seamMaterial.maxSimultaneousLights = 8;
+
+	const floorMaterial = new StandardMaterial('hub-floor', scene);
+	floorMaterial.specularColor = Color3.Black();
+	floorMaterial.maxSimultaneousLights = 8;
+
+	const lampMaterial = new StandardMaterial('hub-lamp', scene);
+	makeEmissiveOnly(lampMaterial);
+
+	const frameMaterial = new StandardMaterial('hub-frame', scene);
+	frameMaterial.specularColor = Color3.Black();
+	frameMaterial.maxSimultaneousLights = 8;
+
+	const floorTexture = new DynamicTexture('hub-floor-tex', { width: 512, height: 512 }, scene, true);
+	floorTexture.wrapU = Texture.WRAP_ADDRESSMODE;
+	floorTexture.wrapV = Texture.WRAP_ADDRESSMODE;
+	const length = END_Z - START_Z;
+	floorTexture.uScale = (HALF_W * 2) / 2.4;
+	floorTexture.vScale = length / 2.4;
+	floorMaterial.diffuseTexture = floorTexture;
+
+	// --- shell ---
+	const midZ = (START_Z + END_Z) / 2;
+
+	const floor = MeshBuilder.CreateGround(
+		'hub-floor',
+		{ width: HALF_W * 2, height: length },
 		scene
 	);
-	wall.checkCollisions = true;
-	wall.isVisible = false;
-	wall.position.y = 15;
+	floor.position.z = midZ;
+	floor.material = floorMaterial;
+	floor.checkCollisions = true;
 
-	// --- portals ---
-	const portals: Portal[] = PORTALS.map((spec, i) => {
-		// Angle measured from straight ahead (+z), spread evenly across the arc.
-		const t = PORTALS.length === 1 ? 0 : i / (PORTALS.length - 1) - 0.5;
-		const angle = t * 2 * ARC_HALF_SPAN;
-		const position = new Vector3(Math.sin(angle) * RING_RADIUS, 0, Math.cos(angle) * RING_RADIUS);
+	const ceiling = MeshBuilder.CreateBox(
+		'hub-ceiling',
+		{ width: HALF_W * 2, height: WALL_T, depth: length },
+		scene
+	);
+	ceiling.position.set(0, HEIGHT + WALL_T / 2, midZ);
+	ceiling.material = concreteDark;
+	ceiling.checkCollisions = true;
 
-		const root = MeshBuilder.CreateBox(`portal-${i}-root`, { size: 0.01 }, scene);
-		root.isVisible = false;
-		root.position = position.clone();
-		// Turn each portal to face the spawn point.
-		root.rotation.y = angle;
+	const backWall = MeshBuilder.CreateBox(
+		'hub-back',
+		{ width: HALF_W * 2, height: HEIGHT, depth: WALL_T },
+		scene
+	);
+	backWall.position.set(0, HEIGHT / 2, START_Z - WALL_T / 2);
+	backWall.material = concrete;
+	backWall.checkCollisions = true;
 
-		const ringMaterial = new StandardMaterial(`portal-${i}-ring-mat`, scene);
-		makeEmissiveOnly(ringMaterial);
-		const ring = MeshBuilder.CreateTorus(
-			`portal-${i}-ring`,
-			{ diameter: 4.4, thickness: 0.22, tessellation: 48 },
+	/** A flat slab of wall, at x = ±(halfWidth), spanning a z and y range. */
+	function sideWall(name: string, sign: -1 | 1, z0: number, z1: number, y0: number, y1: number) {
+		const mesh = MeshBuilder.CreateBox(
+			name,
+			{ width: WALL_T, height: y1 - y0, depth: z1 - z0 },
 			scene
 		);
-		ring.material = ringMaterial;
-		ring.parent = root;
-		ring.position.y = 2.4;
-		ring.rotation.x = Math.PI / 2;
+		mesh.position.set(sign * (HALF_W + WALL_T / 2), (y0 + y1) / 2, (z0 + z1) / 2);
+		mesh.material = concrete;
+		mesh.checkCollisions = true;
+		return mesh;
+	}
 
-		const surfaceMaterial = new StandardMaterial(`portal-${i}-surface-mat`, scene);
-		makeEmissiveOnly(surfaceMaterial);
-		surfaceMaterial.alpha = 0.55;
-		surfaceMaterial.backFaceCulling = false;
-		const surface = MeshBuilder.CreateDisc(`portal-${i}-surface`, { radius: 2.1 }, scene);
-		surface.material = surfaceMaterial;
-		surface.parent = root;
-		surface.position.y = 2.4;
+	const sideDoors = PORTALS.filter((p) => p.side !== 'end');
 
-		const light = new PointLight(`portal-${i}-light`, position.add(new Vector3(0, 2.4, 0)), scene);
-		light.intensity = 0.55;
-		light.range = 16;
+	for (const sign of [-1, 1] as const) {
+		const wantedSide = sign === -1 ? 'left' : 'right';
+		const openings = sideDoors
+			.filter((p) => p.side === wantedSide)
+			.map((p) => [p.depth - DOOR_W / 2, p.depth + DOOR_W / 2] as const)
+			.sort((a, b) => a[0] - b[0]);
 
-		return {
-			spec,
-			root,
-			ring,
-			surface,
-			light,
-			ringMaterial,
-			surfaceMaterial,
-			position,
-			alt: i % 2 === 1
-		};
+		// Solid stretches between the openings. Annotated, because CORRIDOR is
+		// `as const` and the inferred literal type would not take a new z.
+		let cursor: number = START_Z;
+		openings.forEach(([z0, z1], i) => {
+			if (z0 > cursor) sideWall(`hub-wall-${wantedSide}-${i}`, sign, cursor, z0, 0, HEIGHT);
+			// The lintel over the opening.
+			sideWall(`hub-lintel-${wantedSide}-${i}`, sign, z0, z1, DOOR_H, HEIGHT);
+			cursor = z1;
+		});
+		if (cursor < END_Z) sideWall(`hub-wall-${wantedSide}-tail`, sign, cursor, END_Z, 0, HEIGHT);
+
+		// A backstop just outside each opening, so a visitor who slips past the
+		// trigger hits geometry rather than falling out of the world.
+		for (const [z0, z1] of openings) {
+			const stop = MeshBuilder.CreateBox(
+				`hub-stop-${wantedSide}-${z0}`,
+				{ width: WALL_T, height: HEIGHT, depth: z1 - z0 },
+				scene
+			);
+			stop.position.set(sign * (HALF_W + 2.2), HEIGHT / 2, (z0 + z1) / 2);
+			stop.material = concreteDark;
+			stop.checkCollisions = true;
+			stop.isVisible = true;
+		}
+	}
+
+	// The far wall, with the `end` door cut out of it.
+	const endDoorSpec = PORTALS.find((p) => p.side === 'end');
+	{
+		const sideSpan = (HALF_W * 2 - DOOR_W) / 2;
+		for (const sign of [-1, 1] as const) {
+			const panel = MeshBuilder.CreateBox(
+				`hub-end-${sign}`,
+				{ width: sideSpan, height: HEIGHT, depth: WALL_T },
+				scene
+			);
+			panel.position.set(sign * (DOOR_W / 2 + sideSpan / 2), HEIGHT / 2, END_Z + WALL_T / 2);
+			panel.material = concrete;
+			panel.checkCollisions = true;
+		}
+		const lintel = MeshBuilder.CreateBox(
+			'hub-end-lintel',
+			{ width: DOOR_W, height: HEIGHT - DOOR_H, depth: WALL_T },
+			scene
+		);
+		lintel.position.set(0, (HEIGHT + DOOR_H) / 2, END_Z + WALL_T / 2);
+		lintel.material = concrete;
+		lintel.checkCollisions = true;
+
+		const stop = MeshBuilder.CreateBox(
+			'hub-end-stop',
+			{ width: DOOR_W, height: HEIGHT, depth: WALL_T },
+			scene
+		);
+		stop.position.set(0, HEIGHT / 2, END_Z + 2.2);
+		stop.material = concreteDark;
+		stop.checkCollisions = true;
+	}
+
+	// --- kick plate and trim, the detail that makes it read as a facility ---
+	for (const sign of [-1, 1] as const) {
+		const kick = MeshBuilder.CreateBox(
+			`hub-kick-${sign}`,
+			{ width: 0.06, height: 0.34, depth: length },
+			scene
+		);
+		kick.position.set(sign * (HALF_W - 0.03), 0.17, midZ);
+		kick.material = seamMaterial;
+
+		const rail = MeshBuilder.CreateBox(
+			`hub-rail-${sign}`,
+			{ width: 0.1, height: 0.1, depth: length },
+			scene
+		);
+		rail.position.set(sign * (HALF_W - 0.05), HEIGHT - 0.55, midZ);
+		rail.material = seamMaterial;
+	}
+
+	// Vertical panel seams, every couple of metres down both walls.
+	for (let z = START_Z + 2.4; z < END_Z; z += 2.4) {
+		for (const sign of [-1, 1] as const) {
+			const seam = MeshBuilder.CreateBox(
+				`hub-seam-${sign}-${z.toFixed(1)}`,
+				{ width: 0.05, height: HEIGHT, depth: 0.07 },
+				scene
+			);
+			seam.position.set(sign * (HALF_W - 0.025), HEIGHT / 2, z);
+			seam.material = seamMaterial;
+		}
+	}
+
+	// --- ceiling lamps ---
+	const lamps = LAMP_DEPTHS.map((z, i) => {
+		const panel = MeshBuilder.CreateBox(
+			`hub-lamp-${i}`,
+			{ width: 1.7, height: 0.1, depth: 2.2 },
+			scene
+		);
+		panel.position.set(0, HEIGHT - 0.06, z);
+		panel.material = lampMaterial;
+
+		const housing = MeshBuilder.CreateBox(
+			`hub-lamp-housing-${i}`,
+			{ width: 2.1, height: 0.18, depth: 2.6 },
+			scene
+		);
+		housing.position.set(0, HEIGHT - 0.02, z);
+		housing.material = concreteDark;
+		return panel;
 	});
 
-	// --- a few slow-bobbing blobs, so the arena is not just geometry ---
-	const blobMaterial = new StandardMaterial('hub-blob-mat', scene);
-	makeEmissiveOnly(blobMaterial);
-	blobMaterial.alpha = 0.75;
-	const blobs = Array.from({ length: 10 }, (_, i) => {
-		const blob = MeshBuilder.CreateSphere(`hub-blob-${i}`, { diameter: 0.34, segments: 8 }, scene);
-		blob.material = blobMaterial;
-		// Kept high and wide so they read as atmosphere rather than cluttering
-		// the sight line between the spawn point and the portals.
-		const angle = (i / 10) * Math.PI * 2;
-		const radius = 9 + (i % 4) * 3.5;
-		blob.position = new Vector3(
-			Math.cos(angle) * radius,
-			4.5 + (i % 4) * 1.4,
-			Math.sin(angle) * radius
+	// --- doors ---
+	const doors: Door[] = PORTALS.map((spec, i) => {
+		const sign = spec.side === 'left' ? -1 : 1;
+		const isEnd = spec.side === 'end';
+
+		const position = isEnd
+			? new Vector3(0, DOOR_H / 2, END_Z)
+			: new Vector3(sign * HALF_W, DOOR_H / 2, spec.depth);
+
+		const surface = MeshBuilder.CreatePlane(
+			`door-${i}-surface`,
+			{ width: DOOR_W, height: DOOR_H, sideOrientation: 2 },
+			scene
 		);
-		return { mesh: blob, phase: i * 0.7, baseY: blob.position.y };
+		surface.position = position.clone();
+		// Planes face +z by default; the side doors have to turn to face inward.
+		if (!isEnd) surface.rotation.y = sign === -1 ? Math.PI / 2 : -Math.PI / 2;
+
+		const surfaceMaterial = new StandardMaterial(`door-${i}-mat`, scene);
+		makeEmissiveOnly(surfaceMaterial);
+		surfaceMaterial.alpha = 0.92;
+		surfaceMaterial.backFaceCulling = false;
+		surface.material = surfaceMaterial;
+
+		// A frame, so the opening reads as cut into the wall rather than painted on.
+		const frameDepth = isEnd ? 0.12 : DOOR_W + 0.3;
+		const frameWidth = isEnd ? DOOR_W + 0.3 : 0.12;
+		for (const dy of [-1, 1] as const) {
+			const bar = MeshBuilder.CreateBox(
+				`door-${i}-frame-${dy}`,
+				{ width: frameWidth, height: 0.14, depth: frameDepth },
+				scene
+			);
+			bar.position.set(
+				position.x + (isEnd ? 0 : -sign * 0.06),
+				dy === -1 ? 0.07 : DOOR_H + 0.07,
+				isEnd ? END_Z - 0.06 : spec.depth
+			);
+			bar.material = frameMaterial;
+		}
+
+		const light = new PointLight(
+			`door-${i}-light`,
+			position.add(new Vector3(isEnd ? 0 : -sign * 1.2, 0.4, isEnd ? -1.2 : 0)),
+			scene
+		);
+		light.intensity = 0.7;
+		light.range = 11;
+
+		const anchor = isEnd
+			? new Vector3(0, DOOR_H + 0.55, END_Z)
+			: new Vector3(sign * (HALF_W - 0.1), DOOR_H + 0.55, spec.depth);
+
+		return { spec, surface, surfaceMaterial, light, position, anchor, alt: i % 2 === 1 };
 	});
 
 	// --- state ---
 	let interactive = false;
 	let navigating = false;
 	let elapsed = 0;
-	// Ambient mode pans across the arc instead of leaving the camera wherever
-	// the visitor abandoned it.
-	let ambientAngle = 0;
+	/** Ambient mode walks the corridor on a loop instead of standing still. */
+	let ambientZ = SPAWN_Z;
+
+	// Held so the doorways can be repainted when the room changes, which is not
+	// when the palette changes.
+	let doorColor = Color3.White();
+	let doorAlt = Color3.White();
+	let paintedRoom: PortalKey | null = null;
+
+	/**
+	 * The exit takes the other accent and burns a little brighter, so it reads
+	 * as the way out from down the corridor — long before the label over it is
+	 * big enough to read, and at tile size where it never will be.
+	 */
+	function paintDoors() {
+		paintedRoom = room.key;
+		for (const door of doors) {
+			const exit = door.spec.key === room.key;
+			const color = exit || door.alt ? doorAlt : doorColor;
+			door.surfaceMaterial.emissiveColor = color.scale(exit ? 1.15 : 0.85);
+			door.light.diffuse = color;
+		}
+	}
 
 	function applyPalette(p: ScenePalette) {
 		const sky = hexColor(p.sky);
-		const ground3 = hexColor(p.ground);
-		const portalColor = hexColor(p.portal);
-		const portalAlt = hexColor(p.portalAlt);
+		const ground = hexColor(p.ground);
+		const grid = hexColor(p.grid);
+		const lightColor = hexColor(p.light);
+		doorColor = hexColor(p.portal);
+		doorAlt = hexColor(p.portalAlt);
 
 		scene.clearColor = new Color4(sky.r, sky.g, sky.b, 1);
 		scene.fogColor = hexColor(p.fog);
-		ambient.diffuse = hexColor(p.light);
-		ambient.groundColor = ground3.scale(0.6);
+		ambient.diffuse = lightColor;
+		ambient.groundColor = ground.scale(0.5);
 
-		groundMaterial.diffuseColor = Color3.White();
-		groundMaterial.emissiveColor = ground3.scale(0.25);
-		paintGrid(gridTexture, normalizeHex(p.ground), normalizeHex(p.grid));
+		concrete.diffuseColor = ground.scale(1.35);
+		concrete.emissiveColor = ground.scale(0.12);
+		concreteDark.diffuseColor = ground.scale(0.7);
+		concreteDark.emissiveColor = ground.scale(0.06);
+		seamMaterial.diffuseColor = ground.scale(0.4);
+		frameMaterial.diffuseColor = grid.scale(1.1);
+		frameMaterial.emissiveColor = grid.scale(0.2);
 
-		blobMaterial.emissiveColor = portalAlt.scale(0.45);
+		floorMaterial.diffuseColor = Color3.White();
+		floorMaterial.emissiveColor = ground.scale(0.18);
+		paintFloor(floorTexture, normalizeHex(p.ground), normalizeHex(p.grid));
 
-		for (const portal of portals) {
-			const color = portal.alt ? portalAlt : portalColor;
-			portal.ringMaterial.emissiveColor = color;
-			portal.surfaceMaterial.emissiveColor = color.scale(0.55);
-			portal.light.diffuse = color;
-		}
+		lampMaterial.emissiveColor = lightColor.scale(0.95);
+
+		paintDoors();
 	}
 
 	function setInteractive(next: boolean) {
@@ -215,9 +408,10 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 		interactive = next;
 		if (next) {
 			camera.attachControl(canvas, true);
-			// Always start facing the arc, wherever the ambient drift left off.
+			// Always start at the mouth of the corridor, facing down it, wherever
+			// the ambient walk left off.
 			camera.position.set(0, EYE_HEIGHT, SPAWN_Z);
-			camera.setTarget(new Vector3(0, EYE_HEIGHT, 0));
+			camera.setTarget(new Vector3(0, EYE_HEIGHT, SPAWN_Z + 10));
 		} else {
 			camera.detachControl();
 			hubMarkers.clear();
@@ -225,20 +419,35 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 		navigating = false;
 	}
 
-	// Clicking a portal works everywhere, and is the only way in on a
+	/**
+	 * What a doorway leads to right now.
+	 *
+	 * Normally its own room. But the door of the room you are already in is the
+	 * way out, not a link back to the page under your nose — so it is relabelled
+	 * and pointed at the hub. Every route out of the corridor goes through here,
+	 * so a doorway cannot say one thing and do another.
+	 */
+	function doorTarget(door: Door): { href: string; label: string; caption: string } {
+		if (door.spec.key !== room.key) {
+			return { href: door.spec.href, label: door.spec.label, caption: door.spec.caption };
+		}
+		return { href: EXIT_HREF, label: EXIT_LABEL, caption: EXIT_CAPTION };
+	}
+
+	// Clicking a doorway works everywhere, and is the only way in on a
 	// touchscreen, where there is no pointer lock and no keyboard.
 	const pointerObserver = scene.onPointerObservable.add((info) => {
 		if (info.type !== PointerEventTypes.POINTERPICK || !interactive || navigating) return;
 		const picked = info.pickInfo?.pickedMesh;
 		if (!picked) return;
-		const portal = portals.find((p) => picked === p.ring || picked === p.surface);
-		if (portal) {
+		const door = doors.find((d) => picked === d.surface);
+		if (door) {
 			navigating = true;
-			navigate(portal.spec.href);
+			navigate(doorTarget(door).href);
 		}
 	});
 
-	/** Projects each portal to canvas-relative coordinates for the HTML labels. */
+	/** Projects each doorway to canvas-relative coordinates for the HTML labels. */
 	function publishMarkers() {
 		const width = engine.getRenderWidth();
 		const height = engine.getRenderHeight();
@@ -248,18 +457,17 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 		const viewport = camera.viewport.toGlobal(width, height);
 		const forward = camera.getForwardRay().direction;
 
-		const next: PortalMarker[] = portals.map((portal) => {
-			// The label sits above the ring, not at its centre.
-			const anchor = portal.position.add(new Vector3(0, 5.1, 0));
-			const projected = Vector3.Project(anchor, Matrix.Identity(), transform, viewport);
-			const toPortal = anchor.subtract(camera.position);
-			const distance = toPortal.length();
-			const ahead = Vector3.Dot(toPortal.normalize(), forward) > 0.15;
+		const next: PortalMarker[] = doors.map((door) => {
+			const projected = Vector3.Project(door.anchor, Matrix.Identity(), transform, viewport);
+			const toDoor = door.anchor.subtract(camera.position);
+			const distance = toDoor.length();
+			const ahead = Vector3.Dot(toDoor.normalize(), forward) > 0.15;
 
 			const x = projected.x / width;
 			const y = projected.y / height;
 			return {
-				...portal.spec,
+				...door.spec,
+				...doorTarget(door),
 				x,
 				y,
 				distance,
@@ -270,44 +478,55 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 		hubMarkers.set(next);
 	}
 
+	/** True once the camera has stepped into the mouth of a doorway. */
+	function entered(door: Door): boolean {
+		const { x, z } = camera.position;
+		if (door.spec.side === 'end') {
+			return z > END_Z - DOOR_TRIGGER_INSET && Math.abs(x) < DOOR_W / 2;
+		}
+		const sign = door.spec.side === 'left' ? -1 : 1;
+		const past = sign === -1 ? x < -(HALF_W - DOOR_TRIGGER_INSET) : x > HALF_W - DOOR_TRIGGER_INSET;
+		return past && Math.abs(z - door.spec.depth) < DOOR_W / 2;
+	}
+
 	function update(deltaMs: number) {
 		const dt = Math.min(deltaMs, 100) / 1000;
 		elapsed += dt;
 
-		for (const portal of portals) {
-			portal.ring.rotation.z += dt * 0.35;
-			portal.surface.scaling.x = 1 + Math.sin(elapsed * 1.4 + portal.position.x) * 0.03;
-			portal.surface.scaling.y = 1 + Math.cos(elapsed * 1.1 + portal.position.z) * 0.03;
-			portal.light.intensity = 0.45 + Math.sin(elapsed * 2 + portal.position.x) * 0.12;
+		if (paintedRoom !== room.key) paintDoors();
+
+		for (const door of doors) {
+			// A slow breath across the opening, so a doorway never looks like a
+			// flat coloured rectangle.
+			const pulse = Math.sin(elapsed * 1.6 + door.position.z) * 0.04;
+			door.surface.scaling.y = 1 + pulse;
+			door.light.intensity = 0.6 + Math.sin(elapsed * 2.1 + door.position.z) * 0.12;
 		}
 
-		for (const blob of blobs) {
-			blob.mesh.position.y = blob.baseY + Math.sin(elapsed * 0.8 + blob.phase) * 0.4;
-			blob.mesh.rotation.y += dt * 0.3;
+		for (let i = 0; i < lamps.length; i++) {
+			// A barely-there flicker on one lamp. Facilities hum.
+			if (i === 2) lamps[i].scaling.y = 1 + Math.sin(elapsed * 17) * 0.04;
 		}
 
 		if (!interactive) {
-			// Ambient drift: a slow pan across the arc, never turning away from
-			// it, so the backdrop behind a page always shows something.
-			ambientAngle += dt * 0.12;
+			ambientZ += dt * 1.4;
+			if (ambientZ > END_Z - 5) ambientZ = SPAWN_Z;
 			camera.position.set(
-				Math.sin(ambientAngle) * 8,
-				EYE_HEIGHT + 1 + Math.sin(elapsed * 0.3) * 0.3,
-				SPAWN_Z + Math.cos(ambientAngle * 0.7) * 2.5
+				Math.sin(elapsed * 0.35) * 0.5,
+				EYE_HEIGHT + Math.sin(elapsed * 1.6) * 0.04,
+				ambientZ
 			);
-			camera.setTarget(new Vector3(Math.sin(ambientAngle) * 4, EYE_HEIGHT + 1.6, RING_RADIUS));
+			camera.setTarget(new Vector3(0, EYE_HEIGHT, ambientZ + 9));
 			return;
 		}
 
 		publishMarkers();
 
 		if (navigating) return;
-		for (const portal of portals) {
-			const dx = camera.position.x - portal.position.x;
-			const dz = camera.position.z - portal.position.z;
-			if (Math.hypot(dx, dz) < PORTAL_TRIGGER_DISTANCE) {
+		for (const door of doors) {
+			if (entered(door)) {
 				navigating = true;
-				navigate(portal.spec.href);
+				navigate(doorTarget(door).href);
 				return;
 			}
 		}
@@ -372,25 +591,35 @@ function hexColor(value: string): Color3 {
 	return Color3.FromHexString(normalizeHex(value));
 }
 
-function paintGrid(texture: DynamicTexture, background: string, line: string) {
+/** Floor plates: a seam grid with a painted centre line down the corridor. */
+function paintFloor(texture: DynamicTexture, background: string, line: string) {
 	const ctx = texture.getContext() as CanvasRenderingContext2D;
 	const size = texture.getSize();
+
 	ctx.fillStyle = background;
 	ctx.fillRect(0, 0, size.width, size.height);
 
 	ctx.strokeStyle = line;
-	ctx.lineWidth = 4;
+	ctx.lineWidth = 5;
 	ctx.strokeRect(0, 0, size.width, size.height);
 
-	// One lighter subdivision, so the floor reads at both near and far distance.
 	ctx.lineWidth = 1;
-	ctx.globalAlpha = 0.4;
+	ctx.globalAlpha = 0.35;
 	ctx.beginPath();
 	ctx.moveTo(size.width / 2, 0);
 	ctx.lineTo(size.width / 2, size.height);
 	ctx.moveTo(0, size.height / 2);
 	ctx.lineTo(size.width, size.height / 2);
 	ctx.stroke();
+
+	// Scuffs, so a long run of identical plates does not read as wallpaper.
+	ctx.globalAlpha = 0.14;
+	for (let i = 0; i < 24; i++) {
+		const x = (i * 97) % size.width;
+		const y = (i * 211) % size.height;
+		ctx.fillStyle = line;
+		ctx.fillRect(x, y, 18 + (i % 5) * 9, 3);
+	}
 	ctx.globalAlpha = 1;
 
 	texture.update();

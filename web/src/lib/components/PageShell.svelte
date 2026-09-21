@@ -12,8 +12,10 @@
 	let { title, lede, actions, children }: Props = $props();
 </script>
 
-<!-- Bottom padding leaves room for the persistent player bar. -->
-<div class="mx-auto w-full max-w-6xl px-4 pt-10 pb-32 sm:px-6">
+<!-- Bottom padding leaves room for the persistent player bar. The top is kept
+     tight because behind a door this renders inside the frame's window, right
+     under its titlebar, rather than under a page-width nav. -->
+<div class="mx-auto w-full max-w-6xl px-4 pt-7 pb-24 sm:px-6">
 	<div class="flex flex-wrap items-end justify-between gap-4">
 		<div>
 			<h1 class="text-4xl sm:text-5xl">{title}</h1>

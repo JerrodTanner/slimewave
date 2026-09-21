@@ -7,6 +7,14 @@
 	// from the scene's own projection each frame. They are anchors, so the
 	// portals are reachable by keyboard and readable by a screen reader.
 
+	/**
+	 * Set when the corridor is being played in a rail tile. The label keeps its
+	 * plate and its hit area — it is how a doorway is clicked — but drops to a
+	 * size that leaves some corridor visible behind it, and loses the caption,
+	 * which is unreadable at that scale anyway.
+	 */
+	let { compact = false }: { compact?: boolean } = $props();
+
 	function enter(event: MouseEvent, href: string) {
 		event.preventDefault();
 		void stage.transitionTo(href, (target) => goto(target));
@@ -22,7 +30,7 @@
 	}
 </script>
 
-<div class="pointer-events-none fixed inset-0 z-10" aria-label="Portals">
+<div class="pointer-events-none absolute inset-0" aria-label="Doorways">
 	{#each hubMarkers.markers as marker (marker.href)}
 		{#if marker.visible}
 			<a
@@ -34,8 +42,10 @@
 				style:opacity={opacityFor(marker.distance)}
 				onclick={(e) => enter(e, marker.href)}
 			>
-				<span class="portal-label block">{marker.label}</span>
-				<span class="portal-caption block">{marker.caption}</span>
+				<span class="portal-label block" class:portal-label-sm={compact}>{marker.label}</span>
+				{#if !compact}
+					<span class="portal-caption block">{marker.caption}</span>
+				{/if}
 			</a>
 		{/if}
 	{/each}
@@ -54,6 +64,12 @@
 		border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
 		padding: 0.15em 0.55em;
 		line-height: 1.15;
+	}
+
+	.portal-label-sm {
+		font-size: 0.8125rem;
+		letter-spacing: 0.04em;
+		padding: 0.1em 0.4em;
 	}
 
 	.portal-caption {

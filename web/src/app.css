@@ -45,6 +45,73 @@
 	--scene-light: #b8ffd9;
 }
 
+/* --- aero: obsidian and amethyst, the Frutiger-Aero house style --- */
+[data-theme='aero'] {
+	--color-bg: #17171c;
+	--color-bg-deep: #100f14;
+	--color-surface: #221d2c;
+	--color-surface-raised: #2e2740;
+	--color-line: #3b3049;
+	--color-line-bright: #5b4a72;
+	--color-ink: #f4effd;
+	--color-muted: #b6a9cc;
+	--color-accent: #b98cff;
+	--color-accent-ink: #26123f;
+	--color-accent-2: #4fe0d8;
+	--color-warn: #ffb347;
+
+	/* Nunito and Hind are the drawn faces; these are the rounded stacks that
+	   stand in for them without pulling a webfont into a one-binary site. */
+	--font-display: 'Nunito', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+	--font-body: 'Hind', 'Segoe UI', system-ui, -apple-system, sans-serif;
+	--radius-panel: 14px;
+	--tracking-display: -0.02em;
+
+	--scene-sky: #17131f;
+	--scene-fog: #1b1726;
+	--scene-ground: #3a4042;
+	--scene-grid: #6b7477;
+	--scene-portal: #a678f2;
+	--scene-portal-alt: #c8a6ff;
+	--scene-light: #ffd7a0;
+}
+
+/* --- newsprint: paper white, hairline black, one print green -------------
+   The house style. Light ground, hard 1px rules instead of glass, and
+   patterned chrome (dither, hazard, checker) built from these tokens by the
+   hub page. The corridor itself stays dark: a lit screen in a paper page. */
+[data-theme='newsprint'] {
+	--color-bg: #eceae2;
+	--color-bg-deep: #ffffff;
+	--color-surface: #fafaf5;
+	--color-surface-raised: #ffffff;
+	--color-line: #14130f;
+	--color-line-bright: #14130f;
+	--color-ink: #14130f;
+	--color-muted: #4f4c44;
+	--color-accent: #0b7a34;
+	--color-accent-ink: #ffffff;
+	--color-accent-2: #1f39ff;
+	--color-warn: #a35c00;
+
+	--font-display: 'Arial Black', 'Archivo Black', Impact, 'Helvetica Neue', sans-serif;
+	--font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	--radius-panel: 2px;
+	--tracking-display: -0.04em;
+
+	/* The mat behind the layout, and the ruled paper on panels. */
+	--paper-mat: #d9d5cb;
+	--paper-mat-ink: #c9c5ba;
+
+	--scene-sky: #26272c;
+	--scene-fog: #1c1d22;
+	--scene-ground: #2f3036;
+	--scene-grid: #74787e;
+	--scene-portal: #0b7a34;
+	--scene-portal-alt: #1f39ff;
+	--scene-light: #ffffff;
+}
+
 /* --- amber-crt: one phosphor, one job --- */
 [data-theme='amber-crt'] {
 	--color-bg: #0b0803;
@@ -167,7 +234,8 @@
 		color-scheme: dark;
 	}
 
-	[data-theme='xerox'] {
+	[data-theme='xerox'],
+	[data-theme='newsprint'] {
 		color-scheme: light;
 	}
 
@@ -277,6 +345,122 @@
 		outline: none;
 	}
 
+	/* --- Aero window chrome ---------------------------------------------
+	   The hub page is a desktop: a titled window holding the render, a
+	   couple of satellite panels and a dock. These are built from theme
+	   tokens rather than fixed colours, so the other four themes get the
+	   same furniture in their own palette instead of breaking. */
+	.glass {
+		background:
+			linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--color-surface-raised) 94%, transparent),
+				color-mix(in srgb, var(--color-surface) 82%, transparent)
+			);
+		border: 1px solid var(--color-line-bright);
+		border-radius: calc(var(--radius-panel) + 8px);
+		box-shadow:
+			0 30px 60px color-mix(in srgb, var(--color-bg-deep) 70%, transparent),
+			inset 0 1px 0 color-mix(in srgb, #ffffff 16%, transparent);
+		backdrop-filter: blur(16px) saturate(130%);
+	}
+
+	.glass-pill {
+		background:
+			linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--color-surface-raised) 94%, transparent),
+				color-mix(in srgb, var(--color-surface) 82%, transparent)
+			);
+		border: 1px solid var(--color-line-bright);
+		border-radius: 999px;
+		box-shadow:
+			0 14px 34px color-mix(in srgb, var(--color-bg-deep) 62%, transparent),
+			inset 0 1px 0 color-mix(in srgb, #ffffff 16%, transparent);
+		backdrop-filter: blur(16px) saturate(130%);
+	}
+
+	/* The window's titlebar and status strip. The area between them is left
+	   transparent on purpose: the canvas is positioned over it. */
+	.win-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.6rem 0.65rem 0.6rem 1rem;
+		border-bottom: 1px solid var(--color-line);
+	}
+
+	.win-foot {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.55rem 1rem;
+		border-top: 1px solid var(--color-line);
+	}
+
+	.win-btn {
+		width: 1.85rem;
+		height: 1.85rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		border: 1px solid var(--color-line-bright);
+		color: var(--color-ink);
+		background-color: color-mix(in srgb, var(--color-ink) 8%, transparent);
+		box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 20%, transparent);
+	}
+
+	.win-btn:hover {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+
+	.win-btn-close {
+		border-color: color-mix(in srgb, var(--color-accent-2) 55%, transparent);
+		color: var(--color-accent-2);
+	}
+
+	/* Dock tiles. Big enough to hit on a touchscreen without a media query. */
+	.dock-tile {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.5rem 0.35rem;
+		border-radius: calc(var(--radius-panel) + 4px);
+		min-width: 3.5rem;
+	}
+
+	.dock-tile:hover,
+	.dock-tile:focus-visible {
+		background-color: color-mix(in srgb, var(--color-ink) 9%, transparent);
+	}
+
+	.dock-icon {
+		width: 2.75rem;
+		height: 2.75rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: calc(var(--radius-panel) + 1px);
+		border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+		color: var(--color-ink);
+		background:
+			linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--color-accent) 26%, transparent),
+				color-mix(in srgb, var(--color-accent) 8%, transparent)
+			);
+		box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent);
+	}
+
+	.dock-tile-active .dock-icon {
+		color: var(--color-accent-ink);
+		background: linear-gradient(180deg, color-mix(in srgb, #ffffff 70%, var(--color-accent)), var(--color-accent));
+		border-color: color-mix(in srgb, #ffffff 55%, transparent);
+	}
+
 	/* Small caps label. Not tracked-out uppercase — this is a mono label with
 	   an accent rule, which reads as instrumentation rather than as a header. */
 	.label {
@@ -356,5 +540,83 @@
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;
+	}
+}
+
+/* --- the power cycle ------------------------------------------------------
+   Choosing a section switches the set off and back on. The picture collapses
+   to a bright line, then to a dot; the route changes while it is dark; then it
+   strikes back out to full frame in whichever box now holds it.
+
+   Global rather than scoped because the same two classes are put on the canvas
+   layer (which lives in the root layout, outside the frame) and on the frame's
+   own boxes, and all of them have to go out on the same frame.
+
+   The canvas layer carries an inline opacity and filter and a Tailwind
+   transition; an animation outranks inline styles for as long as it runs, and
+   killing the transition stops it easing back afterwards. */
+.crt-off,
+.crt-on {
+	transform-origin: center;
+	will-change: transform, filter, opacity;
+	transition: none !important;
+}
+
+.crt-off {
+	animation: crt-off 280ms cubic-bezier(0.4, 0, 0.9, 1) forwards;
+}
+
+.crt-on {
+	animation: crt-on 460ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes crt-off {
+	0% {
+		transform: scale(1, 1);
+		filter: brightness(1) contrast(1);
+		opacity: 1;
+	}
+	46% {
+		transform: scale(1.015, 0.018);
+		filter: brightness(2.6) contrast(1.4);
+		opacity: 1;
+	}
+	72% {
+		transform: scale(1, 0.012);
+		filter: brightness(3.4) contrast(1.7);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(0.004, 0.01);
+		filter: brightness(6) contrast(2.2);
+		opacity: 0;
+	}
+}
+
+@keyframes crt-on {
+	0% {
+		transform: scale(0.004, 0.01);
+		filter: brightness(6) contrast(2.2);
+		opacity: 0;
+	}
+	20% {
+		transform: scale(1.025, 0.012);
+		filter: brightness(3.6) contrast(1.7);
+		opacity: 1;
+	}
+	44% {
+		transform: scale(1, 0.024);
+		filter: brightness(2.4) contrast(1.35);
+		opacity: 1;
+	}
+	72% {
+		transform: scale(1, 1.04);
+		filter: brightness(1.35) contrast(1.1);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(1, 1);
+		filter: brightness(1) contrast(1);
+		opacity: 1;
 	}
 }

@@ -1,7 +1,17 @@
 import { browser } from '$app/environment';
 import { DEFAULT_THEME, isThemeId, type ThemeId } from './themes';
 
-const STORAGE_KEY = 'slimewave:theme';
+/**
+ * Versioned on purpose.
+ *
+ * A stored preference outranks DEFAULT_THEME, so without a bump every returning
+ * visitor keeps whatever they were last served and never sees a new house
+ * style. Changing the key is a one-time reset: old values are ignored, the new
+ * default lands, and the next deliberate choice is stored under the new key.
+ * Bump it when the default changes, not when a theme is merely edited.
+ */
+const STORAGE_KEY = 'slimewave:theme:v2';
+const LEGACY_STORAGE_KEYS = ['slimewave:theme'];
 
 /** Colours the 3D scene reads from the active theme. */
 export interface ScenePalette {
@@ -33,6 +43,7 @@ class ThemeState {
 			return;
 		}
 		try {
+			for (const key of LEGACY_STORAGE_KEYS) localStorage.removeItem(key);
 			const stored = localStorage.getItem(STORAGE_KEY);
 			if (isThemeId(stored)) this.set(stored);
 		} catch {

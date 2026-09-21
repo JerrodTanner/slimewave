@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="slimewave">
+<html lang="en" data-theme="newsprint">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -11,7 +11,10 @@
 			// The full theme registry lives in src/lib/theme; this only needs
 			// to know that the stored value is a plain theme id.
 			try {
-				var stored = localStorage.getItem('slimewave:theme');
+				// Versioned key: see lib/theme/theme.svelte.ts. A preference from
+				// before the current house style must not outrank it.
+				localStorage.removeItem('slimewave:theme');
+				var stored = localStorage.getItem('slimewave:theme:v2');
 				if (stored) document.documentElement.dataset.theme = stored;
 			} catch (e) {
 				/* private mode, blocked storage: the default theme is fine */

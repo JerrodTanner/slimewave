@@ -4,6 +4,12 @@
 	// The <audio> element is created here, in the shell, for the same reason
 	// the canvas is: a routed page that owned it would stop the music every
 	// time you clicked a link.
+	//
+	// `bar` only hides the transport strip, never the element: the hub draws
+	// its own player inside a window, and two sets of controls on one page is
+	// one set too many.
+	let { bar = true }: { bar?: boolean } = $props();
+
 	let audioEl: HTMLAudioElement;
 
 	$effect(() => {
@@ -19,7 +25,7 @@
 
 <audio bind:this={audioEl} preload="metadata"></audio>
 
-{#if player.current}
+{#if bar && player.current}
 	<div class="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-3 sm:px-6 sm:pb-4">
 		<div class="panel-raised pointer-events-auto mx-auto flex max-w-6xl items-center gap-3 px-3 py-2">
 			<div class="flex shrink-0 items-center gap-1">
