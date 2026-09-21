@@ -1,0 +1,360 @@
+@import 'tailwindcss';
+
+/*
+ * Theme system.
+ *
+ * Every visual decision resolves to a custom property here. `@theme static`
+ * hands the whole set to Tailwind (so `bg-surface`, `text-muted`, `border-line`
+ * and friends exist as utilities) and also emits them on :root, which is what
+ * lets Babylon read them with getComputedStyle and reskin the 3D scene when
+ * the visitor changes theme.
+ *
+ * A theme is a block of overrides keyed on [data-theme]. Adding one means
+ * adding a block below and an entry in src/lib/theme/themes.ts — nothing else.
+ */
+@theme static {
+	/* --- slimewave (default): acid green on wet black, arcade-flyer magenta --- */
+	--color-bg: #04090b;
+	--color-bg-deep: #010405;
+	--color-surface: #0a1418;
+	--color-surface-raised: #102026;
+	--color-line: #1d3a42;
+	--color-line-bright: #2f5f6b;
+	--color-ink: #dcf5ec;
+	--color-muted: #6f9a96;
+	--color-accent: #9dff3c;
+	--color-accent-ink: #04090b;
+	--color-accent-2: #ff4fd8;
+	--color-warn: #ffb347;
+
+	--font-display: 'Arial Black', 'Archivo Black', Impact, 'Helvetica Neue', sans-serif;
+	--font-body: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+	--radius-panel: 2px;
+	--tracking-display: -0.03em;
+
+	/* Colours handed to Babylon. Kept separate from the UI palette because a
+	   fog colour that works on screen is not the same value as a text colour. */
+	--scene-sky: #04090b;
+	--scene-fog: #071418;
+	--scene-ground: #0b1a1e;
+	--scene-grid: #16414a;
+	--scene-portal: #9dff3c;
+	--scene-portal-alt: #ff4fd8;
+	--scene-light: #b8ffd9;
+}
+
+/* --- amber-crt: one phosphor, one job --- */
+[data-theme='amber-crt'] {
+	--color-bg: #0b0803;
+	--color-bg-deep: #050301;
+	--color-surface: #141004;
+	--color-surface-raised: #1d1706;
+	--color-line: #402f0b;
+	--color-line-bright: #6b4f10;
+	--color-ink: #ffc44d;
+	--color-muted: #9a7526;
+	--color-accent: #ffb000;
+	--color-accent-ink: #0b0803;
+	--color-accent-2: #ff6a00;
+	--color-warn: #ff6a00;
+
+	--font-display: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+	--font-body: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+	--radius-panel: 0px;
+	--tracking-display: 0em;
+
+	--scene-sky: #0b0803;
+	--scene-fog: #140d02;
+	--scene-ground: #1a1205;
+	--scene-grid: #4a3407;
+	--scene-portal: #ffb000;
+	--scene-portal-alt: #ff6a00;
+	--scene-light: #ffd89a;
+}
+
+/* --- deepwater: the quiet one, for actually reading things --- */
+[data-theme='deepwater'] {
+	--color-bg: #070d18;
+	--color-bg-deep: #03070f;
+	--color-surface: #0d1626;
+	--color-surface-raised: #142033;
+	--color-line: #24344f;
+	--color-line-bright: #3c5478;
+	--color-ink: #dce7ff;
+	--color-muted: #7d8fb3;
+	--color-accent: #5ee6ff;
+	--color-accent-ink: #051019;
+	--color-accent-2: #a688ff;
+	--color-warn: #ffb347;
+
+	--font-display: 'Georgia', 'Iowan Old Style', serif;
+	--font-body: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+	--radius-panel: 10px;
+	--tracking-display: -0.015em;
+
+	--scene-sky: #070d18;
+	--scene-fog: #0b1526;
+	--scene-ground: #101d33;
+	--scene-grid: #27405f;
+	--scene-portal: #5ee6ff;
+	--scene-portal-alt: #a688ff;
+	--scene-light: #cfe4ff;
+}
+
+/* --- xerox: light, loud, photocopied --- */
+[data-theme='xerox'] {
+	--color-bg: #e9e7e2;
+	--color-bg-deep: #d7d4cd;
+	--color-surface: #ffffff;
+	--color-surface-raised: #ffffff;
+	--color-line: #16150f;
+	--color-line-bright: #16150f;
+	--color-ink: #16150f;
+	--color-muted: #5b584c;
+	--color-accent: #ff2d20;
+	--color-accent-ink: #ffffff;
+	--color-accent-2: #1f39ff;
+	--color-warn: #a35c00;
+
+	--font-display: 'Arial Black', 'Archivo Black', Impact, 'Helvetica Neue', sans-serif;
+	--font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	--radius-panel: 0px;
+	--tracking-display: -0.04em;
+
+	--scene-sky: #e9e7e2;
+	--scene-fog: #dedbd4;
+	--scene-ground: #cfcbc2;
+	--scene-grid: #8d8a80;
+	--scene-portal: #ff2d20;
+	--scene-portal-alt: #1f39ff;
+	--scene-light: #ffffff;
+}
+
+/* --- plate: monochrome print, one hot accent --- */
+[data-theme='plate'] {
+	--color-bg: #111113;
+	--color-bg-deep: #08080a;
+	--color-surface: #1a1a1d;
+	--color-surface-raised: #232327;
+	--color-line: #34343a;
+	--color-line-bright: #4d4d55;
+	--color-ink: #eceaea;
+	--color-muted: #918f96;
+	--color-accent: #ff3b6b;
+	--color-accent-ink: #ffffff;
+	--color-accent-2: #ffd166;
+	--color-warn: #ffd166;
+
+	--font-display: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	--font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	--radius-panel: 4px;
+	--tracking-display: -0.045em;
+
+	--scene-sky: #111113;
+	--scene-fog: #1a1a1d;
+	--scene-ground: #202024;
+	--scene-grid: #3c3c44;
+	--scene-portal: #ff3b6b;
+	--scene-portal-alt: #ffd166;
+	--scene-light: #ffffff;
+}
+
+@layer base {
+	html {
+		background-color: var(--color-bg-deep);
+		color-scheme: dark;
+	}
+
+	[data-theme='xerox'] {
+		color-scheme: light;
+	}
+
+	body {
+		background-color: transparent;
+		color: var(--color-ink);
+		font-family: var(--font-body);
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+
+	::selection {
+		background-color: var(--color-accent);
+		color: var(--color-accent-ink);
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	h1,
+	h2,
+	h3 {
+		font-family: var(--font-display);
+		letter-spacing: var(--tracking-display);
+		line-height: 0.98;
+	}
+
+	a {
+		color: inherit;
+	}
+}
+
+@layer components {
+	/* A panel is the one container shape the site uses: hairline border, flat
+	   fill, square-ish corners. No drop shadows — depth comes from the canvas
+	   sitting behind everything, not from stacked cards. */
+	.panel {
+		background-color: color-mix(in srgb, var(--color-surface) 88%, transparent);
+		border: 1px solid var(--color-line);
+		border-radius: var(--radius-panel);
+		backdrop-filter: blur(14px) saturate(120%);
+	}
+
+	.panel-raised {
+		background-color: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
+		border: 1px solid var(--color-line-bright);
+		border-radius: var(--radius-panel);
+		backdrop-filter: blur(14px) saturate(120%);
+	}
+
+	/* The site's one loud element. */
+	.btn-accent {
+		background-color: var(--color-accent);
+		color: var(--color-accent-ink);
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		padding: 0.5rem 0.9rem;
+		border-radius: var(--radius-panel);
+		border: 1px solid var(--color-accent);
+		transition:
+			transform 120ms ease,
+			filter 120ms ease;
+	}
+
+	.btn-accent:hover {
+		filter: brightness(1.12);
+	}
+
+	.btn-accent:active {
+		transform: translateY(1px);
+	}
+
+	.btn-ghost {
+		border: 1px solid var(--color-line);
+		color: var(--color-ink);
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		padding: 0.5rem 0.9rem;
+		border-radius: var(--radius-panel);
+		transition:
+			border-color 120ms ease,
+			color 120ms ease;
+	}
+
+	.btn-ghost:hover {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+
+	.field {
+		background-color: var(--color-bg-deep);
+		border: 1px solid var(--color-line);
+		border-radius: var(--radius-panel);
+		color: var(--color-ink);
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
+		padding: 0.55rem 0.7rem;
+		width: 100%;
+	}
+
+	.field:focus {
+		border-color: var(--color-accent);
+		outline: none;
+	}
+
+	/* Small caps label. Not tracked-out uppercase — this is a mono label with
+	   an accent rule, which reads as instrumentation rather than as a header. */
+	.label {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		color: var(--color-muted);
+	}
+
+	.rule {
+		border-top: 1px solid var(--color-line);
+	}
+
+	.prose-slim {
+		line-height: 1.65;
+		max-width: 68ch;
+	}
+
+	.prose-slim p {
+		margin-bottom: 1rem;
+	}
+
+	.prose-slim h2 {
+		font-size: 1.35rem;
+		margin: 2rem 0 0.75rem;
+	}
+
+	.prose-slim h3 {
+		font-size: 1.1rem;
+		margin: 1.5rem 0 0.5rem;
+	}
+
+	.prose-slim ul {
+		list-style: square;
+		padding-left: 1.2rem;
+		margin-bottom: 1rem;
+	}
+
+	.prose-slim li {
+		margin-bottom: 0.3rem;
+	}
+
+	.prose-slim code {
+		font-family: var(--font-mono);
+		font-size: 0.875em;
+		background-color: var(--color-surface-raised);
+		padding: 0.1em 0.35em;
+		border-radius: 2px;
+	}
+
+	.prose-slim a {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+}
+
+@layer utilities {
+	/* CRT scanlines, only where a theme asks for them. */
+	[data-theme='amber-crt'] .scanlines::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background: repeating-linear-gradient(
+			to bottom,
+			color-mix(in srgb, var(--color-accent) 7%, transparent) 0px,
+			transparent 1px,
+			transparent 3px
+		);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en" data-theme="slimewave">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="description" content="Jerrod Tanner — engineer. Portfolio, writing, music, and a 3D hub you can walk around in." />
+		<meta name="color-scheme" content="dark light" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+		<script>
+			// Applied before first paint so the chosen theme never flashes.
+			// The full theme registry lives in src/lib/theme; this only needs
+			// to know that the stored value is a plain theme id.
+			try {
+				var stored = localStorage.getItem('slimewave:theme');
+				if (stored) document.documentElement.dataset.theme = stored;
+			} catch (e) {
+				/* private mode, blocked storage: the default theme is fine */
+			}
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

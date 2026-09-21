@@ -1,5 +1,12 @@
+# Build outputs and local state — the image builds these from source.
 .git
+.github
 .idea
 *.exe
-Dockerfile.dev
+slimewave
+data/
+web/node_modules/
+web/build/
+web/.svelte-kit/
 README*
+Dockerfile.dev

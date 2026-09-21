@@ -5,6 +5,13 @@ services:
     restart: unless-stopped
     expose:
       - "8001"
+    environment:
+      # Seeds the owner account on first run; ignored once it exists.
+      - SLIMEWAVE_ADMIN_EMAIL=${SLIMEWAVE_ADMIN_EMAIL:-}
+      - SLIMEWAVE_ADMIN_PASSWORD=${SLIMEWAVE_ADMIN_PASSWORD:-}
+    volumes:
+      # The image is replaced on every deploy, so the database has to outlive it.
+      - slimewave-data:/app/data
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -26,3 +33,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 120 --cleanup --label-enable
+
+volumes:
+  slimewave-data:

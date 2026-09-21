@@ -1,26 +1,52 @@
-# Production build for the Slimewave Go web app.
-# Multi-stage: compile a static binary, then run it on a minimal Alpine image.
+# Production image for slimewave.
+#
+# Three stages: build the SvelteKit bundle, build a static Go binary, then
+# copy both onto a minimal runtime image. The Go binary serves the API, the
+# music library and the SPA, so the container runs one process.
 
-FROM golang:1.22-alpine AS build
+# --- stage 1: the frontend ---
+FROM node:22-alpine AS web
+WORKDIR /web
+# Install against the lockfile first so dependency layers cache independently
+# of source changes.
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
+# --- stage 2: the server ---
+FROM golang:1.24-alpine AS build
 WORKDIR /src
-# Only stdlib + local package, so module download is a no-op but kept for correctness.
-COPY go.mod go.sum* ./
+COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/slimewave .
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
+# CGO off: the SQLite driver is pure Go, so the binary is fully static.
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/slimewave ./cmd/slimewave
 
+# --- stage 3: runtime ---
 FROM alpine:3.20
 RUN adduser -D -u 10001 app
 WORKDIR /app
-# Runtime assets the handlers read by relative path.
-COPY --from=build /out/slimewave           /app/slimewave
-COPY --from=build /src/*.html              /app/
-COPY --from=build /src/styles.css          /app/
-COPY --from=build /src/music.json          /app/
-COPY --from=build /src/static              /app/static
-COPY --from=build /src/audio               /app/audio
-COPY --from=build /src/PDFs                /app/PDFs
-RUN chown -R app:app /app
+
+COPY --from=build /out/slimewave /app/slimewave
+COPY --from=web   /web/build     /app/web/build
+# Content served straight off disk.
+COPY audio/ /app/audio/
+COPY PDFs/  /app/PDFs/
+
+# The SQLite file lives here; mount a volume over it to keep data across
+# deploys, since the image itself is replaced on every push.
+RUN mkdir -p /app/data && chown -R app:app /app
 USER app
+VOLUME ["/app/data"]
+
+ENV SLIMEWAVE_ADDR=:8001 \
+    SLIMEWAVE_DB=/app/data/slimewave.db \
+    SLIMEWAVE_WEB_DIR=/app/web/build \
+    SLIMEWAVE_AUDIO_DIR=/app/audio \
+    SLIMEWAVE_DOCS_DIR=/app/PDFs \
+    SLIMEWAVE_SECURE_COOKIES=true
+
 EXPOSE 8001
 ENTRYPOINT ["/app/slimewave"]

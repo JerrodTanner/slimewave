@@ -1,0 +1,62 @@
+/**
+ * The theme registry.
+ *
+ * Themes are a visitor-facing feature, so each one gets a name and a line of
+ * copy for the switcher rather than being an anonymous id. The actual colours
+ * live in src/app.css under `[data-theme='<id>']`; this file only describes
+ * them to the UI.
+ */
+export type ThemeId = 'slimewave' | 'amber-crt' | 'deepwater' | 'xerox' | 'plate';
+
+export interface Theme {
+	id: ThemeId;
+	name: string;
+	blurb: string;
+	/** Three colours for the switcher's preview chip: bg, accent, secondary. */
+	swatch: [string, string, string];
+}
+
+export const THEMES: Theme[] = [
+	{
+		id: 'slimewave',
+		name: 'Slimewave',
+		blurb: 'Acid green on wet black. The house style.',
+		swatch: ['#04090b', '#9dff3c', '#ff4fd8']
+	},
+	{
+		id: 'amber-crt',
+		name: 'Amber CRT',
+		blurb: 'One phosphor, monospace everything, scanlines on.',
+		swatch: ['#0b0803', '#ffb000', '#ff6a00']
+	},
+	{
+		id: 'deepwater',
+		name: 'Deepwater',
+		blurb: 'Dim blue and a serif. Built for long reading.',
+		swatch: ['#070d18', '#5ee6ff', '#a688ff']
+	},
+	{
+		id: 'xerox',
+		name: 'Xerox',
+		blurb: 'Light, loud, photocopied. Hairlines and hot red.',
+		swatch: ['#e9e7e2', '#ff2d20', '#1f39ff']
+	},
+	{
+		id: 'plate',
+		name: 'Plate',
+		blurb: 'Neutral greys, one hot accent. Gets out of the way.',
+		swatch: ['#111113', '#ff3b6b', '#ffd166']
+	}
+];
+
+export const DEFAULT_THEME: ThemeId = 'slimewave';
+
+export const THEME_IDS = THEMES.map((t) => t.id);
+
+export function isThemeId(value: unknown): value is ThemeId {
+	return typeof value === 'string' && (THEME_IDS as string[]).includes(value);
+}
+
+export function themeById(id: ThemeId): Theme {
+	return THEMES.find((t) => t.id === id) ?? THEMES[0];
+}
