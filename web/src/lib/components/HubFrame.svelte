@@ -49,6 +49,11 @@
 		return gameViewport.claim(slot);
 	});
 
+	// Swapping slots is not giving up the window; leaving the frame is. Kept
+	// apart from the claim above so a power cycle cannot drop the intent
+	// halfway through and let the canvas loose over the page.
+	$effect(() => () => gameViewport.release());
+
 	// Arriving anywhere in the frame arrives on standby, whether that is a
 	// first visit, a walk back from a section, or a reload. The route is the
 	// only dependency on purpose: `stand()` reads the gate's own state, and

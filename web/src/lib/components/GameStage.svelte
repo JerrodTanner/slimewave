@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { stage } from '$lib/game/stage.svelte';
@@ -62,10 +62,16 @@
 	/** Windowed means a page has put the canvas somewhere specific. */
 	const windowed = $derived(frame !== null);
 	/**
-	 * A page has said it wants a window but has not measured one yet. Painting
-	 * during that gap would flash a fullscreen canvas over the whole layout.
+	 * A framed page always draws the corridor into a rect it claimed. When that
+	 * rect is missing — the first frame after mount, or the gap between the
+	 * window and a rail tile during a power cycle — the canvas waits.
+	 *
+	 * It used to stretch to the whole viewport instead. Immersive that put an
+	 * opaque canvas above the page with pointer events on, which ate every
+	 * click on the way back from a door. There is no case inside the frame
+	 * where filling the screen is the right answer, so it no longer can.
 	 */
-	const settling = $derived(gameViewport.intent && frame === null);
+	const stranded = $derived((framed || gameViewport.intent) && frame === null);
 	/**
 	 * The corridor is being played in something tile-sized. The overlays are
 	 * sized for a full window and have to stand down to fit.
@@ -77,7 +83,7 @@
 	 * does not paint over it. It is clipped to the claimed rect, so it covers
 	 * the screen and nothing else — the titlebar and dock stay clickable.
 	 */
-	const layer = $derived(!immersive ? 'z-0' : windowed ? 'z-30' : 'z-10');
+	const layer = $derived(stranded || !immersive ? 'z-0' : windowed ? 'z-30' : 'z-10');
 
 	// Which room the corridor thinks you are standing in. Owned here rather
 	// than in the frame because this component is the one that is always
@@ -86,10 +92,13 @@
 		room.key = framed ? portalForPath(page.url.pathname) : null;
 	});
 
+	// The stage's own guards read the state they are about to write
+	// (`activeSceneId`, `mode`), so calling in tracked would make these effects
+	// depend on what they set. Every real dependency is read above the untrack.
 	$effect(() => {
 		if (!stage.ready) return;
-		if (arcadeGame === 'slime-run') stage.activate('slime-run');
-		else stage.activate('hub');
+		const id = arcadeGame === 'slime-run' ? 'slime-run' : 'hub';
+		untrack(() => stage.activate(id));
 	});
 
 	// Leaving the arcade frees the game's meshes and textures. The hub is
@@ -105,14 +114,14 @@
 
 	$effect(() => {
 		if (!stage.ready) return;
-		if (immersive) stage.setMode('immersive');
-		else stage.setMode(ui.backdrop === 'ambient' ? 'ambient' : 'paused');
+		const next = immersive ? 'immersive' : ui.backdrop === 'ambient' ? 'ambient' : 'paused';
+		untrack(() => stage.setMode(next));
 	});
 
 	function onCanvasPointerDown() {
 		// Pointer lock has to come from a real gesture, so it is requested here
 		// rather than when the mode changes.
-		if (immersive && !stage.pointerLocked) stage.requestPointerLock();
+		if (immersive && !stranded && !stage.pointerLocked) stage.requestPointerLock();
 	}
 </script>
 
@@ -134,10 +143,10 @@
 	class:crt-on={crt.phase === 'on'}
 	style:top={frame ? `${frame.top}px` : '0'}
 	style:left={frame ? `${frame.left}px` : '0'}
-	style:width={frame ? `${frame.width}px` : '100%'}
-	style:height={frame ? `${frame.height}px` : '100%'}
+	style:width={frame ? `${frame.width}px` : stranded ? '0' : '100%'}
+	style:height={frame ? `${frame.height}px` : stranded ? '0' : '100%'}
 	style:border-radius={frame ? 'calc(var(--radius-panel) + 6px)' : '0'}
-	style:opacity={stage.mode === 'paused' || settling ? 0 : immersive ? 1 : 0.35}
+	style:opacity={stage.mode === 'paused' || stranded ? 0 : immersive ? 1 : 0.35}
 	style:filter={immersive ? 'none' : 'saturate(0.7) blur(1px)'}
 	aria-hidden={!immersive}
 >
@@ -149,7 +158,7 @@
 		onpointerdown={onCanvasPointerDown}
 		tabindex="-1"
 		class="h-full w-full touch-none outline-none"
-		class:pointer-events-auto={immersive}
+		class:pointer-events-auto={immersive && !stranded}
 		aria-label="Interactive 3D hub"
 	></canvas>
 
