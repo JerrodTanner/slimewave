@@ -81,11 +81,12 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 	camera.checkCollisions = true;
 	camera.applyGravity = true;
 	camera.ellipsoid = new Vector3(0.5, EYE_HEIGHT / 2, 0.5);
-	// WASD in addition to the arrow keys Babylon binds by default.
-	camera.keysUp = [87, 38];
-	camera.keysDown = [83, 40];
-	camera.keysLeft = [65, 37];
-	camera.keysRight = [68, 39];
+	// The arrow keys, and only those: they are what the HUD tells you to use,
+	// and a control that is not on the readout is a control nobody finds.
+	camera.keysUp = [38];
+	camera.keysDown = [40];
+	camera.keysLeft = [37];
+	camera.keysRight = [39];
 
 	const ambient = new HemisphericLight('hub-ambient', new Vector3(0, 1, 0), scene);
 	ambient.intensity = 0.5;
@@ -206,9 +207,20 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 		}
 	}
 
-	// The far wall, with the `end` door cut out of it.
+	// The far wall. A doorway is cut into it only if some door asks for one;
+	// with no `end` door on the list the corridor simply stops there, so the
+	// wall is drawn whole rather than left standing open onto nothing.
 	const endDoorSpec = PORTALS.find((p) => p.side === 'end');
-	{
+	if (!endDoorSpec) {
+		const wall = MeshBuilder.CreateBox(
+			'hub-end',
+			{ width: HALF_W * 2, height: HEIGHT, depth: WALL_T },
+			scene
+		);
+		wall.position.set(0, HEIGHT / 2, END_Z + WALL_T / 2);
+		wall.material = concrete;
+		wall.checkCollisions = true;
+	} else {
 		const sideSpan = (HALF_W * 2 - DOOR_W) / 2;
 		for (const sign of [-1, 1] as const) {
 			const panel = MeshBuilder.CreateBox(
@@ -323,7 +335,7 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 	//
 	// Every fixture gets an emissive face, which costs nothing, but only two
 	// pairs get a real PointLight: the materials cap at eight lights each and
-	// the four doorways already claim half of that. Babylon keeps the nearest
+	// the doorways already claim several of those. Babylon keeps the nearest
 	// per mesh, which is the right answer anyway.
 	const SCONCE_DEPTHS = [-3.5, 2.5, 12.5, 22.5];
 	const SCONCE_LIT = [2.5, 22.5];

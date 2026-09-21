@@ -1,6 +1,6 @@
 export type DoorSide = 'left' | 'right' | 'end';
 
-export type PortalKey = 'resume' | 'plan' | 'media' | 'arcade';
+export type PortalKey = 'resume' | 'plan' | 'media';
 
 export interface PortalSpec {
 	/** Stable handle, so the hub rail can find a door without matching copy. */
@@ -18,9 +18,8 @@ export interface PortalSpec {
  * section.
  *
  * The hub is a corridor, so the order here is the order you meet them walking
- * in: the two nearest doors face each other, then the next pair, then the far
- * end. That makes the list an itinerary rather than an arc — `end` is the door
- * you reach by doing nothing but walking forward.
+ * in: the two nearest doors face each other, then the one further down. That
+ * makes the list an itinerary rather than an arc.
  *
  * Kept in its own module so the HUD can list them without importing the
  * Babylon scene — the fallback list on the hub page has to work even when the
@@ -29,8 +28,7 @@ export interface PortalSpec {
 export const PORTALS: PortalSpec[] = [
 	{ key: 'resume', href: '/resume', label: 'RESUME', side: 'left', depth: 8 },
 	{ key: 'plan', href: '/plan', label: 'PLAN A PROJECT', side: 'right', depth: 8 },
-	{ key: 'media', href: '/music', label: 'MEDIA', side: 'left', depth: 18 },
-	{ key: 'arcade', href: '/arcade', label: 'ARCADE', side: 'end', depth: 28 }
+	{ key: 'media', href: '/music', label: 'MEDIA', side: 'left', depth: 18 }
 ];
 
 /** The doors by key, for the rail on the hub page. */
@@ -69,12 +67,11 @@ export function portalForPath(path: string): PortalKey | null {
 }
 
 /**
- * True for the routes that render inside the hub frame — the hub and the four
- * doors. An arcade game is deliberately not framed: it takes the whole screen,
- * which is the one case where the corridor gives up its window entirely.
+ * True for the routes that render inside the hub frame — the hub and its
+ * doors. Everything else (the flat pages behind the plain nav) is not framed,
+ * and the corridor does not follow it there.
  */
 export function isFramed(path: string): boolean {
 	if (path === '/') return true;
-	if (path.startsWith('/arcade/')) return false;
 	return portalForPath(path) !== null;
 }

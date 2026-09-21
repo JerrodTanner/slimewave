@@ -23,8 +23,8 @@
 	 * the project, so nothing persistent should be moved down into a route.
 	 *
 	 * The hub frame is one of those persistent things now. The hub and its
-	 * four doors all render inside it — the corridor and the chosen page just
-	 * swap boxes — so it cannot belong to `/` any more than the canvas can.
+	 * doors all render inside it — the corridor and the chosen page just swap
+	 * boxes — so it cannot belong to `/` any more than the canvas can.
 	 */
 	onMount(() => {
 		theme.init();
@@ -33,10 +33,8 @@
 	});
 
 	const path = $derived(page.url.pathname);
-	/** The hub and its four doors. Everything else gets the plain nav. */
+	/** The hub and its doors. Everything else gets the plain nav. */
 	const framed = $derived(isFramed(path));
-	/** An arcade game is the one route that takes the whole screen. */
-	const arcadeGame = $derived(path.startsWith('/arcade/'));
 	const hub = $derived(path === '/');
 </script>
 
@@ -45,12 +43,10 @@
 {#if framed}
 	<HubFrame>{@render children()}</HubFrame>
 {:else}
-	<div class="relative z-20 min-h-dvh" class:pointer-events-none={arcadeGame}>
-		{#if !arcadeGame}
-			<SiteNav />
-		{/if}
+	<div class="relative z-20 min-h-dvh">
+		<SiteNav />
 
-		<main class:pointer-events-none={arcadeGame}>
+		<main>
 			{@render children()}
 		</main>
 	</div>

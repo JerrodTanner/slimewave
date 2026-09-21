@@ -151,7 +151,7 @@ class StageState {
 
 	/**
 	 * Drops a scene and its GPU resources. The hub is never released this way;
-	 * one-off games are, when you leave them.
+	 * a one-off scene would be, when you leave it.
 	 */
 	release(id: string) {
 		const handle = this.#scenes.get(id);
@@ -181,8 +181,8 @@ class StageState {
 	 *
 	 * Focus matters as much as the lock. Babylon binds the camera's keys to the
 	 * canvas element, so locking the pointer while the focus is still on the
-	 * button that asked for it gives mouse-look and no WASD — which is exactly
-	 * what "activate" used to feel like.
+	 * button that asked for it gives mouse-look and no arrow keys — which is
+	 * exactly what "activate" used to feel like.
 	 *
 	 * Must be called inside the gesture that asked for it: pointer lock is only
 	 * granted during real user activation.
@@ -212,8 +212,8 @@ class StageState {
 	 *
 	 * Inside the frame that means the power cycle: both boxes switch off, the
 	 * route changes in the dark, and they come back on having swapped the
-	 * corridor for the page. Leaving the frame entirely (an arcade game takes
-	 * the whole screen) there is no pair of boxes to swap, so it stays a fade.
+	 * corridor for the page. Leaving the frame entirely there is no pair of
+	 * boxes to swap, so it stays a fade.
 	 *
 	 * The smoothness is animation, not state preservation — the route genuinely
 	 * changes. Only the canvas behind it survives, which is the point.

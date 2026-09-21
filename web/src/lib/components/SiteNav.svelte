@@ -9,8 +9,7 @@
 		{ href: '/resume', label: 'Resume' },
 		{ href: '/plan', label: 'Plan' },
 		{ href: '/music', label: 'Music' },
-		{ href: '/writing', label: 'Writing' },
-		{ href: '/arcade', label: 'Arcade' }
+		{ href: '/writing', label: 'Writing' }
 	];
 
 	const path = $derived(page.url.pathname);

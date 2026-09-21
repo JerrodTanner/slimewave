@@ -15,7 +15,7 @@
 	/**
 	 * The furniture: a heading rule, one big window, and the doors as a rail
 	 * beside it. It is mounted by the root layout, not by a route, so it
-	 * survives navigation between the hub and the four doors.
+	 * survives navigation between the hub and its doors.
 	 *
 	 * There are only ever two things in play and they trade places. On the hub
 	 * the corridor has the big window and every door is a door. Choose one and
@@ -73,14 +73,13 @@
 	 * seen on the rail.
 	 *
 	 * A tile says where it goes and what you will do there — no blurb under it.
-	 * Four doors do not need explaining, and the rail reads as a row of tokens
+	 * Three doors do not need explaining, and the rail reads as a row of tokens
 	 * rather than a page of copy.
 	 */
 	const DOORS: Record<PortalKey, { tone?: 'loud' | 'alt'; action: string }> = {
 		resume: { action: 'READ' },
 		plan: { tone: 'loud', action: 'START A BRIEF' },
-		media: { tone: 'alt', action: 'OPEN' },
-		arcade: { action: 'PLAY' }
+		media: { tone: 'alt', action: 'OPEN' }
 	};
 
 	function select(event: MouseEvent | null, href: string) {
@@ -97,10 +96,8 @@
 		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
 	{:else if key === 'plan'}
 		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3z" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /><path d="M3 12h18" /></svg>
-	{:else if key === 'media'}
-		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
 	{:else}
-		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12a6 6 0 0 1 6-6h8a6 6 0 0 1 0 12H8a6 6 0 0 1-6-6z" /><path d="M7 10v4" /><path d="M5 12h4" /><path d="M15.5 11.5h.01" /><path d="M18 10h.01" /></svg>
+		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
 	{/if}
 {/snippet}
 
@@ -109,8 +106,9 @@
 	class:mat-bar={active !== null && player.current !== null}
 >
 	<div class="frame flex min-h-full flex-col gap-4 sm:gap-5">
-		<!-- The heading rule. Deliberately empty but for the mark: the doors
-		     are the navigation, and they are all on the rail. -->
+		<!-- The heading rule. It carries the one sentence that says what the
+		     site is for, and the two things that sentence names are wired to
+		     the doors that do them — so the copy is navigation too. -->
 		<header class="head">
 			{#if active}
 				<a href="/" class="crumb" onclick={(e) => select(e, '/')}>
@@ -118,6 +116,16 @@
 					BACK TO THE HUB
 				</a>
 			{/if}
+			<p class="mission">
+				This site functions as a place to
+				<a href={PORTAL.plan.href} onclick={(e) => select(e, PORTAL.plan.href)}
+					>intake business inquiries</a
+				>, and provide an
+				<a href={PORTAL.resume.href} onclick={(e) => select(e, PORTAL.resume.href)}
+					>interactive portfolio</a
+				>
+			</p>
+
 			<span class="flex-1"></span>
 			<!-- Keyed on the route so the mark restarts its turn on every
 			     navigation. It runs off its own clock from mount, and a walk
@@ -131,14 +139,15 @@
 			<!-- the big window: the corridor on the hub, the section's page behind a door -->
 			<section class="win flex h-[52vh] min-h-[300px] flex-col lg:h-auto lg:min-h-0 lg:flex-1">
 				<div class="winbar">
+					<!-- A cube: what is in the window is a space, not a screen. -->
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<rect x="3" y="4" width="18" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 18v3" />
+						<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />
 					</svg>
 					<span class="winbar-title">
 						{#if active}
 							{PORTAL[active].label}
 						{:else}
-							HUB // THE CORRIDOR
+							NAVIGATE SHINEWAVE IN 3 DIMENSIONS
 						{/if}
 					</span>
 
@@ -154,7 +163,7 @@
 							RUNNING
 						</span>
 					{:else}
-						<span class="chip chip-quiet"><span class="chip-blip"></span>STANDBY</span>
+						<span class="chip chip-quiet"><span class="chip-dot"></span>PAUSED</span>
 					{/if}
 
 					{#if active === 'resume'}
@@ -166,19 +175,12 @@
 
 					<span class="flex-1"></span>
 
+					<!-- The only control the titlebar carries. The hub needs none:
+					     the cover is how the corridor is taken up, and Escape is
+					     how it is put back down. -->
 					{#if active}
 						<a href="/" class="winbtn winbtn-alt" aria-label="Put the corridor back on the big screen" onclick={(e) => select(e, '/')}>
 							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3 14 10" /><path d="M3 21l7-7" /></svg>
-						</a>
-					{:else}
-						<button type="button" class="winbtn" aria-label="Put the corridor on standby" onclick={() => hubGate.stand()}>
-							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12" /></svg>
-						</button>
-						<button type="button" class="winbtn" aria-label="Take the controls" onclick={() => hubGate.enter()}>
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1" /></svg>
-						</button>
-						<a href={PORTAL.arcade.href} class="winbtn winbtn-alt" aria-label="Leave for the arcade" onclick={(e) => select(e, PORTAL.arcade.href)}>
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12" /><path d="M18 6 6 18" /></svg>
 						</a>
 					{/if}
 				</div>
@@ -235,9 +237,9 @@
 							<!-- This door is open, so its tile is where the corridor lives now. -->
 							<div class="live">
 								<div class="livebar">
-									<span class="livebar-title">HUB // CORRIDOR</span>
+									<span class="livebar-title">NAVIGATE IN 3D</span>
 									<span class="flex-1"></span>
-									<span class="livebar-chip">{hubGate.open ? 'RUNNING' : 'STANDBY'}</span>
+									<span class="livebar-chip">{hubGate.open ? 'RUNNING' : 'PAUSED'}</span>
 								</div>
 								<div bind:this={tileScreen} class="livescreen">
 									{#if !stage.unsupported && !hubGate.open}
@@ -257,7 +259,6 @@
 									class:cap-dash={portal.key === 'resume'}
 									class:cap-hazard={portal.key === 'plan'}
 									class:cap-dash-alt={portal.key === 'media'}
-									class:cap-check={portal.key === 'arcade'}
 								></span>
 								<span class="brackets"></span>
 								<span
@@ -325,9 +326,11 @@
 	.head {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.6rem 1.4rem;
 		flex-shrink: 0;
-		height: 72px;
-		padding: 0 18px;
+		min-height: 72px;
+		padding: 0.9rem 18px;
 		border: 1px solid var(--color-line);
 		border-radius: calc(var(--radius-panel) + 4px);
 		background-color: var(--color-surface-raised);
@@ -348,6 +351,24 @@
 
 	.crumb:hover {
 		background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
+	}
+
+	.mission {
+		max-width: 64ch;
+		font-size: 0.9375rem;
+		line-height: 1.4;
+		color: var(--color-ink);
+	}
+
+	.mission a {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+	}
+
+	.mission a:hover {
+		color: var(--color-accent-2);
 	}
 
 	/* --- the window ------------------------------------------------------ */
@@ -431,11 +452,12 @@
 		color: var(--color-muted);
 	}
 
-	.chip-blip {
+	/* Steady on purpose. A blinking light says "waiting for you"; this one is
+	   only saying nobody is driving the corridor right now. */
+	.chip-dot {
 		width: 6px;
 		height: 6px;
-		background-color: var(--color-accent);
-		animation: blink 1.1s steps(1, end) infinite;
+		background-color: var(--color-muted);
 	}
 
 	.breathe {
@@ -592,14 +614,6 @@
 		);
 	}
 
-	.cap-check {
-		background-image: repeating-conic-gradient(
-			color-mix(in srgb, var(--color-accent) 55%, transparent) 0% 25%,
-			transparent 0% 50%
-		);
-		background-size: 6px 6px;
-	}
-
 	/* Corner ticks, drawn in one element by way of two gradients per side. */
 	.brackets {
 		position: absolute;
@@ -700,17 +714,6 @@
 		display: block;
 		height: 100%;
 		background-color: var(--color-accent-2);
-	}
-
-	@keyframes blink {
-		0%,
-		49% {
-			opacity: 1;
-		}
-		50%,
-		100% {
-			opacity: 0.2;
-		}
 	}
 
 	@keyframes breathe {

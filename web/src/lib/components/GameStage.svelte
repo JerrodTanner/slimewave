@@ -9,7 +9,6 @@
 	import { isFramed, portalForPath } from '$lib/game/portals';
 	import { room } from '$lib/game/room.svelte';
 	import { createHubScene } from '$lib/game/hubScene';
-	import { createSlimeRunScene } from '$lib/game/slimeRunScene';
 	import { ui } from '$lib/state/ui.svelte';
 	import PortalLabels from './PortalLabels.svelte';
 	import HudOverlay from './HudOverlay.svelte';
@@ -33,7 +32,6 @@
 	 */
 	onMount(() => {
 		stage.register('hub', createHubScene);
-		stage.register('slime-run', createSlimeRunScene);
 		stage.setNavigator((href) => {
 			void stage.transitionTo(href, (target) => goto(target));
 		});
@@ -43,20 +41,17 @@
 		return () => stage.dispose();
 	});
 
-	// Which scene belongs to which route. Everything that is not an arcade
-	// game shows the hub, in the background.
-	const arcadeGame = $derived(
-		page.url.pathname.startsWith('/arcade/') ? page.url.pathname.split('/')[2] : null
-	);
-	const hub = $derived(page.url.pathname === '/');
+	// The hub scene is the only scene, and it runs under every route — in a
+	// window on the framed pages, as a backdrop everywhere else.
 	const framed = $derived(isFramed(page.url.pathname));
 	// The corridor only goes immersive once someone opens the gate; until then
 	// it is covered, paused and holds no pointer. See lib/game/gate.
 	//
-	// `framed` rather than `hub`, because behind a door the corridor is still
-	// there — smaller, in a rail tile — and carries the same cover. Activating
-	// it from the tile has to work exactly as it does on the big screen.
-	const immersive = $derived((framed && hubGate.open) || arcadeGame !== null);
+	// `framed` rather than the hub route, because behind a door the corridor is
+	// still there — smaller, in a rail tile — and carries the same cover.
+	// Activating it from the tile has to work exactly as it does on the big
+	// screen.
+	const immersive = $derived(framed && hubGate.open);
 
 	const frame = $derived(gameViewport.rect);
 	/** Windowed means a page has put the canvas somewhere specific. */
@@ -93,23 +88,11 @@
 	});
 
 	// The stage's own guards read the state they are about to write
-	// (`activeSceneId`, `mode`), so calling in tracked would make these effects
-	// depend on what they set. Every real dependency is read above the untrack.
+	// (`activeSceneId`, `mode`), so calling in tracked would make this effect
+	// depend on what it sets. Every real dependency is read above the untrack.
 	$effect(() => {
 		if (!stage.ready) return;
-		const id = arcadeGame === 'slime-run' ? 'slime-run' : 'hub';
-		untrack(() => stage.activate(id));
-	});
-
-	// Leaving the arcade frees the game's meshes and textures. The hub is
-	// never released: it is the one scene that has to survive navigation.
-	$effect(() => {
-		const current = arcadeGame;
-		return () => {
-			if (current === 'slime-run' && stage.activeSceneId !== 'slime-run') {
-				stage.release('slime-run');
-			}
-		};
+		untrack(() => stage.activate('hub'));
 	});
 
 	$effect(() => {
@@ -123,11 +106,35 @@
 		// rather than when the mode changes.
 		if (immersive && !stranded && !stage.pointerLocked) stage.requestPointerLock();
 	}
+
+	/**
+	 * Escape pauses: the pointer comes back and the cover drops over the
+	 * corridor again, which is what the HUD promises.
+	 *
+	 * It has to be caught twice. The keydown below is the path for a visitor
+	 * who never got pointer lock (a touchscreen, or a browser that refused it);
+	 * while the pointer *is* locked, browsers keep Escape for themselves and
+	 * release the lock without telling the page, so the lock being dropped is
+	 * the only signal there is. Either way it lands on the same call, and
+	 * `stand()` is a no-op when the gate is already shut.
+	 */
+	let hadLock = false;
+	$effect(() => {
+		if (stage.pointerLocked) {
+			hadLock = true;
+			return;
+		}
+		if (!hadLock) return;
+		hadLock = false;
+		untrack(() => hubGate.stand());
+	});
 </script>
 
 <svelte:window
 	onkeydown={(e) => {
-		if (e.key === 'Escape') stage.exitPointerLock();
+		if (e.key !== 'Escape') return;
+		stage.exitPointerLock();
+		hubGate.stand();
 	}}
 />
 
@@ -164,8 +171,8 @@
 
 	<!-- These belong to the hub *scene*, not to the hub route: behind a door the
 	     corridor is still the thing on screen, just in a tile, and it is still
-	     playable. Only an arcade game replaces it. -->
-	{#if immersive && arcadeGame === null}
+	     playable. -->
+	{#if immersive}
 		<PortalLabels compact={cramped} />
 		<HudOverlay compact={cramped} />
 		<ViewModel />

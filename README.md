@@ -44,7 +44,7 @@ internal/
   media/            music index, range-request file server
   store/            SQLite: users, sessions, documents, preferences
 web/
-  src/lib/game/     stage (engine + scene manager), hub scene, arcade scene
+  src/lib/game/     stage (engine + scene manager), hub scene
   src/lib/theme/    theme registry and state
   src/lib/state/    session, audio player, UI prefs
   src/routes/       pages that mount around the persistent shell

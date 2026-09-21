@@ -5,9 +5,10 @@
 	 * The suit readout, drawn over the corridor.
 	 *
 	 * The borrowed shape is an FPS HUD, but it only says things that are true:
-	 * how many doors there are, and which keys move you. A health bar was the
-	 * obvious joke and it was the wrong one — it is the corner of the screen a
-	 * player already looks at, so it should carry the controls instead.
+	 * how many doors there are, which keys move you, and how to stop. The
+	 * controls are not in a corner: they sit under the crosshair, just above
+	 * the bottom edge, because that is where someone who has just been handed
+	 * a camera is already looking.
 	 *
 	 * The door count is derived rather than typed in, for the same reason.
 	 */
@@ -66,18 +67,20 @@
 			</div>
 		</div>
 
-		<!-- Where the health bar used to be. Pointer lock hands the camera the
-		     keyboard, so this is the one readout a visitor actually needs. -->
-		<div class="absolute bottom-3 left-3 flex flex-col gap-1">
+		<!-- Pointer lock hands the camera the keyboard, so this is the one
+		     readout a visitor actually needs — and the way back out, which is
+		     the other thing a locked pointer has to tell you. -->
+		<div class="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1.5">
 			<span class="hud-label">MOVE</span>
 			<div class="flex flex-col items-center gap-1">
-				<kbd class="hud-key">W</kbd>
+				<kbd class="hud-key">&#8593;</kbd>
 				<div class="flex gap-1">
-					<kbd class="hud-key">A</kbd>
-					<kbd class="hud-key">S</kbd>
-					<kbd class="hud-key">D</kbd>
+					<kbd class="hud-key">&#8592;</kbd>
+					<kbd class="hud-key">&#8595;</kbd>
+					<kbd class="hud-key">&#8594;</kbd>
 				</div>
 			</div>
+			<span class="hud-note">PRESS ESC TO PAUSE</span>
 		</div>
 	{/if}
 </div>
@@ -121,6 +124,16 @@
 		color: var(--color-warn);
 		background-color: color-mix(in srgb, var(--color-bg-deep) 62%, transparent);
 		border: 2px solid var(--color-warn);
+	}
+
+	/* Quieter than the keys above it: the same warn colour, let down towards
+	   the render so it reads as a footnote to them rather than a fourth key. */
+	.hud-note {
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		font-weight: 700;
+		letter-spacing: 0.18em;
+		color: color-mix(in srgb, var(--color-warn) 78%, transparent);
 	}
 
 	.hud-value {
