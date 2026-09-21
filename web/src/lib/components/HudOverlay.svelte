@@ -4,9 +4,12 @@
 	/**
 	 * The suit readout, drawn over the corridor.
 	 *
-	 * It is decoration, not instrumentation: there is no health to lose on a
-	 * personal site. The one number that means anything is the door count,
-	 * which is why it is derived rather than typed in.
+	 * The borrowed shape is an FPS HUD, but it only says things that are true:
+	 * how many doors there are, and which keys move you. A health bar was the
+	 * obvious joke and it was the wrong one — it is the corner of the screen a
+	 * player already looks at, so it should carry the controls instead.
+	 *
+	 * The door count is derived rather than typed in, for the same reason.
 	 */
 	const doors = PORTALS.length;
 
@@ -63,23 +66,16 @@
 			</div>
 		</div>
 
-		<div class="absolute bottom-3 left-3 flex items-end gap-3">
-			<div class="flex flex-col gap-1">
-				<span class="hud-label">HEALTH</span>
-				<div class="hud-readout">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z" />
-					</svg>
-					<span class="hud-value">100</span>
-				</div>
-			</div>
-			<div class="hud-optional flex flex-col gap-1">
-				<span class="hud-label">SUIT</span>
-				<div class="hud-readout">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M12 2 4 5v7c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V5z" />
-					</svg>
-					<span class="hud-value">100</span>
+		<!-- Where the health bar used to be. Pointer lock hands the camera the
+		     keyboard, so this is the one readout a visitor actually needs. -->
+		<div class="absolute bottom-3 left-3 flex flex-col gap-1">
+			<span class="hud-label">MOVE</span>
+			<div class="flex flex-col items-center gap-1">
+				<kbd class="hud-key">W</kbd>
+				<div class="flex gap-1">
+					<kbd class="hud-key">A</kbd>
+					<kbd class="hud-key">S</kbd>
+					<kbd class="hud-key">D</kbd>
 				</div>
 			</div>
 		</div>
@@ -110,6 +106,21 @@
 	.hud-readout-right {
 		border-left: none;
 		border-right: 3px solid var(--color-warn);
+	}
+
+	.hud-key {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 30px;
+		height: 30px;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		font-weight: 700;
+		line-height: 1;
+		color: var(--color-warn);
+		background-color: color-mix(in srgb, var(--color-bg-deep) 62%, transparent);
+		border: 2px solid var(--color-warn);
 	}
 
 	.hud-value {

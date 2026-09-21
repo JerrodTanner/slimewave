@@ -52,6 +52,8 @@ interface Door {
 	spec: PortalSpec;
 	surface: Mesh;
 	surfaceMaterial: StandardMaterial;
+	/** The lit panel at the back of the recess, seen through the opening. */
+	glowMaterial: StandardMaterial;
 	light: PointLight;
 	/** Centre of the opening, on the wall plane. */
 	position: Vector3;
@@ -289,6 +291,71 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 		return panel;
 	});
 
+	// --- coffered ceiling ---
+	// The ceiling was one flat slab, which read as a lid rather than structure.
+	// Transverse beams on the same 2.4m cadence as the wall seams, plus two
+	// runs down the length, make it a grid of recessed panels. A beam that
+	// would land on a lamp is skipped rather than drawn across it.
+	for (let z = START_Z + 2.4; z < END_Z; z += 2.4) {
+		if (LAMP_DEPTHS.some((lampZ) => Math.abs(lampZ - z) < 1.4)) continue;
+		const beam = MeshBuilder.CreateBox(
+			`hub-beam-${z.toFixed(1)}`,
+			{ width: HALF_W * 2, height: 0.18, depth: 0.16 },
+			scene
+		);
+		beam.position.set(0, HEIGHT - 0.09, z);
+		beam.material = seamMaterial;
+	}
+	for (const x of [-1.25, 1.25]) {
+		const run = MeshBuilder.CreateBox(
+			`hub-beam-run-${x}`,
+			{ width: 0.16, height: 0.18, depth: length },
+			scene
+		);
+		run.position.set(x, HEIGHT - 0.09, midZ);
+		run.material = seamMaterial;
+	}
+
+	// --- wall sconces ---
+	// The corridor's character light. The ceiling panels are fill; these are
+	// what shapes it, throwing a pool up and down the wall and onto the floor
+	// beside it. Depths are chosen to miss the doorways.
+	//
+	// Every fixture gets an emissive face, which costs nothing, but only two
+	// pairs get a real PointLight: the materials cap at eight lights each and
+	// the four doorways already claim half of that. Babylon keeps the nearest
+	// per mesh, which is the right answer anyway.
+	const SCONCE_DEPTHS = [-3.5, 2.5, 12.5, 22.5];
+	const SCONCE_LIT = [2.5, 22.5];
+	for (const z of SCONCE_DEPTHS) {
+		for (const sign of [-1, 1] as const) {
+			const housing = MeshBuilder.CreateBox(
+				`hub-sconce-housing-${sign}-${z}`,
+				{ width: 0.18, height: 0.56, depth: 0.38 },
+				scene
+			);
+			housing.position.set(sign * (HALF_W - 0.09), 2.6, z);
+			housing.material = concreteDark;
+
+			const face = MeshBuilder.CreateBox(
+				`hub-sconce-${sign}-${z}`,
+				{ width: 0.07, height: 0.42, depth: 0.26 },
+				scene
+			);
+			face.position.set(sign * (HALF_W - 0.2), 2.6, z);
+			face.material = lampMaterial;
+
+			if (!SCONCE_LIT.includes(z)) continue;
+			const light = new PointLight(
+				`hub-sconce-light-${sign}-${z}`,
+				new Vector3(sign * (HALF_W - 0.6), 2.5, z),
+				scene
+			);
+			light.intensity = 0.6;
+			light.range = 8;
+		}
+	}
+
 	// --- doors ---
 	const doors: Door[] = PORTALS.map((spec, i) => {
 		const sign = spec.side === 'left' ? -1 : 1;
@@ -309,9 +376,33 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 
 		const surfaceMaterial = new StandardMaterial(`door-${i}-mat`, scene);
 		makeEmissiveOnly(surfaceMaterial);
-		surfaceMaterial.alpha = 0.92;
+		// Nearly clear. A doorway is an opening you see through, not a slab of
+		// light standing in it — this is enough tint to say which door it is,
+		// and something for a click to land on.
+		surfaceMaterial.alpha = 0.18;
 		surfaceMaterial.backFaceCulling = false;
 		surface.material = surfaceMaterial;
+
+		// The room beyond. There has always been a backstop 2.2m behind every
+		// opening; this puts a lit panel just in front of it, so a doorway
+		// reads as somewhere you could walk into rather than a bright plane.
+		const glow = MeshBuilder.CreatePlane(
+			`door-${i}-glow`,
+			{ width: DOOR_W, height: DOOR_H, sideOrientation: 2 },
+			scene
+		);
+		glow.position = isEnd
+			? new Vector3(0, DOOR_H / 2, END_Z + 1.95)
+			: new Vector3(sign * (HALF_W + 1.95), DOOR_H / 2, spec.depth);
+		if (!isEnd) glow.rotation.y = sign === -1 ? Math.PI / 2 : -Math.PI / 2;
+		// The plane in the opening is the pick target; this one must not steal
+		// the ray, or a click would land behind the door rather than on it.
+		glow.isPickable = false;
+
+		const glowMaterial = new StandardMaterial(`door-${i}-glow-mat`, scene);
+		makeEmissiveOnly(glowMaterial);
+		glowMaterial.backFaceCulling = false;
+		glow.material = glowMaterial;
 
 		// A frame, so the opening reads as cut into the wall rather than painted on.
 		const frameDepth = isEnd ? 0.12 : DOOR_W + 0.3;
@@ -335,14 +426,25 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 			position.add(new Vector3(isEnd ? 0 : -sign * 1.2, 0.4, isEnd ? -1.2 : 0)),
 			scene
 		);
-		light.intensity = 0.7;
-		light.range = 11;
+		// It sits in the corridor rather than in the recess, because what sells
+		// an open door is the light landing on the floor outside it.
+		light.intensity = 1.15;
+		light.range = 14;
 
 		const anchor = isEnd
 			? new Vector3(0, DOOR_H + 0.55, END_Z)
 			: new Vector3(sign * (HALF_W - 0.1), DOOR_H + 0.55, spec.depth);
 
-		return { spec, surface, surfaceMaterial, light, position, anchor, alt: i % 2 === 1 };
+		return {
+			spec,
+			surface,
+			surfaceMaterial,
+			glowMaterial,
+			light,
+			position,
+			anchor,
+			alt: i % 2 === 1
+		};
 	});
 
 	// --- state ---
@@ -369,6 +471,7 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 			const exit = door.spec.key === room.key;
 			const color = exit || door.alt ? doorAlt : doorColor;
 			door.surfaceMaterial.emissiveColor = color.scale(exit ? 1.15 : 0.85);
+			door.glowMaterial.emissiveColor = color.scale(exit ? 1.3 : 1);
 			door.light.diffuse = color;
 		}
 	}

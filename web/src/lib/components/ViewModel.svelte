@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * The viewmodel: a right hand holding an open fan of banknotes, drawn
+	 * The viewmodel: a black tactical glove, angled down the corridor, drawn
 	 * where a weapon would sit.
 	 *
 	 * It is SVG over the canvas rather than a mesh in the scene. A viewmodel
@@ -8,135 +8,138 @@
 	 * relative to the camera, so putting it in the render buys nothing and
 	 * costs a rig, a second camera pass and a set of near-plane problems.
 	 *
-	 * The skin tone is a CSS variable so it is changed in one place.
+	 * Drawn as a LEFT hand and mirrored, because a right hand entering from the
+	 * bottom right is the shape every first-person game has trained people to
+	 * read, and mirroring is one transform rather than a second set of curves.
+	 *
+	 * The wrist breaks forward inside the mirror: `rotate` tilts the hand down
+	 * the corridor and the `scale(1 0.9)` under it foreshortens what that tilt
+	 * would really do to the fingers. The cuff, the bare forearm and the jacket
+	 * sit outside both, so the arm does not bend with the wrist.
+	 *
+	 * The fingers are four adjacent shapes rather than one silhouette: held
+	 * together they read as a hand, and the edges where they meet are the
+	 * seams, so the detail comes free from the construction.
+	 *
+	 * A black glove is black in every palette, so those tones are literal. The
+	 * one token is the rim light, which is the theme's accent — the hand has to
+	 * look lit by the same corridor as everything else.
 	 */
 	let { idle = true }: { idle?: boolean } = $props();
 </script>
 
 <div class="viewmodel" class:idle aria-hidden="true">
-	<svg viewBox="0 0 560 380" preserveAspectRatio="xMaxYMax meet">
-		<defs>
-			<linearGradient id="vm-bill" x1="0" y1="0" x2="0" y2="1">
-				<stop offset="0" stop-color="#74a97d" />
-				<stop offset="1" stop-color="#436f4d" />
-			</linearGradient>
-			<linearGradient id="vm-sleeve" x1="0" y1="0" x2="1" y2="1">
-				<stop offset="0" stop-color="#34373c" />
-				<stop offset="0.5" stop-color="#232529" />
-				<stop offset="1" stop-color="#121316" />
-			</linearGradient>
-			<linearGradient id="vm-cuff" x1="0" y1="0" x2="1" y2="1">
-				<stop offset="0" stop-color="#a1a5a9" />
-				<stop offset="1" stop-color="#6e7276" />
-			</linearGradient>
-		</defs>
+	<svg viewBox="180 385 390 450" preserveAspectRatio="xMaxYMax meet">
+		<g transform="translate(750 0) scale(-1 1)">
+			<!-- bare forearm, then the jacket cuff over the end of it -->
+			<path d="M 268 694 C 300 722 388 726 418 704 L 434 786 C 398 812 288 808 254 780 Z" fill="var(--vm-skin)" />
+			<path
+				d="M 268 694 C 292 714 330 722 356 722 L 360 800 C 320 800 282 794 254 780 Z"
+				fill="var(--vm-skin-shade)"
+				opacity="0.55"
+			/>
+			<path d="M 254 780 C 288 808 398 812 434 786 L 456 835 L 226 835 Z" fill="var(--vm-jacket)" />
+			<path
+				d="M 256 786 C 292 812 396 816 432 792 L 436 806 C 398 830 288 826 252 800 Z"
+				fill="var(--vm-jacket-lit)"
+				opacity="0.7"
+			/>
 
-		<g transform="translate(28 40)">
-			<!-- forearm and cuff -->
-			<polygon points="431,229 611,339 549,441 369,331" fill="url(#vm-sleeve)" />
-			<polygon points="431,229 455,244 393,346 369,331" fill="url(#vm-cuff)" />
-			<polygon points="455,244 463,249 401,351 393,346" fill="#4e5257" />
-			<polyline points="431,229 611,339" fill="none" stroke="var(--color-warn)" stroke-opacity="0.22" stroke-width="3" />
+			<!-- the glove's cuff, its strap, and the tab on the strap -->
+			<path d="M 266 652 C 298 680 388 684 418 660 L 428 710 C 394 736 292 732 256 704 Z" fill="var(--vm-cuff)" />
+			<path
+				d="M 270 658 C 300 684 386 688 414 666 L 417 680 C 388 700 302 696 272 672 Z"
+				fill="var(--vm-cuff-lit)"
+				opacity="0.75"
+			/>
+			<path d="M 262 686 C 296 714 390 718 422 694 L 425 712 C 392 736 292 732 259 704 Z" fill="var(--vm-strap)" />
+			<rect x="380" y="690" width="26" height="15" rx="3" transform="rotate(-11 393 697)" fill="var(--vm-glove-lit)" />
 
-			<!-- palm, under the stack -->
-			<g>
-				<rect x="316" y="214" width="140" height="96" rx="42" transform="rotate(-26 386 262)" fill="var(--vm-skin)" />
-				<rect x="316" y="214" width="140" height="42" rx="21" transform="rotate(-26 386 262)" fill="#ffffff" fill-opacity="0.10" />
-				<rect x="316" y="276" width="140" height="34" rx="17" transform="rotate(-26 386 262)" fill="#000000" fill-opacity="0.22" />
-			</g>
+			<g transform="rotate(16 345 655)">
+				<g transform="translate(0 65.5) scale(1 0.9)">
+					<!-- fingers, held together; the joins between them are the seams -->
+					<path d="M 250 556 L 238 448 Q 236 428 256 427 Q 274 426 276 446 L 282 552 Z" fill="var(--vm-glove)" />
+					<path d="M 282 552 L 280 408 Q 279 388 299 387 Q 318 386 319 406 L 322 550 Z" fill="var(--vm-glove-panel)" />
+					<path d="M 322 550 L 324 394 Q 325 374 345 373 Q 364 372 365 392 L 366 550 Z" fill="var(--vm-glove)" />
+					<path d="M 366 550 L 372 410 Q 374 390 394 392 Q 412 394 410 414 L 412 554 Z" fill="var(--vm-glove-deep)" />
+					<g stroke="var(--vm-stitch)" stroke-width="1.4" fill="none" opacity="0.5">
+						<path d="M 282 552 L 279 444" />
+						<path d="M 322 550 L 321 406" />
+						<path d="M 366 550 L 370 412" />
+					</g>
 
-			<!-- notes fanned behind the two face blocks -->
-			<g transform="translate(118 88) skewY(8)"><rect width="172" height="104" rx="3" fill="#36593c" /></g>
-			<g transform="translate(122 92) skewY(8)"><rect width="172" height="104" rx="3" fill="#41694a" /></g>
-			<g transform="translate(306 116) skewY(-8)"><rect width="172" height="104" rx="3" fill="#36593c" /></g>
-			<g transform="translate(304 118) skewY(-8)"><rect width="172" height="104" rx="3" fill="#41694a" /></g>
+					<!-- thumb, out to the side with the web open behind it -->
+					<path d="M 424 612 L 486 556 Q 500 544 510 556 Q 519 568 506 579 L 448 640 Z" fill="var(--vm-glove)" />
+					<ellipse cx="505" cy="566" rx="13" ry="9" transform="rotate(-42 505 566)" fill="var(--vm-glove-deep)" />
 
-			<!-- the two faces, opened like pages -->
-			<g transform="translate(126 96) skewY(8)">
-				<rect width="172" height="104" rx="3" fill="url(#vm-bill)" />
-				<rect x="7" y="7" width="158" height="90" rx="2" fill="none" stroke="#a8ceae" stroke-opacity="0.45" stroke-width="1.5" />
-				<ellipse cx="42" cy="52" rx="20" ry="25" fill="#335d3d" />
-				<ellipse cx="42" cy="52" rx="13" ry="17" fill="#4d7d57" />
-				<ellipse cx="42" cy="52" rx="20" ry="25" fill="none" stroke="#a8ceae" stroke-opacity="0.5" stroke-width="1.4" />
-				<g fill="#a8ceae" fill-opacity="0.38">
-					<rect x="14" y="13" width="16" height="11" rx="3" />
-					<rect x="142" y="13" width="16" height="11" rx="3" />
-					<rect x="14" y="80" width="16" height="11" rx="3" />
-					<rect x="142" y="80" width="16" height="11" rx="3" />
+					<!-- back of the hand, and the quilted panels down it -->
+					<path
+						d="M 250 588 C 254 552 298 532 350 534 C 402 536 438 556 444 592 C 450 628 440 660 414 672 C 382 688 304 686 278 666 C 256 648 246 620 250 588 Z"
+						fill="var(--vm-glove)"
+					/>
+					<path
+						d="M 268 574 C 286 550 322 540 356 542 C 392 544 420 558 432 580 C 424 606 410 626 396 640 C 356 650 306 646 280 630 C 268 612 264 592 268 574 Z"
+						fill="var(--vm-glove-panel)"
+					/>
+					<g stroke="var(--vm-glove-deep)" stroke-width="2.4" fill="none" opacity="0.9">
+						<path d="M 292 556 C 300 590 304 622 300 648" />
+						<path d="M 352 542 C 356 582 356 618 350 652" />
+						<path d="M 410 556 C 418 588 418 618 408 644" />
+					</g>
+
+					<!-- the armoured knuckle patch, stitched down -->
+					<path
+						d="M 274 548 C 294 528 330 520 360 522 C 392 524 416 534 428 550 C 420 562 396 570 356 568 C 314 566 286 560 274 548 Z"
+						fill="var(--vm-knuckle)"
+					/>
+					<path
+						d="M 274 548 C 294 528 330 520 360 522 C 392 524 416 534 428 550 C 420 562 396 570 356 568 C 314 566 286 560 274 548 Z"
+						fill="none"
+						stroke="var(--vm-stitch)"
+						stroke-width="1.3"
+						stroke-dasharray="5 4"
+						opacity="0.65"
+					/>
+					<ellipse cx="352" cy="544" rx="17" ry="9" fill="var(--vm-glove-lit)" opacity="0.5" />
+
+					<!-- the corridor, catching the outer edge of every digit -->
+					<g stroke="var(--vm-rim)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.55">
+						<path d="M 238 448 Q 236 428 256 427" />
+						<path d="M 280 408 Q 279 388 299 387" />
+						<path d="M 324 394 Q 325 374 345 373" />
+						<path d="M 372 410 Q 374 390 394 392" />
+						<path d="M 486 556 Q 500 544 510 556" />
+					</g>
 				</g>
-				<g stroke="#a8ceae" stroke-opacity="0.3" stroke-width="2" stroke-linecap="round">
-					<line x1="74" y1="40" x2="152" y2="40" />
-					<line x1="74" y1="52" x2="152" y2="52" />
-					<line x1="74" y1="64" x2="138" y2="64" />
-				</g>
 			</g>
-			<g transform="translate(302 120) skewY(-8)">
-				<rect width="172" height="104" rx="3" fill="url(#vm-bill)" />
-				<rect x="7" y="7" width="158" height="90" rx="2" fill="none" stroke="#a8ceae" stroke-opacity="0.45" stroke-width="1.5" />
-				<ellipse cx="130" cy="52" rx="20" ry="25" fill="#335d3d" />
-				<ellipse cx="130" cy="52" rx="13" ry="17" fill="#4d7d57" />
-				<ellipse cx="130" cy="52" rx="20" ry="25" fill="none" stroke="#a8ceae" stroke-opacity="0.5" stroke-width="1.4" />
-				<g fill="#a8ceae" fill-opacity="0.38">
-					<rect x="14" y="13" width="16" height="11" rx="3" />
-					<rect x="142" y="13" width="16" height="11" rx="3" />
-					<rect x="14" y="80" width="16" height="11" rx="3" />
-					<rect x="142" y="80" width="16" height="11" rx="3" />
-				</g>
-				<g stroke="#a8ceae" stroke-opacity="0.3" stroke-width="2" stroke-linecap="round">
-					<line x1="20" y1="40" x2="98" y2="40" />
-					<line x1="20" y1="52" x2="98" y2="52" />
-					<line x1="34" y1="64" x2="98" y2="64" />
-				</g>
-			</g>
-
-			<!-- stack edges: this is what makes it a wad and not two notes -->
-			<polygon points="126,96 126,200 116,206 116,102" fill="#cac2aa" />
-			<polygon points="474,96 474,200 484,206 484,102" fill="#cac2aa" />
-			<polygon points="126,200 298,224 298,229 126,205" fill="#e4dcc4" />
-			<polygon points="126,205 298,229 298,234 126,210" fill="#cec6ae" />
-			<polygon points="126,210 298,234 298,239 126,215" fill="#ded6be" />
-			<polygon points="126,215 298,239 298,245 126,221" fill="#c3bba3" />
-			<polygon points="302,224 474,200 474,205 302,229" fill="#e4dcc4" />
-			<polygon points="302,229 474,205 474,210 302,234" fill="#cec6ae" />
-			<polygon points="302,234 474,210 474,215 302,239" fill="#ded6be" />
-			<polygon points="302,239 474,215 474,221 302,245" fill="#c3bba3" />
-
-			<!-- band, where a book would have its spine -->
-			<polygon points="286,116 314,116 314,248 286,248" fill="#ded4b8" />
-			<rect x="286" y="150" width="28" height="16" fill="#a8423f" />
-			<polygon points="286,116 314,116 314,248 286,248" fill="none" stroke="#b0a488" stroke-width="1.4" />
-
-			<!-- and the ribbon it would have hanging off it -->
-			<path d="M284 242 C 278 280, 289 308, 281 338 L 297 342 C 305 310, 297 280, 300 242 Z" fill="#9e3b38" />
-			<path d="M284 242 C 278 280, 289 308, 281 338" fill="none" stroke="#c15b55" stroke-width="2" />
-
-			<!-- fingers over the near edge, thumb on the face -->
-			<g>
-				<rect x="352" y="232" width="48" height="27" rx="13" transform="rotate(-8 376 245)" fill="var(--vm-skin)" />
-				<rect x="352" y="249" width="48" height="10" rx="5" transform="rotate(-8 376 245)" fill="#000000" fill-opacity="0.2" />
-				<rect x="398" y="224" width="48" height="27" rx="13" transform="rotate(-8 422 237)" fill="var(--vm-skin)" />
-				<rect x="398" y="241" width="48" height="10" rx="5" transform="rotate(-8 422 237)" fill="#000000" fill-opacity="0.2" />
-				<rect x="444" y="216" width="44" height="26" rx="13" transform="rotate(-8 466 229)" fill="var(--vm-skin)" />
-				<rect x="444" y="232" width="44" height="10" rx="5" transform="rotate(-8 466 229)" fill="#000000" fill-opacity="0.2" />
-			</g>
-			<g transform="rotate(-16 446 192)">
-				<rect x="404" y="176" width="84" height="32" rx="16" fill="var(--vm-skin)" />
-				<rect x="404" y="176" width="84" height="12" rx="6" fill="#ffffff" fill-opacity="0.14" />
-				<ellipse cx="470" cy="192" rx="13" ry="10" fill="#ffffff" fill-opacity="0.16" />
-			</g>
-			<path d="M366 236 C 392 250, 424 240, 452 222" fill="none" stroke="#000000" stroke-opacity="0.18" stroke-width="3" stroke-linecap="round" />
 		</g>
 	</svg>
 </div>
 
 <style>
 	.viewmodel {
+		--vm-glove: #1b1b1e;
+		--vm-glove-panel: #26262a;
+		--vm-glove-lit: #34343a;
+		--vm-glove-deep: #121214;
+		--vm-knuckle: #2b2b30;
+		--vm-stitch: #4a4a52;
+		--vm-cuff: #202024;
+		--vm-cuff-lit: #33333a;
+		--vm-strap: #141416;
 		--vm-skin: #c48a5e;
+		--vm-skin-shade: #9d6b45;
+		--vm-jacket: #0d0d0f;
+		--vm-jacket-lit: #1c1c20;
+		--vm-rim: var(--color-accent);
+
 		position: absolute;
-		right: 0;
-		bottom: 0;
-		width: 62%;
-		max-width: 620px;
+		/* Pushed past the corner on both axes: a viewmodel is a hand at the edge
+		   of vision, not an object in the middle of the shot. */
+		right: -4%;
+		bottom: -7%;
+		width: 36%;
+		max-width: 400px;
 		pointer-events: none;
 		filter: drop-shadow(-8px 8px 26px rgba(0, 0, 0, 0.72));
 	}
@@ -171,7 +174,7 @@
 	/* On a phone the window is small enough that the hand eats the corridor. */
 	@media (max-width: 640px) {
 		.viewmodel {
-			width: 78%;
+			width: 50%;
 		}
 	}
 </style>
