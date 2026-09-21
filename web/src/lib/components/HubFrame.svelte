@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import HubGate from './HubGate.svelte';
 	import SineMark from './SineMark.svelte';
+	import { RESUME_PDF_URL } from '$lib/content/resume';
 	import { crt } from '$lib/game/crt.svelte';
 	import { hubGate } from '$lib/game/gate.svelte';
 	import { PORTAL, PORTALS, portalForPath, type PortalKey } from '$lib/game/portals';
@@ -62,40 +63,19 @@
 	const progress = $derived(player.duration > 0 ? player.position / player.duration : 0);
 
 	/**
-	 * The parts of a door that are not in PORTALS. The href, the label and the
-	 * caption stay there, because the corridor reads them too; everything here
-	 * is only ever seen on the rail.
+	 * The parts of a door that are not in PORTALS. The href and the label stay
+	 * there, because the corridor reads them too; everything here is only ever
+	 * seen on the rail.
+	 *
+	 * A tile says where it goes and what you will do there — no blurb under it.
+	 * Four doors do not need explaining, and the rail reads as a row of tokens
+	 * rather than a page of copy.
 	 */
-	const DOORS: Record<
-		PortalKey,
-		{ tone?: 'loud' | 'alt'; action: string; meta: string; blurb: string }
-	> = {
-		resume: {
-			action: 'READ',
-			meta: 'PDF AND WEB',
-			blurb:
-				'The one-pager. Go services, SvelteKit front ends, and the infrastructure under both.'
-		},
-		plan: {
-			tone: 'loud',
-			action: 'START A BRIEF',
-			meta: 'REPLIES WITHIN A DAY',
-			blurb:
-				'Say what you are building. Four questions, then a scope, a rough number and a date.'
-		},
-		media: {
-			tone: 'alt',
-			action: 'OPEN',
-			meta: 'ALBUMS · TRACKS · NOTES',
-			blurb:
-				'Nothing queued. The player lives in the shell, so whatever you start keeps going while you walk around.'
-		},
-		arcade: {
-			action: 'PLAY',
-			meta: 'SAME CANVAS, SAME SHELL',
-			blurb:
-				'The other games. Same canvas, same shell — the corridor keeps running behind them.'
-		}
+	const DOORS: Record<PortalKey, { tone?: 'loud' | 'alt'; action: string }> = {
+		resume: { action: 'READ' },
+		plan: { tone: 'loud', action: 'START A BRIEF' },
+		media: { tone: 'alt', action: 'OPEN' },
+		arcade: { action: 'PLAY' }
 	};
 
 	function select(event: MouseEvent | null, href: string) {
@@ -151,7 +131,7 @@
 					</svg>
 					<span class="winbar-title">
 						{#if active}
-							{PORTAL[active].label} // {PORTAL[active].caption.toUpperCase()}
+							{PORTAL[active].label}
 						{:else}
 							HUB // THE CORRIDOR
 						{/if}
@@ -170,6 +150,13 @@
 						</span>
 					{:else}
 						<span class="chip chip-quiet"><span class="chip-blip"></span>STANDBY</span>
+					{/if}
+
+					{#if active === 'resume'}
+						<a class="winlink" href={RESUME_PDF_URL} download>
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12" /><path d="m7 11 5 5 5-5" /><path d="M4 21h16" /></svg>
+							DOWNLOAD PDF
+						</a>
 					{/if}
 
 					<span class="flex-1"></span>
@@ -211,10 +198,7 @@
 							<div class="flex h-full flex-col justify-center gap-2 p-5">
 								<p class="label">No WebGL here, so the corridor is off. The doors still work:</p>
 								{#each PORTALS as portal (portal.href)}
-									<a href={portal.href} class="btn-ghost flex items-center justify-between">
-										<span>{portal.label.toLowerCase()}</span>
-										<span class="text-muted">{portal.caption}</span>
-									</a>
+									<a href={portal.href} class="btn-ghost">{portal.label.toLowerCase()}</a>
 								{/each}
 							</div>
 						{:else if !hubGate.open && active === null}
@@ -279,35 +263,18 @@
 									{@render doorIcon(portal.key)}
 								</span>
 								<span class="door-body">
-									{#if portal.key === 'media'}
-										<span class="flex items-baseline gap-2.5">
-											<span class="door-name">{portal.label}</span>
-											<span class="label">THE LIBRARY AND THE WRITING</span>
+									<span class="door-name">{portal.label}</span>
+									<!-- The one exception to a bare tile: what is playing is
+									     live state, not a description of the door. -->
+									{#if portal.key === 'media' && player.current}
+										<span class="door-now">
+											{player.current.title} — <span class="text-muted">{player.current.artist}</span>
 										</span>
-										{#if player.current}
-											<span class="door-blurb door-now">
-												{player.current.title} — <span class="text-muted">{player.current.artist}</span>
-											</span>
-											<span class="flex items-center gap-2.5">
-												<span class="label tabular-nums">{formatTime(player.position)}</span>
-												<span class="track"><span class="track-fill" style:width="{progress * 100}%"></span></span>
-												<span class="label tabular-nums">{formatTime(player.duration)}</span>
-											</span>
-										{:else}
-											<span class="door-blurb">{door.blurb}</span>
-											<span class="label">{door.meta}</span>
-										{/if}
-									{:else if portal.key === 'arcade'}
-										<span class="door-name">{portal.label}</span>
-										<span class="door-blurb">{door.blurb}</span>
-										<span class="flex flex-wrap gap-2">
-											<span class="tag">SLIME RUN</span>
-											<span class="tag tag-quiet">MORE COMING</span>
+										<span class="flex items-center gap-2.5">
+											<span class="label tabular-nums">{formatTime(player.position)}</span>
+											<span class="track"><span class="track-fill" style:width="{progress * 100}%"></span></span>
+											<span class="label tabular-nums">{formatTime(player.duration)}</span>
 										</span>
-									{:else}
-										<span class="door-name">{portal.label}</span>
-										<span class="door-blurb">{door.blurb}</span>
-										<span class="label">{door.meta}</span>
 									{/if}
 								</span>
 								<span class="door-action" class:door-action-loud={door.tone === 'loud'}>{door.action}</span>
@@ -468,6 +435,26 @@
 
 	.breathe {
 		animation: breathe 2.6s ease-in-out infinite;
+	}
+
+	/* The one page-owned control the titlebar carries. */
+	.winlink {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		margin-top: 0.25rem;
+		padding: 0.25rem 0.6rem;
+		border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+		border-radius: var(--radius-panel);
+		background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		letter-spacing: 0.1em;
+		color: var(--color-ink);
+	}
+
+	.winlink:hover {
+		background-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
 	}
 
 	.winbtn {
@@ -671,13 +658,9 @@
 		line-height: 1;
 	}
 
-	.door-blurb {
+	.door-now {
 		font-size: 0.9375rem;
 		line-height: 1.35;
-		color: var(--color-muted);
-	}
-
-	.door-now {
 		color: var(--color-ink);
 	}
 
@@ -712,19 +695,6 @@
 		display: block;
 		height: 100%;
 		background-color: var(--color-accent-2);
-	}
-
-	.tag {
-		padding: 0.15rem 0.5rem;
-		border: 1px solid var(--color-line);
-		border-radius: var(--radius-panel);
-		font-family: var(--font-mono);
-		font-size: 0.625rem;
-		letter-spacing: 0.08em;
-	}
-
-	.tag-quiet {
-		color: var(--color-muted);
 	}
 
 	@keyframes blink {

@@ -10,8 +10,7 @@
 	/**
 	 * Set when the corridor is being played in a rail tile. The label keeps its
 	 * plate and its hit area — it is how a doorway is clicked — but drops to a
-	 * size that leaves some corridor visible behind it, and loses the caption,
-	 * which is unreadable at that scale anyway.
+	 * size that leaves some corridor visible behind it.
 	 */
 	let { compact = false }: { compact?: boolean } = $props();
 
@@ -43,9 +42,6 @@
 				onclick={(e) => enter(e, marker.href)}
 			>
 				<span class="portal-label block" class:portal-label-sm={compact}>{marker.label}</span>
-				{#if !compact}
-					<span class="portal-caption block">{marker.caption}</span>
-				{/if}
 			</a>
 		{/if}
 	{/each}
@@ -70,15 +66,6 @@
 		font-size: 0.8125rem;
 		letter-spacing: 0.04em;
 		padding: 0.1em 0.4em;
-	}
-
-	.portal-caption {
-		font-family: var(--font-mono);
-		font-size: 0.6875rem;
-		color: var(--color-ink);
-		background-color: color-mix(in srgb, var(--color-bg-deep) 62%, transparent);
-		padding: 0.25em 0.6em;
-		margin-top: 2px;
 	}
 
 	a:hover .portal-label,

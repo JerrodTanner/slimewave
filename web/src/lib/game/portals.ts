@@ -7,7 +7,6 @@ export interface PortalSpec {
 	key: PortalKey;
 	href: string;
 	label: string;
-	caption: string;
 	/** Which surface of the corridor the doorway is cut into. */
 	side: DoorSide;
 	/** Metres down the corridor from the spawn end. */
@@ -28,17 +27,10 @@ export interface PortalSpec {
  * browser gives us no WebGL context at all.
  */
 export const PORTALS: PortalSpec[] = [
-	{ key: 'resume', href: '/resume', label: 'RESUME', caption: 'the one-pager', side: 'left', depth: 8 },
-	{
-		key: 'plan',
-		href: '/plan',
-		label: 'PLAN A PROJECT',
-		caption: 'four questions',
-		side: 'right',
-		depth: 8
-	},
-	{ key: 'media', href: '/music', label: 'MEDIA', caption: 'the library and the writing', side: 'left', depth: 18 },
-	{ key: 'arcade', href: '/arcade', label: 'ARCADE', caption: 'the other games', side: 'end', depth: 28 }
+	{ key: 'resume', href: '/resume', label: 'RESUME', side: 'left', depth: 8 },
+	{ key: 'plan', href: '/plan', label: 'PLAN A PROJECT', side: 'right', depth: 8 },
+	{ key: 'media', href: '/music', label: 'MEDIA', side: 'left', depth: 18 },
+	{ key: 'arcade', href: '/arcade', label: 'ARCADE', side: 'end', depth: 28 }
 ];
 
 /** The doors by key, for the rail on the hub page. */

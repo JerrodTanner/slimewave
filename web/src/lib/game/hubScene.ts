@@ -20,7 +20,7 @@ import type { ScenePalette } from '$lib/theme/theme.svelte';
 import type { SceneContext, SceneHandle } from './types';
 import { hubMarkers, type PortalMarker } from './hubMarkers.svelte';
 import { CORRIDOR, PORTALS, type PortalKey, type PortalSpec } from './portals';
-import { EXIT_CAPTION, EXIT_HREF, EXIT_LABEL, room } from './room.svelte';
+import { EXIT_HREF, EXIT_LABEL, room } from './room.svelte';
 
 export { PORTALS };
 export type { PortalSpec };
@@ -427,11 +427,11 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 	 * and pointed at the hub. Every route out of the corridor goes through here,
 	 * so a doorway cannot say one thing and do another.
 	 */
-	function doorTarget(door: Door): { href: string; label: string; caption: string } {
+	function doorTarget(door: Door): { href: string; label: string } {
 		if (door.spec.key !== room.key) {
-			return { href: door.spec.href, label: door.spec.label, caption: door.spec.caption };
+			return { href: door.spec.href, label: door.spec.label };
 		}
-		return { href: EXIT_HREF, label: EXIT_LABEL, caption: EXIT_CAPTION };
+		return { href: EXIT_HREF, label: EXIT_LABEL };
 	}
 
 	// Clicking a doorway works everywhere, and is the only way in on a

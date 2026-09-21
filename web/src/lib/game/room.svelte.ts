@@ -25,5 +25,4 @@ export const room = new RoomState();
 
 /** What the door of the room you are in says, instead of the room's name. */
 export const EXIT_LABEL = 'BACK TO THE HUB';
-export const EXIT_CAPTION = 'the door you came in by';
 export const EXIT_HREF = '/';
