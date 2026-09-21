@@ -6,6 +6,7 @@
 	import SineMark from './SineMark.svelte';
 	import { RESUME_PDF_URL } from '$lib/content/resume';
 	import { crt } from '$lib/game/crt.svelte';
+	import { DOOR_ICON } from '$lib/game/doorIcons';
 	import { hubGate } from '$lib/game/gate.svelte';
 	import { PORTAL, PORTALS, portalForPath, type PortalKey } from '$lib/game/portals';
 	import { stage } from '$lib/game/stage.svelte';
@@ -93,18 +94,17 @@
 
 <!--
 	One icon per door, sized by the caller. A door wears it on the rail at 21,
-	and the window's titlebar wears the same one at 16 once that door is the
-	page you are reading — so a section is recognised by the same glyph
-	wherever you meet it.
+	the window's titlebar wears the same one at 16 once that door is the page
+	you are reading, and the corridor paints it onto the doorway itself — so a
+	section is the same sign wherever you meet it. The paths live in
+	lib/game/doorIcons, because the scene has to draw them too.
 -->
 {#snippet doorIcon(key: PortalKey, size: number)}
-	{#if key === 'resume'}
-		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
-	{:else if key === 'plan'}
-		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3z" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /><path d="M3 12h18" /></svg>
-	{:else}
-		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
-	{/if}
+	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		{#each DOOR_ICON[key] as d (d)}
+			<path {d} />
+		{/each}
+	</svg>
 {/snippet}
 
 <div

@@ -18,6 +18,7 @@ import '@babylonjs/core/Culling/ray';
 
 import type { ScenePalette } from '$lib/theme/theme.svelte';
 import type { SceneContext, SceneHandle } from './types';
+import { DOOR_ICON, EXIT_ICON } from './doorIcons';
 import { hubMarkers, type PortalMarker } from './hubMarkers.svelte';
 import { CORRIDOR, PORTALS, type PortalKey, type PortalSpec } from './portals';
 import { EXIT_HREF, EXIT_LABEL, room } from './room.svelte';
@@ -47,6 +48,9 @@ const CAMERA_FOV = 0.95;
 const DOOR_TRIGGER_INSET = 0.7;
 /** Ceiling lamps, as distances down the corridor. */
 const LAMP_DEPTHS = [-2, 5, 12, 19, 25];
+/** The glyph plate in each opening: metres square, and how high it hangs. */
+const ICON_SIZE = 1.15;
+const ICON_Y = 1.95;
 
 interface Door {
 	spec: PortalSpec;
@@ -54,6 +58,8 @@ interface Door {
 	surfaceMaterial: StandardMaterial;
 	/** The lit panel at the back of the recess, seen through the opening. */
 	glowMaterial: StandardMaterial;
+	/** The door's own sign, repainted whenever the door itself is. */
+	iconTexture: DynamicTexture;
 	light: PointLight;
 	/** Centre of the opening, on the wall plane. */
 	position: Vector3;
@@ -445,6 +451,39 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 		light.intensity = 1.15;
 		light.range = 14;
 
+		// The door's own sign, hung in the opening at head height. The glyph is
+		// the one the rail and the titlebar wear — same paths, drawn onto a
+		// canvas instead of into the DOM. Its colour is painted rather than
+		// tinted, so the plate carries the drawing and the material only has to
+		// know where the ink is.
+		const iconTexture = new DynamicTexture(
+			`door-${i}-icon`,
+			{ width: 256, height: 256 },
+			scene,
+			true
+		);
+		iconTexture.hasAlpha = true;
+
+		const iconMaterial = new StandardMaterial(`door-${i}-icon-mat`, scene);
+		makeEmissiveOnly(iconMaterial);
+		iconMaterial.emissiveTexture = iconTexture;
+		iconMaterial.opacityTexture = iconTexture;
+		iconMaterial.backFaceCulling = false;
+
+		const iconPlate = MeshBuilder.CreatePlane(`door-${i}-icon-plate`, { size: ICON_SIZE }, scene);
+		// A hair inside the corridor from the opening, so it never z-fights the
+		// tinted plane it hangs in front of.
+		iconPlate.position = isEnd
+			? new Vector3(0, ICON_Y, END_Z - 0.06)
+			: new Vector3(sign * (HALF_W - 0.06), ICON_Y, spec.depth);
+		// Planes face +z. Every one of these has to face the corridor instead,
+		// which for the far door means turning right around.
+		iconPlate.rotation.y = isEnd ? Math.PI : sign === -1 ? Math.PI / 2 : -Math.PI / 2;
+		iconPlate.material = iconMaterial;
+		// The tinted plane behind it is the pick target; a sign that ate the
+		// click would make the door stop opening where it looks like it should.
+		iconPlate.isPickable = false;
+
 		const anchor = isEnd
 			? new Vector3(0, DOOR_H + 0.55, END_Z)
 			: new Vector3(sign * (HALF_W - 0.1), DOOR_H + 0.55, spec.depth);
@@ -454,6 +493,7 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 			surface,
 			surfaceMaterial,
 			glowMaterial,
+			iconTexture,
 			light,
 			position,
 			anchor,
@@ -487,6 +527,13 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 			door.surfaceMaterial.emissiveColor = color.scale(exit ? 1.15 : 0.85);
 			door.glowMaterial.emissiveColor = color.scale(exit ? 1.3 : 1);
 			door.light.diffuse = color;
+			// The sign makes the same swap the label does: the door of the room
+			// you are in is the way out, so it stops advertising the section.
+			paintIcon(
+				door.iconTexture,
+				exit ? EXIT_ICON : DOOR_ICON[door.spec.key],
+				color.toHexString()
+			);
 		}
 	}
 
@@ -706,6 +753,36 @@ function normalizeHex(value: string): string {
 
 function hexColor(value: string): Color3 {
 	return Color3.FromHexString(normalizeHex(value));
+}
+
+/**
+ * A door's sign, stroked onto its plate.
+ *
+ * The paths are the same 24-unit glyphs the rail draws, so the drawing is
+ * scaled into the canvas rather than redrawn for it. Everything lands in the
+ * alpha channel as well as the colour channels, which is what lets one texture
+ * be both the emissive and the opacity map: ink where the glyph is, nothing
+ * anywhere else.
+ */
+function paintIcon(texture: DynamicTexture, paths: string[], color: string) {
+	const ctx = texture.getContext() as CanvasRenderingContext2D;
+	const { width, height } = texture.getSize();
+
+	ctx.clearRect(0, 0, width, height);
+	ctx.save();
+	// The glyphs are drawn on a 24×24 grid with a little air around them.
+	const pad = width * 0.12;
+	const scale = (width - pad * 2) / 24;
+	ctx.translate(pad, pad);
+	ctx.scale(scale, scale);
+	ctx.strokeStyle = color;
+	ctx.lineWidth = 1.7;
+	ctx.lineCap = 'round';
+	ctx.lineJoin = 'round';
+	for (const d of paths) ctx.stroke(new Path2D(d));
+	ctx.restore();
+
+	texture.update();
 }
 
 /** Floor plates: a seam grid with a painted centre line down the corridor. */

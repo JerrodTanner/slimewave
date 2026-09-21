@@ -70,11 +70,11 @@
 		<!-- Pointer lock hands the camera the keyboard, so this is the one
 		     readout a visitor actually needs — and the way back out, which is
 		     the other thing a locked pointer has to tell you. -->
-		<div class="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1.5">
+		<div class="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2">
 			<span class="hud-label">MOVE</span>
-			<div class="flex flex-col items-center gap-1">
+			<div class="flex flex-col items-center gap-1.5">
 				<kbd class="hud-key">&#8593;</kbd>
-				<div class="flex gap-1">
+				<div class="flex gap-1.5">
 					<kbd class="hud-key">&#8592;</kbd>
 					<kbd class="hud-key">&#8595;</kbd>
 					<kbd class="hud-key">&#8594;</kbd>
@@ -90,7 +90,7 @@
 	   carries its own plate rather than trusting contrast with the scene. */
 	.hud-label {
 		font-family: var(--font-mono);
-		font-size: 0.5625rem;
+		font-size: 0.6875rem;
 		font-weight: 700;
 		letter-spacing: 0.22em;
 		color: var(--color-warn);
@@ -111,14 +111,17 @@
 		border-right: 3px solid var(--color-warn);
 	}
 
+	/* Big enough to read at a glance from the middle of the screen: this is
+	   the one thing on the HUD a visitor has to act on, and it was sized for a
+	   corner it no longer sits in. */
 	.hud-key {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 30px;
-		height: 30px;
+		width: 46px;
+		height: 46px;
 		font-family: var(--font-mono);
-		font-size: 0.8125rem;
+		font-size: 1.125rem;
 		font-weight: 700;
 		line-height: 1;
 		color: var(--color-warn);
@@ -130,7 +133,7 @@
 	   the render so it reads as a footnote to them rather than a fourth key. */
 	.hud-note {
 		font-family: var(--font-mono);
-		font-size: 0.625rem;
+		font-size: 0.8125rem;
 		font-weight: 700;
 		letter-spacing: 0.18em;
 		color: color-mix(in srgb, var(--color-warn) 78%, transparent);
