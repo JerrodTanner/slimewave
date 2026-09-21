@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
 
 	import GameStage from '$lib/components/GameStage.svelte';
@@ -40,10 +39,6 @@
 	const arcadeGame = $derived(path.startsWith('/arcade/'));
 	const hub = $derived(path === '/');
 </script>
-
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
 
 <GameStage />
 

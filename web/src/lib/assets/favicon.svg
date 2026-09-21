@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-	<rect width="32" height="32" fill="#04090b" />
-	<!-- A portal ring: the site's one recurring shape. -->
-	<circle cx="16" cy="16" r="9" fill="none" stroke="#9dff3c" stroke-width="3" />
-	<circle cx="16" cy="16" r="3.5" fill="#ff4fd8" />
-</svg>
