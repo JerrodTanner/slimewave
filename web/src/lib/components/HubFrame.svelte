@@ -91,13 +91,19 @@
 	}
 </script>
 
-{#snippet doorIcon(key: PortalKey)}
+<!--
+	One icon per door, sized by the caller. A door wears it on the rail at 21,
+	and the window's titlebar wears the same one at 16 once that door is the
+	page you are reading — so a section is recognised by the same glyph
+	wherever you meet it.
+-->
+{#snippet doorIcon(key: PortalKey, size: number)}
 	{#if key === 'resume'}
-		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
+		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
 	{:else if key === 'plan'}
-		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3z" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /><path d="M3 12h18" /></svg>
+		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3z" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /><path d="M3 12h18" /></svg>
 	{:else}
-		<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
+		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
 	{/if}
 {/snippet}
 
@@ -110,12 +116,22 @@
 		     site is for, and the two things that sentence names are wired to
 		     the doors that do them — so the copy is navigation too. -->
 		<header class="head">
-			{#if active}
-				<a href="/" class="crumb" onclick={(e) => select(e, '/')}>
-					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m11 18-6-6 6-6" /></svg>
-					BACK TO THE HUB
-				</a>
-			{/if}
+			<!--
+				One slot, one width, two occupants: the name on the hub and the
+				way back behind a door. They are the same size on purpose — the
+				sentence beside them must not shift a pixel when you walk
+				through a door.
+			-->
+			<div class="headslot">
+				{#if active}
+					<a href="/" class="crumb" onclick={(e) => select(e, '/')}>
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m11 18-6-6 6-6" /></svg>
+						BACK TO MAIN MENU
+					</a>
+				{:else}
+					<span class="wordmark">ShineWave</span>
+				{/if}
+			</div>
 			<p class="mission">
 				This site functions as a place to
 				<a href={PORTAL.plan.href} onclick={(e) => select(e, PORTAL.plan.href)}
@@ -139,10 +155,18 @@
 			<!-- the big window: the corridor on the hub, the section's page behind a door -->
 			<section class="win flex h-[52vh] min-h-[300px] flex-col lg:h-auto lg:min-h-0 lg:flex-1">
 				<div class="winbar">
-					<!-- A cube: what is in the window is a space, not a screen. -->
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />
-					</svg>
+					<!-- The open door's own icon, or — on the hub, where the window
+					     holds the corridor rather than a page — a cube, because
+					     what is in it is a space and not a screen. -->
+					<span class="winbar-icon">
+						{#if active}
+							{@render doorIcon(active, 16)}
+						{:else}
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+								<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />
+							</svg>
+						{/if}
+					</span>
 					<span class="winbar-title">
 						{#if active}
 							{PORTAL[active].label}
@@ -266,7 +290,7 @@
 									class:door-icon-loud={door.tone === 'loud'}
 									class:door-icon-alt={door.tone === 'alt'}
 								>
-									{@render doorIcon(portal.key)}
+									{@render doorIcon(portal.key, 21)}
 								</span>
 								<span class="door-body">
 									<span class="door-name">{portal.label}</span>
@@ -336,9 +360,28 @@
 		background-color: var(--color-surface-raised);
 	}
 
+	.headslot {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		width: 202px;
+	}
+
+	/* The name as the cover sets it, at a size the heading rule can hold. */
+	.wordmark {
+		font-family: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+		font-size: 1.75rem;
+		font-weight: 600;
+		line-height: 1;
+		letter-spacing: -0.015em;
+		color: var(--color-accent);
+	}
+
 	.crumb {
 		display: inline-flex;
 		align-items: center;
+		justify-content: center;
+		width: 100%;
 		gap: 0.55rem;
 		padding: 0.5rem 0.9rem;
 		border: 1px solid var(--color-line);
@@ -394,6 +437,12 @@
 		background-size: 100% 6px;
 		background-repeat: repeat-x;
 		background-position: top;
+	}
+
+	.winbar-icon {
+		display: inline-flex;
+		flex-shrink: 0;
+		color: var(--color-accent);
 	}
 
 	.winbar-title {

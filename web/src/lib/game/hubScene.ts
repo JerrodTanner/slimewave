@@ -81,12 +81,14 @@ export function createHubScene(ctx: SceneContext): SceneHandle {
 	camera.checkCollisions = true;
 	camera.applyGravity = true;
 	camera.ellipsoid = new Vector3(0.5, EYE_HEIGHT / 2, 0.5);
-	// The arrow keys, and only those: they are what the HUD tells you to use,
-	// and a control that is not on the readout is a control nobody finds.
-	camera.keysUp = [38];
-	camera.keysDown = [40];
-	camera.keysLeft = [37];
-	camera.keysRight = [39];
+	// The arrow keys are what the HUD tells you to use, because one set has to
+	// be on the readout and they are the set that needs no explaining. WASD is
+	// bound too and always will be: the hand that reaches for it already knows
+	// what it is doing, and nothing is gained by refusing it.
+	camera.keysUp = [87, 38];
+	camera.keysDown = [83, 40];
+	camera.keysLeft = [65, 37];
+	camera.keysRight = [68, 39];
 
 	const ambient = new HemisphericLight('hub-ambient', new Vector3(0, 1, 0), scene);
 	ambient.intensity = 0.5;

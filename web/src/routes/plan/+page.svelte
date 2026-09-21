@@ -230,7 +230,7 @@
 
 <PageShell
 	title="Plan a project"
-	lede="Fill out the questionnaire to build a work order for the type of work you want done."
+	lede="Fill out the questionnaire to build a work order for the type of work you want done. I will schedule a meeting pertaining to your request as soon as I can."
 >
 	<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:items-start">
 		<form class="flex min-w-0 flex-col gap-4" onsubmit={(e) => e.preventDefault()}>

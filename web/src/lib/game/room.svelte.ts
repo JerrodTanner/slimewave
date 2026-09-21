@@ -24,5 +24,5 @@ class RoomState {
 export const room = new RoomState();
 
 /** What the door of the room you are in says, instead of the room's name. */
-export const EXIT_LABEL = 'BACK TO THE HUB';
+export const EXIT_LABEL = 'BACK TO MAIN MENU';
 export const EXIT_HREF = '/';
