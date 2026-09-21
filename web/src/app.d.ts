@@ -10,4 +10,11 @@ declare global {
 	}
 }
 
+// Markdown documents are imported for their text: `lib/content` parses
+// them at runtime rather than through a build plugin.
+declare module '*.md?raw' {
+	const source: string;
+	export default source;
+}
+
 export {};
