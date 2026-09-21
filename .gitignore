@@ -1,6 +1,7 @@
 # build artifacts
 *.exe
-slimewave
+/slimewave
+/slimewave.exe
 web/build/
 web/.svelte-kit/
 web/node_modules/
