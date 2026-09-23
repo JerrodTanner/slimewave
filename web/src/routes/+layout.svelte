@@ -8,6 +8,7 @@
 	import NowPlaying from '$lib/components/NowPlaying.svelte';
 	import SiteNav from '$lib/components/SiteNav.svelte';
 	import { isFramed } from '$lib/game/portals';
+	import { cardPlate } from '$lib/state/cardPlate.svelte';
 	import { session } from '$lib/state/session.svelte';
 	import { theme } from '$lib/theme/theme.svelte';
 	import { ui } from '$lib/state/ui.svelte';
@@ -29,6 +30,7 @@
 	onMount(() => {
 		theme.init();
 		ui.init();
+		cardPlate.init();
 		void session.load();
 	});
 

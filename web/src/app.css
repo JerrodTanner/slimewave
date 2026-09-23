@@ -229,6 +229,14 @@
 }
 
 @layer base {
+	/* The plate behind the main card, and how much of it shows. Kept as custom
+	   properties so the advanced panel can retune them live; these are the
+	   values the site ships with. */
+	:root {
+		--card-plate: url('/header-tissue.png');
+		--card-wash: 84%;
+	}
+
 	html {
 		background-color: var(--color-bg-deep);
 		color-scheme: dark;
@@ -471,6 +479,25 @@
 
 	.rule {
 		border-top: 1px solid var(--color-line);
+	}
+
+	/* The plate behind the main card. It is laid under a wash of the card's
+	   own ground rather than given a fixed tint, so each theme mutes it in its
+	   own palette instead of showing the same picture seven times.
+
+	   Both the picture and the wash come from custom properties, which is what
+	   lets the advanced panel retune them on a live page; the defaults are in
+	   the base layer. The wash is the only dial — raise its percentage and the
+	   plate goes fainter. */
+	.site-card {
+		background-image:
+			linear-gradient(
+				color-mix(in srgb, var(--color-bg) var(--card-wash), transparent),
+				color-mix(in srgb, var(--color-bg) var(--card-wash), transparent)
+			),
+			var(--card-plate);
+		background-size: cover;
+		background-position: center;
 	}
 
 	.prose-slim {

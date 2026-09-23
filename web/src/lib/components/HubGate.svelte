@@ -17,11 +17,20 @@
 	 * screen. It is the one that has to stay legible at about a fifth of the
 	 * size, so the lockup loses the drawn mark and the furniture drops away —
 	 * what is left is the one thing the cover is for, which is the button.
+	 *
+	 * `sealed` is the cover with nothing behind it to open: simple mode keeps
+	 * the corridor a backdrop, so the same picture stays over it but the way
+	 * in is gone. It is a plain box then rather than a button, which is what
+	 * takes the lockup out of the tab order along with the call to action.
 	 */
-	let { onenter, compact = false }: { onenter: () => void; compact?: boolean } = $props();
+	let {
+		onenter,
+		compact = false,
+		sealed = false
+	}: { onenter?: () => void; compact?: boolean; sealed?: boolean } = $props();
 </script>
 
-<button type="button" class="gate" class:compact onclick={onenter}>
+{#snippet cover()}
 	<span class="hazard hazard-top"></span>
 	<span class="hazard hazard-bottom"></span>
 	<span class="bracket bracket-tl"></span>
@@ -50,13 +59,21 @@
 		{/if}
 	</span>
 
-	<span class="cta-stack">
-		<span class="cta">
-			<span class="blip"></span>
-			CLICK TO ACTIVATE
+	{#if !sealed}
+		<span class="cta-stack">
+			<span class="cta">
+				<span class="blip"></span>
+				CLICK TO ACTIVATE
+			</span>
 		</span>
-	</span>
-</button>
+	{/if}
+{/snippet}
+
+{#if sealed}
+	<div class="gate sealed" class:compact>{@render cover()}</div>
+{:else}
+	<button type="button" class="gate" class:compact onclick={onenter}>{@render cover()}</button>
+{/if}
 
 <style>
 	.gate {
@@ -196,6 +213,11 @@
 		height: 9px;
 		background-color: currentColor;
 		animation: blink 1.1s steps(1, end) infinite;
+	}
+
+	/* Nothing to press, so nothing that says it can be pressed. */
+	.sealed {
+		cursor: default;
 	}
 
 	/* --- the tile cover -------------------------------------------------- */

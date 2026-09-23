@@ -1,3 +1,4 @@
+import { ui } from '$lib/state/ui.svelte';
 import { stage } from './stage.svelte';
 
 /**
@@ -19,6 +20,9 @@ class HubGateState {
 
 	enter() {
 		if (this.open) return;
+		// Simple mode is the site without the game. The corridor stays a
+		// backdrop, so there is no way in and nothing takes the pointer.
+		if (ui.mode !== 'advanced') return;
 		this.open = true;
 		stage.setMode('immersive');
 		stage.requestPointerLock();

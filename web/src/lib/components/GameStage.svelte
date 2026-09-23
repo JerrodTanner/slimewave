@@ -101,6 +101,13 @@
 		untrack(() => stage.setMode(next));
 	});
 
+	// Dropping back to simple while standing in the corridor puts the pointer
+	// back and shuts the gate. Here rather than in the menu because this is the
+	// component that is always mounted, whatever the route.
+	$effect(() => {
+		if (ui.mode !== 'advanced') hubGate.stand();
+	});
+
 	function onCanvasPointerDown() {
 		// Pointer lock has to come from a real gesture, so it is requested here
 		// rather than when the mode changes.

@@ -3,7 +3,9 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import HubGate from './HubGate.svelte';
+	import SettingsMenu from './SettingsMenu.svelte';
 	import SineMark from './SineMark.svelte';
+	import SiteMission from './SiteMission.svelte';
 	import { RESUME_PDF_URL } from '$lib/content/resume';
 	import { crt } from '$lib/game/crt.svelte';
 	import { DOOR_ICON } from '$lib/game/doorIcons';
@@ -12,6 +14,7 @@
 	import { stage } from '$lib/game/stage.svelte';
 	import { gameViewport } from '$lib/game/viewport.svelte';
 	import { formatTime, player } from '$lib/state/player.svelte';
+	import { ui } from '$lib/state/ui.svelte';
 
 	/**
 	 * The furniture: a heading rule, one big window, and the doors as a rail
@@ -35,6 +38,11 @@
 	const path = $derived(page.url.pathname);
 	/** The door we are behind, or `null` on the hub itself. */
 	const active = $derived(portalForPath(path));
+
+	/** Simple mode keeps the corridor a backdrop: no cover, and no way in. */
+	const playable = $derived(ui.mode === 'advanced');
+	/** The titlebar earns its row only when it has something to put in it. */
+	const barred = $derived(active !== null || stage.unsupported || hubGate.open);
 
 	/** The two placeholders the corridor can occupy. Only one exists at a time. */
 	let windowScreen = $state<HTMLElement | null>(null);
@@ -111,7 +119,7 @@
 	class="mat pointer-events-auto fixed inset-0 z-20 overflow-y-auto lg:overflow-hidden"
 	class:mat-bar={active !== null && player.current !== null}
 >
-	<div class="frame flex min-h-full flex-col gap-4 sm:gap-5">
+	<div class="frame site-card flex min-h-full flex-col gap-4 sm:gap-5">
 		<!-- The heading rule. It carries the one sentence that says what the
 		     site is for, and the two things that sentence names are wired to
 		     the doors that do them — so the copy is navigation too. -->
@@ -132,17 +140,15 @@
 					<span class="wordmark">ShineWave</span>
 				{/if}
 			</div>
-			<p class="mission">
-				This site functions as a place to
-				<a href={PORTAL.plan.href} onclick={(e) => select(e, PORTAL.plan.href)}
-					>intake business inquiries</a
-				>, and provide an
-				<a href={PORTAL.resume.href} onclick={(e) => select(e, PORTAL.resume.href)}
-					>interactive portfolio</a
-				>
-			</p>
+
+			<SettingsMenu />
+
+			<span class="divider" aria-hidden="true"></span>
+
+			<SiteMission {select} />
 
 			<span class="flex-1"></span>
+
 			<!-- Keyed on the route so the mark restarts its turn on every
 			     navigation. It runs off its own clock from mount, and a walk
 			     through a door is the natural place to put it back to zero. -->
@@ -151,31 +157,18 @@
 			{/key}
 		</header>
 
-		<div class="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:gap-5">
+		<div class="lay flex min-h-0 flex-1 flex-col" class:lay-simple={!playable}>
 			<!-- the big window: the corridor on the hub, the section's page behind a door -->
-			<section class="win flex h-[52vh] min-h-[300px] flex-col lg:h-auto lg:min-h-0 lg:flex-1">
+			<section class="win flex flex-col" class:win-hub={active === null}>
+				<!-- The bar is the page's, and only shows when it has something to
+				     say. On the hub the window is the corridor itself: no icon
+				     stands for a space, and a title over it would only name what
+				     is already in view. -->
+				{#if barred}
 				<div class="winbar">
-					<!-- The open door's own icon, or — on the hub, where the window
-					     holds the corridor rather than a page — a cube, because
-					     what is in it is a space and not a screen. -->
-					<span class="winbar-icon">
-						{#if active}
-							{@render doorIcon(active, 16)}
-						{:else}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-								<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />
-							</svg>
-						{/if}
-					</span>
-					<span class="winbar-title">
-						{#if active}
-							{PORTAL[active].label}
-						{:else}
-							NAVIGATE SHINEWAVE IN 3 DIMENSIONS
-						{/if}
-					</span>
-
 					{#if active}
+						<span class="winbar-icon">{@render doorIcon(active, 16)}</span>
+						<span class="winbar-title">{PORTAL[active].label}</span>
 						<span class="chip chip-quiet">PAGE</span>
 					{:else if stage.unsupported}
 						<span class="chip chip-quiet">NO WEBGL</span>
@@ -186,8 +179,6 @@
 							</svg>
 							RUNNING
 						</span>
-					{:else}
-						<span class="chip chip-quiet"><span class="chip-dot"></span>PAUSED</span>
 					{/if}
 
 					{#if active === 'resume'}
@@ -208,6 +199,7 @@
 						</a>
 					{/if}
 				</div>
+				{/if}
 
 				<!--
 					One persistent box, so the power cycle plays on the same
@@ -233,7 +225,7 @@
 								{/each}
 							</div>
 						{:else if !hubGate.open && active === null}
-							<HubGate onenter={() => hubGate.enter()} />
+							<HubGate sealed={!playable} onenter={() => hubGate.enter()} />
 						{/if}
 					</div>
 
@@ -248,8 +240,8 @@
 				</div>
 			</section>
 
-			<!-- the doors -->
-			<aside class="flex w-full shrink-0 flex-col gap-4 lg:w-[420px] lg:gap-5 xl:w-[520px]">
+			<!-- the doors, three across under the window -->
+			<aside class="rail">
 				{#each PORTALS as portal (portal.key)}
 					{@const door = DOORS[portal.key]}
 					<div
@@ -263,11 +255,13 @@
 								<div class="livebar">
 									<span class="livebar-title">NAVIGATE IN 3D</span>
 									<span class="flex-1"></span>
-									<span class="livebar-chip">{hubGate.open ? 'RUNNING' : 'PAUSED'}</span>
+									{#if hubGate.open}
+										<span class="livebar-chip">RUNNING</span>
+									{/if}
 								</div>
 								<div bind:this={tileScreen} class="livescreen">
 									{#if !stage.unsupported && !hubGate.open}
-										<HubGate compact onenter={() => hubGate.enter()} />
+										<HubGate compact sealed={!playable} onenter={() => hubGate.enter()} />
 									{/if}
 								</div>
 							</div>
@@ -396,22 +390,12 @@
 		background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
 	}
 
-	.mission {
-		max-width: 64ch;
-		font-size: 0.9375rem;
-		line-height: 1.4;
-		color: var(--color-ink);
-	}
-
-	.mission a {
-		color: var(--color-accent);
-		text-decoration: underline;
-		text-decoration-thickness: 1px;
-		text-underline-offset: 3px;
-	}
-
-	.mission a:hover {
-		color: var(--color-accent-2);
+	/* Separates the name and its cog from the sentence. */
+	.divider {
+		flex-shrink: 0;
+		width: 1px;
+		height: 26px;
+		background-color: var(--color-line);
 	}
 
 	/* --- the window ------------------------------------------------------ */
@@ -420,6 +404,89 @@
 		border-radius: calc(var(--radius-panel) + 4px);
 		background-color: var(--color-surface-raised);
 		overflow: hidden;
+	}
+
+	/* --- advanced: the corridor beside its doors ------------------------
+	   The arrangement the frame was built around — a tall window with the
+	   three doors stacked down its right-hand side. */
+	.lay {
+		gap: 1rem;
+	}
+
+	.lay .win {
+		height: 52vh;
+		min-height: 300px;
+	}
+
+	.lay .rail {
+		display: flex;
+		width: 100%;
+		flex-direction: column;
+		flex-shrink: 0;
+		gap: 1rem;
+	}
+
+	.lay .slot {
+		flex: 1 1 0;
+	}
+
+	@media (min-width: 64rem) {
+		.lay {
+			flex-direction: row;
+			gap: 1.25rem;
+		}
+
+		.lay .win {
+			height: auto;
+			min-height: 0;
+			flex: 1 1 auto;
+		}
+
+		.lay .rail {
+			width: 420px;
+			gap: 1.25rem;
+		}
+	}
+
+	@media (min-width: 80rem) {
+		.lay .rail {
+			width: 520px;
+		}
+	}
+
+	/* --- simple: the corridor over its doors ----------------------------
+	   Not a game, so the window stops competing with the doors for the
+	   width and simply sits above them. It is measured in tiles rather than
+	   in viewport height, so the block reads as one object however tall the
+	   screen is; the doors then take whatever is left. */
+	.lay-simple {
+		--tile-h: 132px;
+		--rail-gap: 1.25rem;
+
+		flex-direction: column;
+		gap: var(--rail-gap);
+	}
+
+	.lay-simple .win-hub {
+		flex: none;
+		height: calc((var(--tile-h) * 2 + var(--rail-gap)) * 2);
+		min-height: 0;
+	}
+
+	.lay-simple .rail {
+		display: grid;
+		width: 100%;
+		grid-template-columns: 1fr;
+		gap: var(--rail-gap);
+		flex: 1 1 auto;
+	}
+
+	/* Three across, one down on a phone, where a third of the width is not
+	   enough to hold a door's name and its action. */
+	@media (min-width: 40rem) {
+		.lay-simple .rail {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
 	}
 
 	.winbar {
@@ -501,14 +568,6 @@
 		color: var(--color-muted);
 	}
 
-	/* Steady on purpose. A blinking light says "waiting for you"; this one is
-	   only saying nobody is driving the corridor right now. */
-	.chip-dot {
-		width: 6px;
-		height: 6px;
-		background-color: var(--color-muted);
-	}
-
 	.breathe {
 		animation: breathe 2.6s ease-in-out infinite;
 	}
@@ -557,7 +616,6 @@
 	/* --- the rail -------------------------------------------------------- */
 	.slot {
 		display: flex;
-		flex: 1 1 0;
 		min-height: 118px;
 	}
 
