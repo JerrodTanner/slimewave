@@ -54,7 +54,7 @@
 </script>
 
 <svelte:head>
-	<title>Resume — slimewave</title>
+	<title>Resume — ShineWave</title>
 </svelte:head>
 
 <div class="paper">

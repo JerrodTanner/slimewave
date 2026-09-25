@@ -39,7 +39,7 @@
 </script>
 
 <svelte:head>
-	<title>{doc?.title ?? 'Writing'} — slimewave</title>
+	<title>{doc?.title ?? 'Writing'} — ShineWave</title>
 </svelte:head>
 
 <PageShell title={doc?.title ?? (loading ? '…' : 'Not found')} lede={doc?.summary}>

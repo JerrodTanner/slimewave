@@ -15,5 +15,5 @@
 </script>
 
 <svelte:head>
-	<title>Jerrod Tanner — slimewave</title>
+	<title>Jerrod Tanner — ShineWave</title>
 </svelte:head>

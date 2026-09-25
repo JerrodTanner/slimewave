@@ -225,7 +225,7 @@
 {/snippet}
 
 <svelte:head>
-	<title>Plan a project — slimewave</title>
+	<title>Plan a project — ShineWave</title>
 </svelte:head>
 
 <PageShell

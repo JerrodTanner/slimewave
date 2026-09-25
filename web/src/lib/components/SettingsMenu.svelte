@@ -118,61 +118,39 @@
 				</div>
 			</div>
 
-			<!-- Not advanced-only: a running 3D scene is worth being able to
-			     switch off whether or not you ever walk around in it. -->
-			<div class="row row-line">
-				<span class="label">Backdrop</span>
-				<div class="seg">
-					<button
-						type="button"
-						class:seg-on={ui.backdrop === 'ambient'}
-						onclick={() => ui.setBackdrop('ambient')}>on</button
-					>
-					<button
-						type="button"
-						class:seg-on={ui.backdrop === 'still'}
-						onclick={() => ui.setBackdrop('still')}>off</button
-					>
+			<!-- The bench, in both modes. A pick is read off disk and kept in
+			     this browser; nothing is uploaded. -->
+			<div class="row row-plate">
+				<div class="themehead">
+					<span class="label">Backdrop</span>
+					<span class="themename">{cardPlate.opacity}%</span>
 				</div>
-			</div>
 
-			<!-- The bench. Advanced only, because trying pictures out behind the
-			     card is work on the site rather than use of it. A pick is read
-			     off disk and kept in this browser; nothing is uploaded. -->
-			{#if ui.mode === 'advanced'}
-				<div class="row row-plate">
-					<div class="themehead">
-						<span class="label">Card image</span>
-						<span class="themename">{cardPlate.opacity}%</span>
-					</div>
+				<input
+					id="card-plate-opacity"
+					type="range"
+					min="0"
+					max="50"
+					step="1"
+					value={cardPlate.opacity}
+					oninput={(e) => cardPlate.setOpacity(e.currentTarget.valueAsNumber)}
+					aria-label="How much of the backdrop shows"
+				/>
 
-					<input
-						id="card-plate-opacity"
-						type="range"
-						min="0"
-						max="50"
-						step="1"
-						value={cardPlate.opacity}
-						oninput={(e) => cardPlate.setOpacity(e.currentTarget.valueAsNumber)}
-						aria-label="How much of the card image shows"
-					/>
-
-					<div class="bench">
-						<label class="pick">
-							choose
-							<input type="file" accept="image/*" onchange={pickPlate} />
-						</label>
-						{#if cardPlate.custom}
-							<a class="pick" href={cardPlate.custom} download="card-plate.webp">save</a>
-						{/if}
-						<button type="button" class="pick" onclick={() => cardPlate.reset()}>reset</button>
-					</div>
-
-					{#if cardPlate.notice}
-						<p class="notice">{cardPlate.notice}</p>
+				<div class="bench">
+					<label class="pick">
+						choose backdrop
+						<input type="file" accept="image/*" onchange={pickPlate} />
+					</label>
+					{#if cardPlate.custom}
+						<a class="pick" href={cardPlate.custom} download="card-plate.webp">save</a>
 					{/if}
 				</div>
-			{/if}
+
+				{#if cardPlate.notice}
+					<p class="notice">{cardPlate.notice}</p>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </div>
@@ -253,10 +231,6 @@
 		align-items: stretch;
 		gap: 0.55rem;
 		padding-bottom: 12px;
-		border-top: 1px solid var(--color-line);
-	}
-
-	.row-line {
 		border-top: 1px solid var(--color-line);
 	}
 
@@ -373,7 +347,7 @@
 		gap: 0.4rem;
 	}
 
-	/* One shape for the three, though they are a label, a link and a button. */
+	/* One shape for both, though one is a label and the other a link. */
 	.pick {
 		flex: 1;
 		padding: 4px 0;

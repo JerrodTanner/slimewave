@@ -7,7 +7,7 @@
 	import HubFrame from '$lib/components/HubFrame.svelte';
 	import NowPlaying from '$lib/components/NowPlaying.svelte';
 	import SiteNav from '$lib/components/SiteNav.svelte';
-	import { isFramed } from '$lib/game/portals';
+	import { isFramed, portalForPath } from '$lib/game/portals';
 	import { cardPlate } from '$lib/state/cardPlate.svelte';
 	import { session } from '$lib/state/session.svelte';
 	import { theme } from '$lib/theme/theme.svelte';
@@ -38,6 +38,8 @@
 	/** The hub and its doors. Everything else gets the plain nav. */
 	const framed = $derived(isFramed(path));
 	const hub = $derived(path === '/');
+	/** The Media door draws its own transport, so the floating bar stands down there. */
+	const media = $derived(portalForPath(path) === 'media');
 </script>
 
 <GameStage />
@@ -54,4 +56,4 @@
 	</div>
 {/if}
 
-<NowPlaying bar={!hub} />
+<NowPlaying bar={!hub && !media} />

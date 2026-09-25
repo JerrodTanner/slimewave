@@ -10,10 +10,7 @@ export type ThemeId =
 	| 'newsprint'
 	| 'aero'
 	| 'slimewave'
-	| 'amber-crt'
-	| 'deepwater'
-	| 'xerox'
-	| 'plate';
+	| 'deepwater';
 
 export interface Theme {
 	id: ThemeId;
@@ -43,28 +40,10 @@ export const THEMES: Theme[] = [
 		swatch: ['#04090b', '#9dff3c', '#ff4fd8']
 	},
 	{
-		id: 'amber-crt',
-		name: 'Amber CRT',
-		blurb: 'One phosphor, monospace everything, scanlines on.',
-		swatch: ['#0b0803', '#ffb000', '#ff6a00']
-	},
-	{
 		id: 'deepwater',
 		name: 'Deepwater',
 		blurb: 'Dim blue and a serif. Built for long reading.',
 		swatch: ['#070d18', '#5ee6ff', '#a688ff']
-	},
-	{
-		id: 'xerox',
-		name: 'Xerox',
-		blurb: 'Light, loud, photocopied. Hairlines and hot red.',
-		swatch: ['#e9e7e2', '#ff2d20', '#1f39ff']
-	},
-	{
-		id: 'plate',
-		name: 'Plate',
-		blurb: 'Neutral greys, one hot accent. Gets out of the way.',
-		swatch: ['#111113', '#ff3b6b', '#ffd166']
 	}
 ];
 

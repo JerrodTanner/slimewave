@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Work — slimewave</title>
+	<title>Work — ShineWave</title>
 </svelte:head>
 
 <PageShell

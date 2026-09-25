@@ -39,8 +39,10 @@ class PlayerState {
 		this.#el = el;
 
 		try {
-			const stored = Number(localStorage.getItem(VOLUME_KEY));
-			if (Number.isFinite(stored) && stored >= 0 && stored <= 1) this.volume = stored;
+			// Checked for null first: Number(null) is 0, which muted every first visit.
+			const raw = localStorage.getItem(VOLUME_KEY);
+			const stored = Number(raw);
+			if (raw !== null && Number.isFinite(stored) && stored >= 0 && stored <= 1) this.volume = stored;
 		} catch {
 			/* storage blocked */
 		}

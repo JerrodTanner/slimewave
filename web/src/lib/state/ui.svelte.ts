@@ -1,6 +1,5 @@
 import { browser } from '$app/environment';
 
-const BACKDROP_KEY = 'slimewave:backdrop';
 const MODE_KEY = 'slimewave:mode';
 
 /**
@@ -17,7 +16,7 @@ export type Backdrop = 'ambient' | 'still';
  *
  * "simple" is the site a reader came for: the name, what the place is for, and
  * the doors. "advanced" puts back the controls that would otherwise clutter
- * that — the backdrop switch and anything else that belongs to the scene
+ * that — anything that belongs to the scene
  * rather than to the content.
  */
 export type Mode = 'simple' | 'advanced';
@@ -30,30 +29,19 @@ class UiState {
 
 	init() {
 		if (!browser) return;
-		// Anyone who asked their OS for less motion gets the still backdrop by
-		// default; they can still turn it on deliberately.
-		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		let storedBackdrop: string | null = null;
+		// No switch for it any more: anyone who asked their OS for less motion
+		// gets the still backdrop, everyone else the running one.
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.backdrop = 'still';
 		let storedMode: string | null = null;
 		try {
-			storedBackdrop = localStorage.getItem(BACKDROP_KEY);
+			// Retired with the switch; don't let an old choice linger.
+			localStorage.removeItem('slimewave:backdrop');
 			storedMode = localStorage.getItem(MODE_KEY);
 		} catch {
 			/* storage blocked */
 		}
-		if (storedBackdrop === 'ambient' || storedBackdrop === 'still') this.backdrop = storedBackdrop;
-		else if (reduced) this.backdrop = 'still';
 
 		if (storedMode === 'simple' || storedMode === 'advanced') this.mode = storedMode;
-	}
-
-	setBackdrop(value: Backdrop) {
-		this.backdrop = value;
-		this.#store(BACKDROP_KEY, value);
-	}
-
-	toggleBackdrop() {
-		this.setBackdrop(this.backdrop === 'ambient' ? 'still' : 'ambient');
 	}
 
 	setMode(value: Mode) {

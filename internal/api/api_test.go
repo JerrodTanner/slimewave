@@ -321,14 +321,14 @@ func TestPreferencesRoundTrip(t *testing.T) {
 
 	cookie := e.login(t)
 	if rec := e.do(t, http.MethodPut, "/api/preferences", map[string]any{
-		"theme": "amber-crt",
+		"theme": "deepwater",
 		"data":  map[string]any{"gameMode": "ambient"},
 	}, cookie); rec.Code != http.StatusOK {
 		t.Fatalf("write: status = %d, body = %s", rec.Code, rec.Body.String())
 	}
 
 	rec := e.do(t, http.MethodGet, "/api/preferences", nil, cookie)
-	if !bytes.Contains(rec.Body.Bytes(), []byte("amber-crt")) {
+	if !bytes.Contains(rec.Body.Bytes(), []byte("deepwater")) {
 		t.Errorf("theme did not round-trip: %s", rec.Body.String())
 	}
 	if !bytes.Contains(rec.Body.Bytes(), []byte("ambient")) {

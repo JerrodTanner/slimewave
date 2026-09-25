@@ -41,6 +41,8 @@
 
 	/** Simple mode keeps the corridor a backdrop: no cover, and no way in. */
 	const playable = $derived(ui.mode === 'advanced');
+	/** Simple mode behind a door: the doors move into the heading rule and the page takes their room. */
+	const docked = $derived(active !== null && !playable);
 	/** The titlebar earns its row only when it has something to put in it. */
 	const barred = $derived(active !== null || stage.unsupported || hubGate.open);
 
@@ -117,7 +119,7 @@
 
 <div
 	class="mat pointer-events-auto fixed inset-0 z-20 overflow-y-auto lg:overflow-hidden"
-	class:mat-bar={active !== null && player.current !== null}
+	class:mat-bar={active !== null && active !== 'media' && player.current !== null}
 >
 	<div class="frame site-card flex min-h-full flex-col gap-4 sm:gap-5">
 		<!-- The heading rule. It carries the one sentence that says what the
@@ -147,7 +149,23 @@
 
 			<SiteMission {select} />
 
-			<span class="flex-1"></span>
+			<!-- Docked, the rail's doors live here instead, the open one marked. -->
+			<nav class="headdoors" aria-label="Pages">
+				{#if docked}
+					{#each PORTALS as portal (portal.key)}
+						<a
+							href={portal.href}
+							class="headdoor"
+							class:headdoor-here={active === portal.key}
+							aria-current={active === portal.key ? 'page' : undefined}
+							onclick={(e) => (active === portal.key ? e.preventDefault() : select(e, portal.href))}
+						>
+							<span class="winbar-icon">{@render doorIcon(portal.key, 18)}</span>
+							{portal.label}
+						</a>
+					{/each}
+				{/if}
+			</nav>
 
 			<!-- Keyed on the route so the mark restarts its turn on every
 			     navigation. It runs off its own clock from mount, and a walk
@@ -159,7 +177,7 @@
 
 		<div class="lay flex min-h-0 flex-1 flex-col" class:lay-simple={!playable}>
 			<!-- the big window: the corridor on the hub, the section's page behind a door -->
-			<section class="win flex flex-col" class:win-hub={active === null}>
+			<section class="win flex flex-col" class:win-hub={active === null} class:win-docked={docked}>
 				<!-- The bar is the page's, and only shows when it has something to
 				     say. On the hub the window is the corridor itself: no icon
 				     stands for a space, and a title over it would only name what
@@ -167,8 +185,10 @@
 				{#if barred}
 				<div class="winbar">
 					{#if active}
-						<span class="winbar-icon">{@render doorIcon(active, 16)}</span>
-						<span class="winbar-title">{PORTAL[active].label}</span>
+						{#if playable}
+							<span class="winbar-icon">{@render doorIcon(active, 16)}</span>
+							<span class="winbar-title">{PORTAL[active].label}</span>
+						{/if}
 						<span class="chip chip-quiet">PAGE</span>
 					{:else if stage.unsupported}
 						<span class="chip chip-quiet">NO WEBGL</span>
@@ -193,7 +213,13 @@
 					<!-- The only control the titlebar carries. The hub needs none:
 					     the cover is how the corridor is taken up, and Escape is
 					     how it is put back down. -->
-					{#if active}
+					{#if active === 'resume'}
+						<span class="winnote">Another personal project: I host it, keep its offsite backup and maintain the in-game mod behind its leaderboards and rankings for a game I play.</span>
+						<a class="winlink" href="https://logking.duckdns.org/" target="_blank" rel="noopener noreferrer">
+							LOGKING
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg>
+						</a>
+					{:else if active && active !== 'media'}
 						<a href="/" class="winbtn winbtn-alt" aria-label="Put the corridor back on the big screen" onclick={(e) => select(e, '/')}>
 							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3 14 10" /><path d="M3 21l7-7" /></svg>
 						</a>
@@ -208,6 +234,7 @@
 				-->
 				<div
 					class="pane"
+					class:pane-flush={active === 'media' || active === 'resume'}
 					class:crt-off={crt.phase === 'off'}
 					class:crt-on={crt.phase === 'on'}
 				>
@@ -241,6 +268,7 @@
 			</section>
 
 			<!-- the doors, three across under the window -->
+			{#if !docked}
 			<aside class="rail">
 				{#each PORTALS as portal (portal.key)}
 					{@const door = DOORS[portal.key]}
@@ -307,6 +335,7 @@
 					</div>
 				{/each}
 			</aside>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -473,6 +502,13 @@
 		min-height: 0;
 	}
 
+	/* Docked, nothing sits under the window, so it takes the whole height. */
+	.lay-simple .win-docked {
+		flex: 1 1 auto;
+		height: auto;
+		min-height: 60vh;
+	}
+
 	.lay-simple .rail {
 		display: grid;
 		width: 100%;
@@ -512,6 +548,40 @@
 		color: var(--color-accent);
 	}
 
+	.headdoors {
+		display: flex;
+		flex: 1 0 auto;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+	}
+
+	.headdoor {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.4rem 0.75rem;
+		border: 1px solid var(--color-line);
+		border-radius: var(--radius-panel);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		color: var(--color-ink);
+	}
+
+	.headdoor:hover {
+		background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
+	}
+
+	.headdoor-here {
+		border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+		background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
+		cursor: default;
+	}
+
 	.winbar-title {
 		margin-top: 0.25rem;
 		font-family: var(--font-mono);
@@ -544,6 +614,18 @@
 	.doc {
 		overflow-y: auto;
 		background-color: var(--color-bg);
+	}
+
+	/* The music player and the resume are their own furniture, so they run
+	   to the card's edges with no bezel of their own. */
+	.pane-flush {
+		margin: 0;
+	}
+
+	.pane-flush .doc {
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
 	}
 
 	.chip,
@@ -590,6 +672,20 @@
 
 	.winlink:hover {
 		background-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+	}
+
+	/* One line beside a titlebar link; it gives way before the link does. */
+	.winnote {
+		flex: 0 1 auto;
+		min-width: 0;
+		margin-top: 0.25rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		letter-spacing: 0.04em;
+		color: var(--color-muted);
 	}
 
 	.winbtn {

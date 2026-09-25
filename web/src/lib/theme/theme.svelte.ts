@@ -49,6 +49,8 @@ class ThemeState {
 		} catch {
 			/* storage blocked; the default stands */
 		}
+		// A retired theme id from app.html would leave the page unstyled.
+		document.documentElement.dataset.theme = this.current;
 	}
 
 	/**

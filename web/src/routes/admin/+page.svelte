@@ -123,7 +123,7 @@
 </script>
 
 <svelte:head>
-	<title>Admin — slimewave</title>
+	<title>Admin — ShineWave</title>
 </svelte:head>
 
 <PageShell title="Admin" lede="Documents live in SQLite. Drafts are invisible to everyone but you.">

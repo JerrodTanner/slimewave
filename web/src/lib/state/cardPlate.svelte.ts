@@ -73,19 +73,6 @@ class CardPlate {
 		}
 	}
 
-	reset() {
-		this.custom = null;
-		this.opacity = DEFAULT_OPACITY;
-		this.notice = null;
-		this.#apply();
-		try {
-			localStorage.removeItem(PLATE_KEY);
-			localStorage.removeItem(OPACITY_KEY);
-		} catch {
-			/* storage blocked; nothing was kept anyway */
-		}
-	}
-
 	#apply() {
 		if (!browser) return;
 		const root = document.documentElement.style;

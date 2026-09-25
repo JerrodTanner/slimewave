@@ -24,7 +24,7 @@
 </script>
 
 <svelte:head>
-	<title>Writing — slimewave</title>
+	<title>Writing — ShineWave</title>
 </svelte:head>
 
 <PageShell title="Writing" lede="Notes on things I got working, and a few I did not.">

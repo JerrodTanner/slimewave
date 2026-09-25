@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign in — slimewave</title>
+	<title>Sign in — ShineWave</title>
 </svelte:head>
 
 <PageShell
