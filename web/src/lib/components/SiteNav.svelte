@@ -1,7 +1,10 @@
 <script lang="ts">
 	import SettingsMenu from './SettingsMenu.svelte';
 	import SineMark from './SineMark.svelte';
+	import MiniPlayer from './MiniPlayer.svelte';
 	import SiteMission from './SiteMission.svelte';
+	import { player } from '$lib/state/player.svelte';
+	import { ui } from '$lib/state/ui.svelte';
 
 	/**
 	 * The header on the flat pages — the ones that do not render inside the
@@ -26,7 +29,11 @@
 
 		<span class="flex-1"></span>
 
-		<SineMark width={92} />
+		{#if player.current && ui.mode === 'simple'}
+			<MiniPlayer size={52} />
+		{:else}
+			<SineMark width={92} />
+		{/if}
 	</div>
 </header>
 

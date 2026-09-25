@@ -1,12 +1,34 @@
 # slimewave
 
-My personal site: portfolio, resume, writing, a music library, and a 3D hub you
-can walk around in. One Go binary serves all of it.
+My site, live at [jerrodtanner.com](https://jerrodtanner.com): where small
+businesses find me for reporting, databases, and workflows, and where the
+resume lives. The front of it is a 3D corridor you can walk around in, and
+there is a music library behind one of the doors. One Go binary serves all of it.
 
 ```
 go run ./cmd/slimewave          # API + media + the built SPA on :8001
 cd web && npm install && npm run dev   # frontend with hot reload, proxying to :8001
 ```
+
+## What is on it
+
+The main menu is the corridor's window, a tile that makes the pitch
+(back-office automation in healthcare, finance ops and hospitality, with a
+message box and my email), and three doors:
+
+| Door | Route | |
+| --- | --- | --- |
+| Resume | `/resume` | typeset from `web/src/lib/content/resume.md`; the PDF in `PDFs/` is the download |
+| Plan a project | `/plan` | a questionnaire that writes a project brief |
+| Media | `/music` | artist / album / track browsing and a player that survives navigation |
+
+**3D Navigation** is a toggle in the cog menu beside the name. **Off**, the
+default, keeps the corridor a backdrop. **On** adds "click to activate" and
+lets you walk in. The main menu is laid out the same either way.
+
+Both contact paths, the tile's button and the brief, open a `mailto:` draft
+for now. A real `POST /api/contact` is the next thing to build; the plan is in
+`CLAUDE.md`.
 
 ## Why it is built this way
 
@@ -54,17 +76,21 @@ PDFs/               downloadable documents
 
 ## Themes
 
-Five, visitor-selectable, in the top-right switcher. A theme is one block of
+Five, visitor-selectable, in the cog menu beside the name. A theme is one block of
 CSS custom properties in `web/src/app.css` plus an entry in
 `web/src/lib/theme/themes.ts` — nothing else. The `--scene-*` variables in each
 block are read back out with `getComputedStyle` and handed to Babylon, so
 changing the theme reskins the 3D scene too.
 
-Preference is stored in `localStorage`, and synced to the account when signed
-in. An inline script in `app.html` applies it before first paint so there is no
+Preference is stored in `localStorage`. The API can sync it to an account,
+but the site no longer has a sign-in page, so in practice it stays local. An inline script in `app.html` applies it before first paint so there is no
 flash.
 
 ## API
+
+The auth and documents endpoints predate the current frontend. Nothing on the
+site calls documents or sign-in anymore; they are kept in case writing comes
+back.
 
 | Method | Path | Notes |
 | --- | --- | --- |

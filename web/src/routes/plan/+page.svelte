@@ -17,6 +17,37 @@
 	 */
 	const CONTACT = 'jerrod@jerrodtanner.com';
 
+	/**
+	 * Sample pages for the web design section, shown one at a time in a
+	 * modal. Drop the images in web/static/samples/ and list them here in the
+	 * order they should be browsed.
+	 */
+	const SAMPLES: { src: string; caption: string }[] = [
+		{ src: '/samples/lk-front.png', caption: 'LogKing — front page: top raiders and log upload' },
+		{ src: '/samples/lk-rankings.png', caption: 'LogKing — rankings leaderboard' },
+		{ src: '/samples/lk-players.png', caption: 'LogKing — player profile' },
+		{ src: '/samples/ba-eventcheckin.png', caption: 'Booking app — event manifest and check-in' },
+		{ src: '/samples/redeemable.png', caption: 'Vacation certificate receipt' }
+	];
+
+	let samplesDialog = $state<HTMLDialogElement | null>(null);
+	let sampleIndex = $state(0);
+
+	function openSamples() {
+		sampleIndex = 0;
+		samplesDialog?.showModal();
+	}
+
+	function stepSample(by: number) {
+		if (SAMPLES.length === 0) return;
+		sampleIndex = (sampleIndex + by + SAMPLES.length) % SAMPLES.length;
+	}
+
+	function sampleKeys(e: KeyboardEvent) {
+		if (e.key === 'ArrowLeft') stepSample(-1);
+		else if (e.key === 'ArrowRight') stepSample(1);
+	}
+
 	interface Option {
 		value: string;
 		label: string;
@@ -27,8 +58,8 @@
 	const DONT_KNOW = "Neither | Don't Know";
 
 	const DOMAIN: Option[] = [
-		{ value: 'need', label: 'I need a domain' },
-		{ value: 'have', label: 'I have a domain' },
+		{ value: 'need', label: 'I need a new website domain' },
+		{ value: 'have', label: 'Yes' },
 		{ value: 'neither', label: DONT_KNOW, none: true }
 	];
 
@@ -237,7 +268,7 @@
 			<div class="sec">
 				<span class="cap"></span>
 				<div class="sechead"><span class="secname">DOMAIN</span></div>
-				<p class="ask" id="domain-ask">Where does this live on the web?</p>
+				<p class="ask" id="domain-ask">Do you know your website domain name?</p>
 				{@render radios('domain', DOMAIN, domain, (v) => (domain = v))}
 				{#if showDomain}
 					<div class="more">
@@ -259,7 +290,13 @@
 
 			<div class="sec">
 				<span class="cap"></span>
-				<div class="sechead"><span class="secname">WEB DESIGN</span></div>
+				<div class="sechead">
+					<span class="secname">WEB DESIGN</span>
+					<button type="button" class="samples-btn" onclick={openSamples}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+						View sample pages
+					</button>
+				</div>
 				<p class="ask" id="web-ask">Is there a site to build, or one to put right?</p>
 				{@render radios('web', WEB, web, (v) => (web = v))}
 				{#if showWeb}
@@ -429,6 +466,44 @@
 	</div>
 </PageShell>
 
+<!-- Native <dialog>: showModal() brings the backdrop, the focus trap and
+     Escape to close, so only the arrows are ours. A click on the backdrop
+     lands on the dialog itself and closes it. -->
+<dialog
+	bind:this={samplesDialog}
+	class="samples"
+	aria-label="Sample pages"
+	onkeydown={sampleKeys}
+	onclick={(e) => e.target === samplesDialog && samplesDialog?.close()}
+>
+	<div class="samples-bar">
+		<span class="secname">SAMPLE PAGES</span>
+		{#if SAMPLES.length}<span class="samples-count">{sampleIndex + 1} / {SAMPLES.length}</span>{/if}
+		<span class="flex-1"></span>
+		<button type="button" class="samples-close" aria-label="Close" onclick={() => samplesDialog?.close()}>
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+		</button>
+	</div>
+
+	{#if SAMPLES.length}
+		{@const sample = SAMPLES[sampleIndex]}
+		<div class="samples-stage">
+			<button type="button" class="samples-arrow" aria-label="Previous sample" onclick={() => stepSample(-1)} disabled={SAMPLES.length < 2}>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+			</button>
+			<figure>
+				<img src={sample.src} alt={sample.caption} />
+				<figcaption>{sample.caption}</figcaption>
+			</figure>
+			<button type="button" class="samples-arrow" aria-label="Next sample" onclick={() => stepSample(1)} disabled={SAMPLES.length < 2}>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+			</button>
+		</div>
+	{:else}
+		<p class="samples-empty">Sample pages are on their way.</p>
+	{/if}
+</dialog>
+
 <style>
 	/* --- a section ------------------------------------------------------
 	   Ruled like the door tiles on the hub: a hairline box on raised stock
@@ -469,6 +544,131 @@
 		font-size: 0.75rem;
 		font-weight: 600;
 		letter-spacing: 0.12em;
+	}
+
+	/* --- sample pages ---------------------------------------------------- */
+	.samples-btn {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0.7rem;
+		border: 1px solid var(--color-line);
+		border-radius: var(--radius-panel);
+		background-color: var(--color-bg-deep);
+		color: var(--color-ink);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		cursor: pointer;
+	}
+
+	.samples-btn svg {
+		color: var(--color-accent);
+	}
+
+	.samples-btn:hover {
+		border-color: var(--color-accent);
+		background-color: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-deep));
+	}
+
+	.samples {
+		/* The reset zeroes every margin, which is what centres a modal dialog. */
+		margin: auto;
+		width: min(1100px, calc(100vw - 32px));
+		max-height: calc(100dvh - 32px);
+		padding: 0;
+		border: 1px solid var(--color-line);
+		border-radius: calc(var(--radius-panel) + 4px);
+		background-color: var(--color-surface-raised);
+		color: var(--color-ink);
+	}
+
+	.samples::backdrop {
+		background-color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+	}
+
+	.samples-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.8rem;
+		padding: 0.75rem 0.75rem 0.65rem 1rem;
+		border-bottom: 1px solid var(--color-line);
+	}
+
+	.samples-count {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--color-muted);
+	}
+
+	.samples-close,
+	.samples-arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		width: 34px;
+		height: 30px;
+		padding: 0;
+		border: 1px solid var(--color-line);
+		border-radius: var(--radius-panel);
+		background-color: var(--color-surface-raised);
+		color: var(--color-ink);
+		cursor: pointer;
+	}
+
+	.samples-arrow {
+		width: 40px;
+		height: 40px;
+	}
+
+	.samples-close:hover,
+	.samples-arrow:hover:not(:disabled) {
+		background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
+	}
+
+	.samples-arrow:disabled {
+		cursor: default;
+		opacity: 0.35;
+	}
+
+	.samples-stage {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 1rem;
+	}
+
+	.samples-stage figure {
+		flex: 1;
+		min-width: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.samples-stage img {
+		display: block;
+		max-width: 100%;
+		max-height: calc(100dvh - 190px);
+		object-fit: contain;
+		border: 1px solid var(--color-line);
+	}
+
+	.samples-stage figcaption {
+		font-size: 0.875rem;
+		color: var(--color-muted);
+	}
+
+	.samples-empty {
+		margin: 0;
+		padding: 3rem 1rem;
+		text-align: center;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		color: var(--color-muted);
 	}
 
 	/* The same 55% accent the caps are printed in, so the tag reads as part of

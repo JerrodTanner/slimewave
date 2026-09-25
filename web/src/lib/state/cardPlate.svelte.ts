@@ -6,7 +6,7 @@ const OPACITY_KEY = 'slimewave:card-opacity';
 /** The plate that ships with the site. */
 const SHIPPED = "url('/header-tissue.png')";
 /** Percent of the plate that shows through the wash. */
-const DEFAULT_OPACITY = 16;
+const DEFAULT_OPACITY = 50;
 /** Longest edge of a plate once it has been taken in, in px. */
 const MAX_EDGE = 1200;
 
@@ -70,6 +70,18 @@ class CardPlate {
 			// Local storage is a few megabytes; a big picture can still miss.
 			// The plate is already on screen, so this costs only the reload.
 			this.notice = 'Shown, but too big to remember past a reload.';
+		}
+	}
+
+	/** Back to the shipped plate. The opacity is a separate choice and stays. */
+	resetImage() {
+		this.custom = null;
+		this.notice = null;
+		this.#apply();
+		try {
+			localStorage.removeItem(PLATE_KEY);
+		} catch {
+			/* storage blocked; nothing was kept anyway */
 		}
 	}
 

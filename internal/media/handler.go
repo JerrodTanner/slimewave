@@ -36,7 +36,7 @@ func (fsv *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	rel := strings.TrimPrefix(r.URL.Path, fsv.prefix)
 	full, ok := SafeJoin(fsv.root, rel)
-	if !ok {
+	if !ok || underHidden(fsv.root, full) {
 		http.NotFound(w, r)
 		return
 	}

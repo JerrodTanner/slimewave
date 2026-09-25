@@ -64,7 +64,7 @@ Summer 2024 – Summer 2025
 - Audited and rebuilt half of Radiant procedures' charges
   - Worked with revenue integrity, hospital billing, and operations
   - Debugged charge capture routing between Radiant, Cupid, OpTime, and Lumens
-- Pushed 40 tickets to production in six months
+- Parsed CT data streams to catch critically tagged findings, like strokes, and alert doctors right away
 
 ### Data Architect
 

@@ -130,6 +130,44 @@ func TestLibraryScan(t *testing.T) {
 	}
 }
 
+func TestFileServerRefusesHiddenArtist(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "Shown", "album", "a.mp3"), []byte("a"))
+	writeFile(t, filepath.Join(root, "Kept Out", "album", "b.mp3"), []byte("b"))
+	writeFile(t, filepath.Join(root, "Kept Out", hiddenMarker), nil)
+
+	srv := NewFileServer(root, "/media/audio/", time.Hour)
+	for path, want := range map[string]int{
+		"/media/audio/Shown/album/a.mp3":               http.StatusOK,
+		"/media/audio/Kept%20Out/album/b.mp3":          http.StatusNotFound,
+		"/media/audio/Shown/../Kept%20Out/album/b.mp3": http.StatusNotFound,
+	} {
+		rec := httptest.NewRecorder()
+		srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		if rec.Code != want {
+			t.Errorf("%s: status = %d, want %d", path, rec.Code, want)
+		}
+	}
+}
+
+func TestLibraryScanSkipsHiddenArtist(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "Shown", "album", "a.mp3"), []byte("a"))
+	writeFile(t, filepath.Join(root, "Kept Out", "album", "b.mp3"), []byte("b"))
+	writeFile(t, filepath.Join(root, "Kept Out", hiddenMarker), nil)
+
+	lib := NewLibrary(root)
+	if err := lib.Scan(); err != nil {
+		t.Fatal(err)
+	}
+	if artists := lib.Artists(); len(artists) != 1 || artists[0].Name != "Shown" {
+		t.Fatalf("got %+v, want only Shown", artists)
+	}
+	if _, ok := lib.Artist("Kept Out"); ok {
+		t.Error("hidden artist is still reachable by name")
+	}
+}
+
 func TestLibraryScanMissingDirectory(t *testing.T) {
 	lib := NewLibrary(filepath.Join(t.TempDir(), "nope"))
 	if err := lib.Scan(); err != nil {

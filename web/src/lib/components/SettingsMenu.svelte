@@ -76,18 +76,19 @@
 		<div class="menu">
 			<div class="notch"></div>
 
+			<!-- Shown as 3D Navigation off/on; stored as the simple/advanced mode. -->
 			<div class="row">
-				<span class="label">Mode</span>
+				<span class="label">3D Navigation</span>
 				<div class="seg">
 					<button
 						type="button"
 						class:seg-on={ui.mode === 'simple'}
-						onclick={() => ui.setMode('simple')}>simple</button
+						onclick={() => ui.setMode('simple')}>off</button
 					>
 					<button
 						type="button"
 						class:seg-on={ui.mode === 'advanced'}
-						onclick={() => ui.setMode('advanced')}>advanced</button
+						onclick={() => ui.setMode('advanced')}>on</button
 					>
 				</div>
 			</div>
@@ -143,7 +144,7 @@
 						<input type="file" accept="image/*" onchange={pickPlate} />
 					</label>
 					{#if cardPlate.custom}
-						<a class="pick" href={cardPlate.custom} download="card-plate.webp">save</a>
+						<button type="button" class="pick" onclick={() => cardPlate.resetImage()}>reset image</button>
 					{/if}
 				</div>
 

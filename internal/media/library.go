@@ -24,6 +24,33 @@ var audioExtensions = map[string]string{
 	".wav":  "audio/wav",
 }
 
+// hiddenMarker, dropped into an artist's folder, keeps the files on disk but
+// out of the index, and the file server refuses them too, so the artist never
+// reaches the API, the player, or a direct link.
+const hiddenMarker = ".hidden"
+
+// underHidden reports whether full (a path SafeJoin resolved inside root) sits
+// in a top-level folder carrying the hidden marker.
+func underHidden(root, full string) bool {
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		return false
+	}
+	if resolved, err := filepath.EvalSymlinks(absRoot); err == nil {
+		absRoot = resolved
+	}
+	rel, err := filepath.Rel(absRoot, full)
+	if err != nil {
+		return false
+	}
+	top, _, nested := strings.Cut(filepath.ToSlash(rel), "/")
+	if !nested {
+		return false
+	}
+	_, err = os.Stat(filepath.Join(absRoot, top, hiddenMarker))
+	return err == nil
+}
+
 // coverNames are tried in order when looking for album art.
 var coverNames = []string{"cover.jpg", "cover.jpeg", "cover.png", "folder.jpg"}
 
@@ -78,6 +105,11 @@ func (l *Library) Scan() error {
 			return err
 		}
 		if d.IsDir() {
+			if filepath.Dir(p) == filepath.Clean(l.root) {
+				if _, err := os.Stat(filepath.Join(p, hiddenMarker)); err == nil {
+					return filepath.SkipDir
+				}
+			}
 			return nil
 		}
 		ext := strings.ToLower(filepath.Ext(p))

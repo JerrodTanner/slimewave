@@ -28,6 +28,17 @@
 		compact = false,
 		sealed = false
 	}: { onenter?: () => void; compact?: boolean; sealed?: boolean } = $props();
+
+	// A crosshair that follows the mouse: one line edge to edge each way,
+	// crossing at the cursor. Mouse and pen only — a
+	// finger has no hover to follow.
+	let aim = $state<{ x: number; y: number } | null>(null);
+
+	function track(e: PointerEvent) {
+		if (e.pointerType === 'touch') return;
+		const box = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		aim = { x: e.clientX - box.left, y: e.clientY - box.top };
+	}
 </script>
 
 {#snippet cover()}
@@ -52,27 +63,34 @@
 		</g>
 	</svg>
 
+	{#if aim}
+		<span class="cross cross-v" style:transform="translateX({aim.x}px)"></span>
+		<span class="cross cross-h" style:transform="translateY({aim.y}px)"></span>
+	{/if}
+
 	<span class="lockup">
 		<span class="wordmark">ShineWave</span>
 		{#if !compact}
 			<SineMark width={330} weight={1.45} />
 		{/if}
-	</span>
 
-	{#if !sealed}
-		<span class="cta-stack">
-			<span class="cta">
-				<span class="blip"></span>
-				CLICK TO ACTIVATE
+		<!-- Hung below the lockup rather than stacked with it, so the mark sits
+		     in the same place whether or not there is a way in. -->
+		{#if !sealed}
+			<span class="cta-stack">
+				<span class="cta">
+					<span class="blip"></span>
+					CLICK TO ACTIVATE
+				</span>
 			</span>
-		</span>
-	{/if}
+		{/if}
+	</span>
 {/snippet}
 
 {#if sealed}
-	<div class="gate sealed" class:compact>{@render cover()}</div>
+	<div class="gate sealed" class:compact role="presentation" onpointermove={track} onpointerleave={() => (aim = null)}>{@render cover()}</div>
 {:else}
-	<button type="button" class="gate" class:compact onclick={onenter}>{@render cover()}</button>
+	<button type="button" class="gate" class:compact onclick={onenter} onpointermove={track} onpointerleave={() => (aim = null)}>{@render cover()}</button>
 {/if}
 
 <style>
@@ -95,6 +113,25 @@
 			color-mix(in srgb, var(--color-line) 22%, transparent) 0 1px,
 			transparent 1px 3px
 		);
+	}
+
+	.cross {
+		position: absolute;
+		top: 0;
+		left: 0;
+		pointer-events: none;
+		background-color: var(--color-accent);
+		will-change: transform;
+	}
+
+	.cross-v {
+		width: 1px;
+		height: 100%;
+	}
+
+	.cross-h {
+		width: 100%;
+		height: 1px;
 	}
 
 	.schematic {
@@ -180,7 +217,10 @@
 	}
 
 	.cta-stack {
-		position: relative;
+		position: absolute;
+		top: calc(100% + 1.6rem);
+		left: 50%;
+		transform: translateX(-50%);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -199,6 +239,7 @@
 		font-size: 0.9375rem;
 		font-weight: 600;
 		letter-spacing: 0.22em;
+		white-space: nowrap;
 		color: var(--color-ink);
 	}
 
@@ -223,6 +264,10 @@
 	/* --- the tile cover -------------------------------------------------- */
 	.compact {
 		gap: 0.7rem;
+	}
+
+	.compact .cta-stack {
+		top: calc(100% + 0.7rem);
 	}
 
 	.compact .wordmark {

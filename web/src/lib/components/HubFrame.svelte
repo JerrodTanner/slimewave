@@ -3,8 +3,10 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import HubGate from './HubGate.svelte';
+	import IndustriesTile from './IndustriesTile.svelte';
 	import SettingsMenu from './SettingsMenu.svelte';
 	import SineMark from './SineMark.svelte';
+	import MiniPlayer from './MiniPlayer.svelte';
 	import SiteMission from './SiteMission.svelte';
 	import { RESUME_PDF_URL } from '$lib/content/resume';
 	import { crt } from '$lib/game/crt.svelte';
@@ -45,6 +47,8 @@
 	const docked = $derived(active !== null && !playable);
 	/** The titlebar earns its row only when it has something to put in it. */
 	const barred = $derived(active !== null || stage.unsupported || hubGate.open);
+	/** On the hub the pitch tile takes the column above the Media door. The hub wears the simple layout in both modes. */
+	const pitched = $derived(active === null);
 
 	/** The two placeholders the corridor can occupy. Only one exists at a time. */
 	let windowScreen = $state<HTMLElement | null>(null);
@@ -89,7 +93,7 @@
 	 */
 	const DOORS: Record<PortalKey, { tone?: 'loud' | 'alt'; action: string }> = {
 		resume: { action: 'READ' },
-		plan: { tone: 'loud', action: 'START A BRIEF' },
+		plan: { tone: 'loud', action: 'PLAN' },
 		media: { tone: 'alt', action: 'OPEN' }
 	};
 
@@ -119,7 +123,6 @@
 
 <div
 	class="mat pointer-events-auto fixed inset-0 z-20 overflow-y-auto lg:overflow-hidden"
-	class:mat-bar={active !== null && active !== 'media' && player.current !== null}
 >
 	<div class="frame site-card flex min-h-full flex-col gap-4 sm:gap-5">
 		<!-- The heading rule. It carries the one sentence that says what the
@@ -170,12 +173,20 @@
 			<!-- Keyed on the route so the mark restarts its turn on every
 			     navigation. It runs off its own clock from mount, and a walk
 			     through a door is the natural place to put it back to zero. -->
-			{#key path}
-				<SineMark width={108} />
-			{/key}
+			<!-- In simple mode, behind a door, a loaded track takes the mark's
+			     place — not on the main menu, where the Media door's play button
+			     carries it, and not on the Media page, which has its own
+			     transport. Advanced mode keeps the mark everywhere. -->
+			{#if player.current && !playable && active !== null && active !== 'media'}
+				<MiniPlayer size={62} />
+			{:else}
+				{#key path}
+					<SineMark width={108} />
+				{/key}
+			{/if}
 		</header>
 
-		<div class="lay flex min-h-0 flex-1 flex-col" class:lay-simple={!playable}>
+		<div class="lay flex min-h-0 flex-1 flex-col" class:lay-simple={!playable || active === null} class:lay-pitched={pitched}>
 			<!-- the big window: the corridor on the hub, the section's page behind a door -->
 			<section class="win flex flex-col" class:win-hub={active === null} class:win-docked={docked}>
 				<!-- The bar is the page's, and only shows when it has something to
@@ -210,18 +221,14 @@
 
 					<span class="flex-1"></span>
 
-					<!-- The only control the titlebar carries. The hub needs none:
-					     the cover is how the corridor is taken up, and Escape is
-					     how it is put back down. -->
+					<!-- No way-back button here: the header's back link and door
+					     buttons already cover it, and on the hub the cover is how
+					     the corridor is taken up and Escape how it is put down. -->
 					{#if active === 'resume'}
 						<span class="winnote">Another personal project: I host it, keep its offsite backup and maintain the in-game mod behind its leaderboards and rankings for a game I play.</span>
 						<a class="winlink" href="https://logking.duckdns.org/" target="_blank" rel="noopener noreferrer">
 							LOGKING
 							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg>
-						</a>
-					{:else if active && active !== 'media'}
-						<a href="/" class="winbtn winbtn-alt" aria-label="Put the corridor back on the big screen" onclick={(e) => select(e, '/')}>
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3 14 10" /><path d="M3 21l7-7" /></svg>
 						</a>
 					{/if}
 				</div>
@@ -234,7 +241,7 @@
 				-->
 				<div
 					class="pane"
-					class:pane-flush={active === 'media' || active === 'resume'}
+					class:pane-flush={active !== null}
 					class:crt-off={crt.phase === 'off'}
 					class:crt-on={crt.phase === 'on'}
 				>
@@ -267,6 +274,10 @@
 				</div>
 			</section>
 
+			{#if pitched}
+				<div class="pitch"><IndustriesTile /></div>
+			{/if}
+
 			<!-- the doors, three across under the window -->
 			{#if !docked}
 			<aside class="rail">
@@ -294,12 +305,12 @@
 								</div>
 							</div>
 						{:else}
-							<a
-								href={portal.href}
-								class="door"
-								class:door-loud={door.tone === 'loud'}
-								onclick={(e) => select(e, portal.href)}
-							>
+							<!-- A door is a box with its link stretched over it, so the Media
+							     door can raise a play/pause button above the link once a track
+							     is loaded — a button cannot sit inside a link. -->
+							{@const transport = portal.key === 'media' && player.current !== null}
+							<div class="door" class:door-loud={door.tone === 'loud'}>
+								<a class="door-cover" href={portal.href} aria-label={portal.label} onclick={(e) => select(e, portal.href)}></a>
 								<span
 									class="cap"
 									class:cap-dash={portal.key === 'resume'}
@@ -307,13 +318,28 @@
 									class:cap-dash-alt={portal.key === 'media'}
 								></span>
 								<span class="brackets"></span>
-								<span
-									class="door-icon"
-									class:door-icon-loud={door.tone === 'loud'}
-									class:door-icon-alt={door.tone === 'alt'}
-								>
-									{@render doorIcon(portal.key, 21)}
-								</span>
+								{#if transport}
+									<button
+										type="button"
+										class="door-icon door-icon-alt door-play"
+										aria-label={player.playing ? 'Pause' : 'Play'}
+										onclick={() => player.toggle()}
+									>
+										{#if player.playing}
+											<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" /><rect x="14" y="4" width="5" height="16" /></svg>
+										{:else}
+											<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" /></svg>
+										{/if}
+									</button>
+								{:else}
+									<span
+										class="door-icon"
+										class:door-icon-loud={door.tone === 'loud'}
+										class:door-icon-alt={door.tone === 'alt'}
+									>
+										{@render doorIcon(portal.key, 21)}
+									</span>
+								{/if}
 								<span class="door-body">
 									<span class="door-name">{portal.label}</span>
 									<!-- The one exception to a bare tile: what is playing is
@@ -330,7 +356,7 @@
 									{/if}
 								</span>
 								<span class="door-action" class:door-action-loud={door.tone === 'loud'}>{door.action}</span>
-							</a>
+							</div>
 						{/if}
 					</div>
 				{/each}
@@ -353,12 +379,6 @@
 		);
 		background-size: 4px 4px;
 		padding: 12px;
-	}
-
-	/* Behind a door the persistent player shows its bar, which is fixed to the
-	   viewport rather than to the frame. Give it its own room. */
-	.mat-bar {
-		padding-bottom: 84px;
 	}
 
 	.frame {
@@ -525,6 +545,37 @@
 		}
 	}
 
+	/* Pitched: the tile takes a column on the hub. */
+	.pitch {
+		display: flex;
+	}
+
+	/* Simple: the window gives up the third column to the tile. The doors
+	   span all three with the same gap, so the tile lines up with Media.
+	   Below 64rem a third of the width is too narrow for the tile's copy, so
+	   it stacks under the window at full width instead. */
+	@media (min-width: 64rem) {
+		.lay-simple.lay-pitched {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			grid-template-rows: auto 1fr;
+		}
+
+		.lay-simple.lay-pitched .win {
+			grid-column: span 2;
+		}
+
+		.lay-simple.lay-pitched .rail {
+			grid-column: 1 / -1;
+		}
+
+		/* Sized by the row, never by its own copy, so it is exactly the
+		   window's height and scrolls rather than stretching the row. */
+		.lay-simple.lay-pitched .pitch {
+			contain: size;
+		}
+	}
+
 	.winbar {
 		display: flex;
 		align-items: center;
@@ -548,11 +599,12 @@
 		color: var(--color-accent);
 	}
 
+	/* Pushed to the right, so the doors sit beside the mark. */
 	.headdoors {
 		display: flex;
 		flex: 1 0 auto;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-end;
 		gap: 0.5rem;
 	}
 
@@ -616,8 +668,8 @@
 		background-color: var(--color-bg);
 	}
 
-	/* The music player and the resume are their own furniture, so they run
-	   to the card's edges with no bezel of their own. */
+	/* Behind a door the page is its own furniture, so it runs to the card's
+	   edges; only the corridor on the hub wears the bezel. */
 	.pane-flush {
 		margin: 0;
 	}
@@ -688,31 +740,14 @@
 		color: var(--color-muted);
 	}
 
-	.winbtn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 30px;
-		height: 26px;
-		margin-top: 0.25rem;
-		border: 1px solid var(--color-line);
-		border-radius: var(--radius-panel);
-		color: var(--color-ink);
-	}
-
-	.winbtn:hover {
-		background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
-	}
-
-	.winbtn-alt {
-		border-color: color-mix(in srgb, var(--color-accent-2) 65%, transparent);
-		color: var(--color-accent-2);
-	}
-
 	/* --- the rail -------------------------------------------------------- */
+	/* A container, so a door sizes its type to its own width rather than the
+	   viewport's: three across on a narrow window is narrower than one down
+	   on a phone. */
 	.slot {
 		display: flex;
 		min-height: 118px;
+		container-type: inline-size;
 	}
 
 	.door {
@@ -730,8 +765,33 @@
 	}
 
 	.door:hover,
-	.door:focus-visible {
+	.door:has(.door-cover:focus-visible) {
 		background-color: var(--color-surface);
+	}
+
+	/* The link stretched over every door (see the markup). */
+	.door-cover {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+	}
+
+	.door-play {
+		position: relative;
+		z-index: 2;
+		padding: 0;
+		cursor: pointer;
+	}
+
+	.door-play:hover {
+		filter: brightness(0.95);
+		background-color: color-mix(in srgb, var(--color-accent-2) 24%, transparent);
+	}
+
+	.door-play:focus-visible,
+	.door-cover:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
 	}
 
 	.door-loud {
@@ -875,7 +935,10 @@
 
 	.door-name {
 		font-family: var(--font-display);
-		font-size: 1.45rem;
+		/* Sized to fit, not scaled: the longest name ("PLAN A PROJECT") sets
+		   about 9.6× its font size wide, and what the door has left for it is
+		   its width less the padding, icon and action — 215px at full size. */
+		font-size: clamp(0.75rem, calc((100cqi - 215px) / 9.6), 1.45rem);
 		letter-spacing: var(--tracking-display);
 		line-height: 1;
 	}
@@ -896,6 +959,45 @@
 		font-family: var(--font-mono);
 		font-size: 0.75rem;
 		letter-spacing: 0.1em;
+	}
+
+	/* A narrow door gives up padding and icon size before the name wraps. */
+	@container (max-width: 26rem) {
+		.door {
+			gap: 0.7rem;
+			padding: 0.8rem 0.9rem 0.8rem 1.9rem;
+		}
+
+		.door-icon {
+			width: 36px;
+			height: 36px;
+		}
+
+		/* Capped where the full-size rule left off, so shrinking never grows it. */
+		.door-name {
+			font-size: clamp(0.75rem, calc((100cqi - 160px) / 9.6), 1.3rem);
+		}
+
+		.door-action {
+			padding: 0.45rem 0.7rem;
+			font-size: 0.625rem;
+			letter-spacing: 0.08em;
+		}
+	}
+
+	/* Narrower still, the icon goes: the name is the thing to keep on one line. */
+	@container (max-width: 18rem) {
+		.door {
+			padding: 0.7rem 0.7rem 0.7rem 1.6rem;
+		}
+
+		.door-name {
+			font-size: clamp(0.625rem, calc((100cqi - 100px) / 9.6), 0.83rem);
+		}
+
+		.door-icon:not(.door-play) {
+			display: none;
+		}
 	}
 
 	.door-action-loud {

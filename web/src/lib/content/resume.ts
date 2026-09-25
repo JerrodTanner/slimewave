@@ -3,7 +3,7 @@
  *
  * The Markdown next door is the canonical text: it is what the page renders,
  * it is reviewed in a diff, and it does not depend on the database being
- * reachable — same reasoning as `projects.ts`. The PDF is the copy to send
+ * reachable. The PDF is the copy to send
  * along and is served straight off disk by Go.
  */
 import source from './resume.md?raw';

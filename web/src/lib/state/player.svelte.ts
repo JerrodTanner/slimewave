@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { SvelteMap } from 'svelte/reactivity';
 import type { Track } from '$lib/api/client';
 
 const VOLUME_KEY = 'slimewave:volume';
@@ -48,15 +49,31 @@ class PlayerState {
 		}
 		el.volume = this.volume;
 
+		// `timeupdate` only fires about four times a second, which walks the
+		// progress bar in steps; while playing, read the clock every frame.
+		let frame = 0;
+		const tick = () => {
+			this.position = el.currentTime;
+			frame = requestAnimationFrame(tick);
+		};
 		el.addEventListener('timeupdate', () => (this.position = el.currentTime));
 		el.addEventListener('durationchange', () => (this.duration = el.duration || 0));
+		el.addEventListener('playing', () => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(tick);
+		});
 		el.addEventListener('play', () => {
 			this.playing = true;
 			this.blocked = false;
 		});
-		el.addEventListener('pause', () => (this.playing = false));
+		el.addEventListener('pause', () => {
+			cancelAnimationFrame(frame);
+			this.playing = false;
+		});
+		el.addEventListener('waiting', () => cancelAnimationFrame(frame));
 		el.addEventListener('ended', () => this.next());
 		el.addEventListener('error', () => {
+			cancelAnimationFrame(frame);
 			this.playing = false;
 		});
 	}
@@ -142,6 +159,18 @@ class PlayerState {
 }
 
 export const player = new PlayerState();
+
+/**
+ * Artwork by `artist/album`, with the artist's own cover under the bare name
+ * as a fallback. Filled by whoever fetched the library, read by anything
+ * that shows the current track — the API's tracks carry no cover of their own.
+ */
+export const covers = new SvelteMap<string, string>();
+
+export function coverOf(track: Track | null): string | null {
+	if (!track) return null;
+	return covers.get(`${track.artist}/${track.album}`) ?? covers.get(track.artist) ?? null;
+}
 
 export function formatTime(seconds: number): string {
 	if (!Number.isFinite(seconds) || seconds < 0) return '0:00';

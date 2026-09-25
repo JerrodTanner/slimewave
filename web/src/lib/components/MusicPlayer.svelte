@@ -1,30 +1,54 @@
 <script module lang="ts">
 	import { SvelteMap } from 'svelte/reactivity';
 	import { endpoints, type Artist, type ArtistSummary, type Track } from '$lib/api/client';
+	import { covers } from '$lib/state/player.svelte';
 
 	// Module-level so walking between the three music routes, which each mount
 	// their own copy of this component, does not refetch or re-measure.
 	let artistsRequest: Promise<ArtistSummary[]> | null = null;
+	/** In-flight and settled requests. Plain Map on purpose: effects must not subscribe to it. */
+	const artistRequests = new Map<string, Promise<Artist>>();
+	/** Loaded artists, reactive, for the views that list what has arrived so far. */
 	const artistCache = new SvelteMap<string, Artist>();
 	/** Track length in seconds, keyed by stream URL, read off the file's own metadata. */
 	const durations = new SvelteMap<string, number>();
-	/** Album artwork by `artist/album`, so the now-playing strip can show it on any page. */
-	const covers = new SvelteMap<string, string>();
 
+	// A failed request is forgotten, so the next visit tries again instead of
+	// replaying the same rejection until a reload.
 	function loadArtists() {
-		artistsRequest ??= endpoints.artists().then((res) => res.artists);
+		artistsRequest ??= endpoints
+			.artists()
+			.then((res) => res.artists)
+			.catch((err) => {
+				artistsRequest = null;
+				throw err;
+			});
 		return artistsRequest;
 	}
 
-	async function loadArtist(name: string) {
-		const hit = artistCache.get(name);
-		if (hit) return hit;
-		const { artist } = await endpoints.artist(name);
-		artistCache.set(name, artist);
-		for (const album of artist.albums) {
-			if (album.coverUrl) covers.set(`${artist.name}/${album.name}`, album.coverUrl);
+	// The promise is cached, not just the result, so asking twice while a
+	// request is in flight shares it. Reading the reactive cache here would
+	// subscribe the calling effect to every later arrival, which re-ran it
+	// (and re-requested every pending artist) once per response.
+	function loadArtist(name: string) {
+		let request = artistRequests.get(name);
+		if (!request) {
+			request = endpoints
+				.artist(name)
+				.then(({ artist }) => {
+					artistCache.set(name, artist);
+					for (const album of artist.albums) {
+						if (album.coverUrl) covers.set(`${artist.name}/${album.name}`, album.coverUrl);
+					}
+					return artist;
+				})
+				.catch((err) => {
+					artistRequests.delete(name);
+					throw err;
+				});
+			artistRequests.set(name, request);
 		}
-		return artist;
+		return request;
 	}
 
 	// ponytail: the API carries no lengths, so each track's metadata is fetched
@@ -47,7 +71,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { crt } from '$lib/game/crt.svelte';
-	import { formatTime, player } from '$lib/state/player.svelte';
+	import { coverOf, formatTime, player } from '$lib/state/player.svelte';
 
 	/**
 	 * The Media door: one player laid over the three music routes.
@@ -62,7 +86,10 @@
 
 	let artists = $state<ArtistSummary[]>([]);
 	let artist = $state<Artist | null>(null);
-	let error = $state<string | null>(null);
+	/** The library list failing is page-wide; one artist failing is only that route's. */
+	let listError = $state<string | null>(null);
+	let artistError = $state<string | null>(null);
+	const error = $derived(listError ?? artistError);
 	let query = $state('');
 
 	$effect(() => {
@@ -71,12 +98,15 @@
 				artists = list;
 				for (const a of list) if (a.coverUrl && !covers.has(a.name)) covers.set(a.name, a.coverUrl);
 			})
-			.catch((err) => (error = err.message));
+			.catch((err) => (listError = err.message));
 	});
 
+	// The component is reused when only the artist changes, so the last
+	// route's error is cleared here rather than left over the new one.
 	$effect(() => {
 		const name = artistName;
 		artist = null;
+		artistError = null;
 		if (!name) return;
 		loadArtist(name)
 			.then((a) => {
@@ -84,7 +114,7 @@
 				if (name === artistName) artist = a;
 			})
 			.catch((err) => {
-				if (name === artistName) error = err.message;
+				if (name === artistName) artistError = err.message;
 			});
 	});
 
@@ -93,7 +123,8 @@
 	// Home lists every album, so it needs every artist's detail, not just the summaries.
 	$effect(() => {
 		if (artistName) return;
-		for (const a of artists) loadArtist(a.name).catch((err) => (error = err.message));
+		// One artist failing leaves its albums out of the list, not the whole page.
+		for (const a of artists) loadArtist(a.name).catch(() => {});
 	});
 	const allAlbums = $derived(artists.flatMap((a) => artistCache.get(a.name)?.albums ?? []));
 
@@ -134,13 +165,7 @@
 		else player.play(album.tracks, i);
 	}
 
-	const nowCover = $derived(
-		player.current
-			? (covers.get(`${player.current.artist}/${player.current.album}`) ??
-					covers.get(player.current.artist) ??
-					null)
-			: null
-	);
+	const nowCover = $derived(coverOf(player.current));
 	const progress = $derived(player.duration > 0 ? player.position / player.duration : 0);
 </script>
 
@@ -181,7 +206,10 @@
 	<div class="middle">
 		<!-- library rail -->
 		<aside class="box rail">
-			<div class="boxbar">LIBRARY</div>
+			<div class="boxbar">
+				LIBRARY
+				{#if player.current && player.playing}<span class="chip-on playing">PLAYING</span>{/if}
+			</div>
 			<nav class="railnav" aria-label="Library">
 				<a class="hov railitem" href="/music" aria-current={artistName === null ? 'page' : undefined}>
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 3l9 8" /><path d="M5 9.5V21h14V9.5" /><path d="M10 21v-6h4v6" /></svg>
@@ -329,7 +357,6 @@
 					{#if player.blocked}<span class="warn"> · press play to start</span>{/if}
 				</span>
 			</div>
-			{#if player.current && player.playing}<span class="chip-on">PLAYING</span>{/if}
 		</div>
 
 		<div class="transport">
@@ -346,18 +373,23 @@
 			</div>
 			<div class="seek">
 				<span>{formatTime(player.position)}</span>
-				<input
-					type="range"
-					class="bar"
-					style:--fill="{progress * 100}%"
-					min="0"
-					max={player.duration || 0}
-					step="0.5"
-					value={player.position}
-					disabled={!player.current}
-					oninput={(e) => player.seek(Number(e.currentTarget.value))}
-					aria-label="Seek"
-				/>
+				<!-- Drawn with transforms, which move by fractions of a pixel; a native
+				     range snaps its thumb to whole ones, so a slow song ticked along.
+				     The real input sits on top, invisible, and takes the pointer and keys. -->
+				<span class="seekbar">
+					<span class="seek-fill" style:transform="scaleX({progress})"></span>
+					<span class="seek-pos" style:transform="translateX({progress * 100}%)"><span class="seek-thumb"></span></span>
+					<input
+						type="range"
+						min="0"
+						max={player.duration || 0}
+						step="any"
+						value={player.position}
+						disabled={!player.current}
+						oninput={(e) => player.seek(Number(e.currentTarget.value))}
+						aria-label="Seek"
+					/>
+				</span>
 				<span>{formatTime(player.duration)}</span>
 			</div>
 		</div>
@@ -403,11 +435,16 @@
 		background-color: var(--color-surface-raised);
 	}
 
+	/* Fixed height, so a bar with a chip in it and one with bare text put
+	   their rules on the same line across the rail and the panel. */
 	.boxbar {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		padding: 12px 12px 9px;
+		height: 40px;
+		box-sizing: border-box;
+		flex-shrink: 0;
+		padding: 3px 12px 0;
 		border-bottom: 1px solid var(--color-line);
 		font-family: var(--font-mono);
 		font-size: 10px;
@@ -494,6 +531,10 @@
 		letter-spacing: 0.12em;
 		color: var(--color-muted);
 		white-space: nowrap;
+	}
+
+	.playing {
+		margin-left: auto;
 	}
 
 	.chip-on {
@@ -896,6 +937,60 @@
 		font-size: 11px;
 		letter-spacing: normal;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.seekbar {
+		position: relative;
+		flex: 1;
+		height: 4px;
+		background-color: color-mix(in srgb, var(--color-line) 15%, transparent);
+	}
+
+	.seek-fill,
+	.seek-pos {
+		position: absolute;
+		inset: 0;
+		will-change: transform;
+	}
+
+	.seek-fill {
+		background-color: var(--color-accent);
+		transform-origin: left;
+	}
+
+	.seek-thumb {
+		position: absolute;
+		top: 50%;
+		left: -5px;
+		width: 10px;
+		height: 10px;
+		margin-top: -5px;
+		box-sizing: border-box;
+		border: 1px solid var(--color-line);
+		background: var(--color-surface-raised);
+	}
+
+	.seekbar input {
+		position: absolute;
+		inset: -8px 0;
+		width: 100%;
+		height: calc(100% + 16px);
+		margin: 0;
+		opacity: 0;
+		cursor: pointer;
+	}
+
+	.seekbar input:disabled {
+		cursor: default;
+	}
+
+	.seekbar:has(input:disabled) .seek-thumb {
+		opacity: 0.45;
+	}
+
+	.seekbar:has(input:focus-visible) {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 4px;
 	}
 
 	.volume {
