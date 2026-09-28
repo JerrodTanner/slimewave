@@ -1,6 +1,13 @@
 <script lang="ts">
+	import { workMenu } from '$lib/state/workMenu.svelte';
+
 	/**
 	 * The pitch in one tile: the same kind of work, done in three industries.
+	 *
+	 * A row whose `sample` names a work sample is a way in as well as a claim:
+	 * clicking it scrolls the window straight down to that sample's sheet. The
+	 * key is the sample's `key` in the WORK list in WorkPanel. `null` means the
+	 * sheet is not written yet, and the row stays a plain claim until it is.
 	 *
 	 * Icons are stroked `d` strings on a 24×24 grid, the same convention as
 	 * lib/game/doorIcons.ts, so they sit beside the door glyphs without looking
@@ -10,6 +17,7 @@
 		{
 			name: 'Healthcare',
 			tool: 'Epic · Radiant',
+			sample: 'critical-results',
 			proof: 'Parsed CT data streams to catch critically tagged findings, like strokes, and alert doctors right away.',
 			icon: [
 				'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z',
@@ -19,6 +27,7 @@
 		{
 			name: 'Finance ops',
 			tool: 'Python · SQL',
+			sample: null,
 			proof: 'Reconciliation tools that save HR 20 hours a week and catch $12k a month in 401k errors.',
 			icon: [
 				'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z',
@@ -29,6 +38,7 @@
 		{
 			name: 'Hospitality',
 			tool: 'C# · SQL Server',
+			sample: null,
 			proof: 'Booking features for sales reps, and backend queries made up to 10× faster.',
 			icon: [
 				'M3 20a1 1 0 0 1-1-1v-1a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1Z',
@@ -62,7 +72,19 @@
 
 	<ul class="rows">
 		{#each INDUSTRIES as row (row.name)}
-			<li class="row">
+			{@const sample = row.sample}
+			<li class="row" class:row-linked={sample !== null}>
+				<!-- The link is stretched over the whole row, the same way a door
+				     on the rail carries its cover, so the claim itself is the
+				     target rather than a "see more" tacked on the end. -->
+				{#if sample !== null}
+					<button
+						type="button"
+						class="rowcover"
+						aria-label="See the {row.name.toLowerCase()} example"
+						onclick={() => workMenu.show(sample)}
+					></button>
+				{/if}
 				<span class="icon">{@render glyph(row.icon, 22)}</span>
 				<div class="min-w-0">
 					<div class="rowhead">
@@ -71,6 +93,9 @@
 					</div>
 					<p class="proof">{row.proof}</p>
 				</div>
+				{#if sample !== null}
+					<span class="go" aria-hidden="true">{@render glyph(['M5 12h14', 'm13 6 6 6-6 6'], 14)}</span>
+				{/if}
 			</li>
 		{/each}
 	</ul>
@@ -166,6 +191,7 @@
 	}
 
 	.row {
+		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
@@ -173,6 +199,39 @@
 		border: 1px solid var(--color-line);
 		border-radius: var(--radius-panel);
 		background-color: var(--color-bg-deep);
+	}
+
+	/* The cover over a row that has a sheet behind it (see the markup). */
+	.rowcover {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		border-radius: var(--radius-panel);
+		cursor: pointer;
+	}
+
+	.rowcover:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	.row-linked:hover {
+		border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-line));
+		background-color: var(--color-surface);
+	}
+
+	/* The arrow only says which way the row goes, so it stays quiet until the
+	   row is under the pointer. */
+	.go {
+		flex: 0 0 auto;
+		color: var(--color-accent);
+		opacity: 0.45;
+		transition: opacity 120ms ease;
+	}
+
+	.row-linked:hover .go,
+	.row-linked:has(.rowcover:focus-visible) .go {
+		opacity: 1;
 	}
 
 	.icon {

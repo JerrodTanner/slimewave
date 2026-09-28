@@ -8,6 +8,7 @@
 	import SineMark from './SineMark.svelte';
 	import MiniPlayer from './MiniPlayer.svelte';
 	import SiteMission from './SiteMission.svelte';
+	import WorkPanel from './WorkPanel.svelte';
 	import { RESUME_PDF_URL } from '$lib/content/resume';
 	import { crt } from '$lib/game/crt.svelte';
 	import { DOOR_ICON } from '$lib/game/doorIcons';
@@ -96,6 +97,16 @@
 		plan: { tone: 'loud', action: 'PLAN' },
 		media: { tone: 'alt', action: 'OPEN' }
 	};
+
+	/**
+	 * Scrolling a sample up over the corridor is leaving the corridor, so the
+	 * gate goes back to standby rather than being left running under a sheet.
+	 * The threshold is there so a stray wheel click does not shut it.
+	 */
+	function onWindowScroll(event: Event) {
+		const el = event.currentTarget as HTMLElement;
+		if (el.scrollTop > 24 && hubGate.open) hubGate.stand();
+	}
 
 	function select(event: MouseEvent | null, href: string) {
 		event?.preventDefault();
@@ -250,17 +261,29 @@
 						over it by the stage. What is inside shows only when there
 						is no render to cover it — the gate, or the flat fallback.
 					-->
-					<div bind:this={windowScreen} class="glassbox" class:hidden={active !== null}>
-						{#if stage.unsupported}
-							<div class="flex h-full flex-col justify-center gap-2 p-5">
-								<p class="label">No WebGL here, so the corridor is off. The doors still work:</p>
-								{#each PORTALS as portal (portal.href)}
-									<a href={portal.href} class="btn-ghost">{portal.label.toLowerCase()}</a>
-								{/each}
-							</div>
-						{:else if !hubGate.open && active === null}
-							<HubGate sealed={!playable} onenter={() => hubGate.enter()} />
-						{/if}
+					<!--
+						The window is one continuous scroll: the corridor first,
+						then every work sample under it. The corridor's screen is
+						sticky, so the rect handed to the stage never moves however
+						far the samples are scrolled — the sheets ride up over a
+						screen that stays put, and the canvas is never dragged out
+						of the window it was given.
+					-->
+					<div class="scroller" class:hidden={active !== null} onscroll={onWindowScroll}>
+						<div bind:this={windowScreen} class="glassbox screenslot">
+							{#if stage.unsupported}
+								<div class="flex h-full flex-col justify-center gap-2 p-5">
+									<p class="label">No WebGL here, so the corridor is off. The doors still work:</p>
+									{#each PORTALS as portal (portal.href)}
+										<a href={portal.href} class="btn-ghost">{portal.label.toLowerCase()}</a>
+									{/each}
+								</div>
+							{:else if !hubGate.open && active === null}
+								<HubGate sealed={!playable} onenter={() => hubGate.enter()} />
+							{/if}
+						</div>
+
+						<WorkPanel />
 					</div>
 
 					<!--
@@ -545,6 +568,47 @@
 		}
 	}
 
+	/* --- the doors as one tile ------------------------------------------
+	   On the hub the three doors are slices of a single tile rather than
+	   three tiles with air between them. Each slice keeps its cap, its name
+	   and its action; what it gives up is its own box, so the tile reads as
+	   one object and the window can have the height the gaps used to take.
+
+	   Behind a door in advanced mode the rail is still a column of separate
+	   tiles beside the window, which is why this is scoped to the hub. */
+	.lay-simple.lay-pitched .rail {
+		gap: 0;
+		grid-auto-rows: minmax(60px, 1fr);
+		border: 1px solid var(--color-line);
+		border-radius: calc(var(--radius-panel) + 4px);
+		background-color: var(--color-surface-raised);
+		overflow: hidden;
+	}
+
+	.lay-simple.lay-pitched .slot {
+		min-height: 0;
+	}
+
+	/* One hairline between slices, turned to match however they are laid out:
+	   down the tile when they are stacked, across it when they are in a row. */
+	.lay-simple.lay-pitched .slot + .slot {
+		border-top: 1px solid var(--color-line);
+	}
+
+	@media (min-width: 40rem) and (max-width: 63.999rem) {
+		.lay-simple.lay-pitched .slot + .slot {
+			border-top: 0;
+			border-left: 1px solid var(--color-line);
+		}
+	}
+
+	/* The tile owns the edge now. The background is left alone so the Plan
+	   slice keeps its warmer stock. */
+	.lay-simple.lay-pitched .door {
+		border: 0;
+		border-radius: 0;
+	}
+
 	/* Pitched: the tile takes a column on the hub. */
 	.pitch {
 		display: flex;
@@ -554,25 +618,41 @@
 	   span all three with the same gap, so the tile lines up with Media.
 	   Below 64rem a third of the width is too narrow for the tile's copy, so
 	   it stacks under the window at full width instead. */
+	/* Two columns of window beside one column carrying the pitch over the
+	   doors. The window spans both rows, so it runs from the heading rule to
+	   the bottom of the card instead of stopping at a tile-measured height —
+	   which is the whole reason the three doors became one tile.
+
+	   Both rows are given an explicit share — two thirds to the pitch, one to
+	   the doors, which need only enough height to hold three names — and the
+	   tile in the third column is `contain: size`, so neither of the two
+	   things stacked there can size a row from its own copy. */
 	@media (min-width: 64rem) {
 		.lay-simple.lay-pitched {
 			display: grid;
 			grid-template-columns: repeat(3, minmax(0, 1fr));
-			grid-template-rows: auto 1fr;
+			grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
 		}
 
 		.lay-simple.lay-pitched .win {
-			grid-column: span 2;
+			grid-column: 1 / 3;
+			grid-row: 1 / 3;
+		}
+
+		.lay-simple.lay-pitched .win-hub {
+			height: auto;
+			min-height: 0;
+		}
+
+		.lay-simple.lay-pitched .pitch {
+			grid-column: 3;
+			grid-row: 1;
+			contain: size;
 		}
 
 		.lay-simple.lay-pitched .rail {
-			grid-column: 1 / -1;
-		}
-
-		/* Sized by the row, never by its own copy, so it is exactly the
-		   window's height and scrolls rather than stretching the row. */
-		.lay-simple.lay-pitched .pitch {
-			contain: size;
+			grid-column: 3;
+			grid-row: 2;
 		}
 	}
 
@@ -666,6 +746,24 @@
 	.doc {
 		overflow-y: auto;
 		background-color: var(--color-bg);
+	}
+
+	/* The window's continuous scroll. It fills the pane exactly, so the screen
+	   inside it can be a full window tall and still have somewhere to go. */
+	.scroller {
+		position: absolute;
+		inset: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	/* The corridor's screen: a full window tall and pinned there, so scrolling
+	   moves the samples across it rather than taking the render with them. */
+	.glassbox.screenslot {
+		position: sticky;
+		inset: auto;
+		top: 0;
+		height: 100%;
 	}
 
 	/* Behind a door the page is its own furniture, so it runs to the card's
