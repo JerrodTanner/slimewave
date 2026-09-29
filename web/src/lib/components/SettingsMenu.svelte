@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { theme } from '$lib/theme/theme.svelte';
-	import { THEMES, themeById } from '$lib/theme/themes';
+	import { STYLES, themeById, themesForStyle } from '$lib/theme/themes';
 	import { cardPlate } from '$lib/state/cardPlate.svelte';
 	import { ui } from '$lib/state/ui.svelte';
 
 	/**
 	 * The cog in the header card, and what it drops down.
 	 *
-	 * Two rows, and deliberately only two: how much machinery the site admits
-	 * to, and which theme it wears. Both are settings in the real sense —
-	 * chosen once and then left alone — which is what earns them a menu
-	 * instead of a permanent chip in the header.
+	 * How much machinery the site admits to, which furniture it is built from
+	 * (the style), and which palette it wears within that (the theme). All are
+	 * settings in the real sense — chosen once and then left alone — which is
+	 * what earns them a menu instead of a permanent chip in the header. The
+	 * theme row only offers the themes of the style that is on.
 	 *
 	 * The themes are shown as tokens rather than a named list because the
 	 * swatch is the honest preview: three colours are what a theme actually
@@ -18,6 +19,7 @@
 	 * say which is which.
 	 */
 	const active = $derived(themeById(theme.current));
+	const styleThemes = $derived(themesForStyle(active.style));
 
 	function pickPlate(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
@@ -93,6 +95,20 @@
 				</div>
 			</div>
 
+			<div class="row row-style">
+				<span class="label">Style</span>
+				<div class="seg">
+					{#each STYLES as s (s.id)}
+						<button
+							type="button"
+							class:seg-on={active.style === s.id}
+							aria-pressed={active.style === s.id}
+							onclick={() => theme.setStyle(s.id)}>{s.name.toLowerCase()}</button
+						>
+					{/each}
+				</div>
+			</div>
+
 			<div class="row row-themes">
 				<div class="themehead">
 					<span class="label">Theme</span>
@@ -101,7 +117,7 @@
 				<!-- The menu stays open on a pick: choosing a theme is a thing
 				     you do by comparing, not by committing once. -->
 				<div class="tokens">
-					{#each THEMES as t (t.id)}
+					{#each styleThemes as t (t.id)}
 						<button
 							type="button"
 							class="token"
@@ -120,7 +136,9 @@
 			</div>
 
 			<!-- The bench, in both modes. A pick is read off disk and kept in
-			     this browser; nothing is uploaded. -->
+			     this browser; nothing is uploaded. Clean only: Homey's card is
+			     its own wall, with no plate behind it to tune. -->
+			{#if active.style === 'clean'}
 			<div class="row row-plate">
 				<div class="themehead">
 					<span class="label">Backdrop</span>
@@ -152,6 +170,7 @@
 					<p class="notice">{cardPlate.notice}</p>
 				{/if}
 			</div>
+			{/if}
 		</div>
 	{/if}
 </div>
@@ -225,6 +244,10 @@
 		align-items: center;
 		gap: 0.75rem;
 		padding: 10px 11px;
+	}
+
+	.row-style {
+		border-top: 1px solid var(--color-line);
 	}
 
 	.row-themes {

@@ -73,7 +73,7 @@
 	<ul class="rows">
 		{#each INDUSTRIES as row (row.name)}
 			{@const sample = row.sample}
-			<li class="row" class:row-linked={sample !== null}>
+			<li class="row" class:row-linked={sample !== null} data-row={row.name}>
 				<!-- The link is stretched over the whole row, the same way a door
 				     on the rail carries its cover, so the claim itself is the
 				     target rather than a "see more" tacked on the end. -->
@@ -234,6 +234,44 @@
 		opacity: 1;
 	}
 
+	/* Healthcare's sign keeps a heartbeat while its row is under the pointer:
+	   the heart gives a double beat and the pulse line redraws across it like
+	   a monitor trace. 30 is the line's length in the icon's own units. */
+	.row[data-row='Healthcare']:hover .icon svg,
+	.row[data-row='Healthcare']:has(.rowcover:focus-visible) .icon svg {
+		animation: heartbeat 1.1s ease-in-out infinite;
+	}
+
+	.row[data-row='Healthcare']:hover .icon :global(path:nth-child(2)),
+	.row[data-row='Healthcare']:has(.rowcover:focus-visible) .icon :global(path:nth-child(2)) {
+		stroke-dasharray: 30;
+		animation: trace 1.1s linear infinite;
+	}
+
+	@keyframes heartbeat {
+		0%,
+		40%,
+		100% {
+			scale: 1;
+		}
+		12% {
+			scale: 1.18;
+		}
+		26% {
+			scale: 1.08;
+		}
+	}
+
+	@keyframes trace {
+		0% {
+			stroke-dashoffset: 30;
+		}
+		70%,
+		100% {
+			stroke-dashoffset: 0;
+		}
+	}
+
 	.icon {
 		display: inline-flex;
 		align-items: center;
@@ -300,5 +338,85 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
+	}
+
+	/* --- the Homey style -------------------------------------------------
+	   The tile is a cream glazed panel set in a ring of majolica. The ring is
+	   a border-image of a four-by-four checker of the two tiles, which is what
+	   keeps them alternating all the way round whatever the panel's size. */
+	:global([data-style='homey']) .tile {
+		border-style: solid;
+		border-color: transparent;
+		border-width: 26px;
+		border-image: var(--homey-ring) 128 / 26px round;
+		border-radius: 0;
+		padding: 0.65rem 0.9rem 0.7rem;
+		background: linear-gradient(170deg, #f8f2e2, #ebe3ce);
+		box-shadow: 0 10px 24px rgb(0 0 0 / 0.4);
+	}
+
+	:global([data-style='homey']) .cap {
+		display: none;
+	}
+
+	:global([data-style='homey']) .kicker,
+	:global([data-style='homey']) .tool {
+		font-family: var(--font-display);
+		font-variant: small-caps;
+		letter-spacing: 0.16em;
+	}
+
+	/* Tighter than Clean, so the whole pitch fits the panel without a scroll:
+	   the ring takes room Clean's hairline does not. */
+	:global([data-style='homey']) .head {
+		margin: 0.15rem 0 0.45rem;
+		font-size: 1.15rem;
+	}
+
+	:global([data-style='homey']) .rows {
+		gap: 0.35rem;
+	}
+
+	:global([data-style='homey']) .row {
+		gap: 0.6rem;
+		padding: 0.35rem 0.6rem;
+		background-color: transparent;
+		border-color: rgb(29 43 82 / 0.28);
+	}
+
+	:global([data-style='homey']) .proof {
+		margin-top: 0.15rem;
+		font-size: 0.8125rem;
+		line-height: 1.35;
+	}
+
+	:global([data-style='homey']) .foot {
+		gap: 0.35rem;
+		margin-top: 0.5rem;
+		font-size: 0.875rem;
+	}
+
+	:global([data-style='homey']) .message {
+		padding-block: 0.4rem;
+	}
+
+	:global([data-style='homey']) .row-linked {
+		border-color: rgb(29 43 82 / 0.5);
+	}
+
+	:global([data-style='homey']) .row-linked:hover {
+		background-color: rgb(255 252 240 / 0.6);
+	}
+
+	:global([data-style='homey']) .icon {
+		width: 28px;
+		height: 28px;
+		border: 0;
+		background: none;
+		color: var(--color-ink);
+	}
+
+	:global([data-style='homey']) .email {
+		font-family: var(--font-body);
 	}
 </style>

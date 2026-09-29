@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { DEFAULT_THEME, isThemeId, type ThemeId } from './themes';
+import { DEFAULT_THEME, STYLE_DEFAULT_THEME, isThemeId, themeById, type Style, type ThemeId } from './themes';
 
 /**
  * Versioned on purpose.
@@ -12,6 +12,8 @@ import { DEFAULT_THEME, isThemeId, type ThemeId } from './themes';
  */
 const STORAGE_KEY = 'slimewave:theme:v2';
 const LEGACY_STORAGE_KEYS = ['slimewave:theme'];
+/** The theme last worn in each style, so switching style and back returns to it. */
+const LAST_KEY = (style: Style) => `slimewave:theme-last:${style}`;
 
 /** Colours the 3D scene reads from the active theme. */
 export interface ScenePalette {
@@ -34,12 +36,18 @@ class ThemeState {
 	#listeners = new Set<Listener>();
 	#push: ((theme: ThemeId) => void) | null = null;
 
+	/** The furniture the current theme belongs to. */
+	get style(): Style {
+		return themeById(this.current).style;
+	}
+
 	/** Reads whatever the inline script in app.html already applied. */
 	init() {
 		if (!browser) return;
 		const fromDom = document.documentElement.dataset.theme;
 		if (isThemeId(fromDom)) {
 			this.current = fromDom;
+			document.documentElement.dataset.style = this.style;
 			return;
 		}
 		try {
@@ -51,6 +59,7 @@ class ThemeState {
 		}
 		// A retired theme id from app.html would leave the page unstyled.
 		document.documentElement.dataset.theme = this.current;
+		document.documentElement.dataset.style = this.style;
 	}
 
 	/**
@@ -68,9 +77,11 @@ class ThemeState {
 		if (!browser) return;
 
 		document.documentElement.dataset.theme = id;
+		document.documentElement.dataset.style = this.style;
 		if (persist) {
 			try {
 				localStorage.setItem(STORAGE_KEY, id);
+				localStorage.setItem(LAST_KEY(this.style), id);
 			} catch {
 				/* storage blocked; the theme still applies for this visit */
 			}
@@ -79,6 +90,22 @@ class ThemeState {
 		// The CSS variables change on the same frame the attribute does, but
 		// reading them immediately can catch the old values in some browsers.
 		requestAnimationFrame(() => this.#notify());
+	}
+
+	/**
+	 * Switches the furniture. The style has no storage of its own; it lands on
+	 * the theme last worn in it, or on its default the first time.
+	 */
+	setStyle(style: Style) {
+		if (style === this.style) return;
+		let next = STYLE_DEFAULT_THEME[style];
+		try {
+			const last = localStorage.getItem(LAST_KEY(style));
+			if (isThemeId(last) && themeById(last).style === style) next = last;
+		} catch {
+			/* storage blocked; the style's default stands */
+		}
+		this.set(next);
 	}
 
 	/** Applies a theme that came from the server without echoing it back. */

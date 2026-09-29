@@ -17,7 +17,8 @@
 	 * ends at the hand's height, by construction, with no clip at all.
 	 *
 	 * Drawn rather than animated in CSS so it inherits `currentColor` and comes
-	 * out in whatever the active theme calls the accent.
+	 * out in whatever the active theme calls the accent. A container can set
+	 * `--mark-color` to wear it in something else.
 	 */
 	interface Props {
 		/** Rendered width in px; the mark keeps a 2:1 box. */
@@ -87,7 +88,7 @@
 	role="img"
 	aria-label="A point on a circle unrolling into a sine wave"
 	style:display="block"
-	style:color="var(--color-accent)"
+	style:color="var(--mark-color, var(--color-accent))"
 >
 	<g stroke="currentColor" stroke-width={1.6 * weight} opacity="0.55">
 		<path d="M8 54 H100" />

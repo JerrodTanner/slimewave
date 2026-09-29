@@ -108,6 +108,77 @@
 		if (el.scrollTop > 24 && hubGate.open) hubGate.stand();
 	}
 
+	/**
+	 * The window's scrollbar, drawn into its frame instead of the browser's
+	 * gutter, so the corridor keeps its full width. `slideFrac` is how much of
+	 * the scroll is on screen (the thumb's length), `slidePos` how far down it
+	 * is, both 0–1; the stylesheet turns them into a size and an offset.
+	 */
+	let scroller = $state<HTMLElement | null>(null);
+	let slideTrack = $state<HTMLElement | null>(null);
+	let slideFrac = $state(1);
+	let slidePos = $state(0);
+	/** Lit while the window is moving, then left to fade. */
+	let slideLive = $state(false);
+	let slideIdle: ReturnType<typeof setTimeout> | undefined;
+
+	function wakeSlide() {
+		measureSlide();
+		slideLive = true;
+		clearTimeout(slideIdle);
+		slideIdle = setTimeout(() => (slideLive = false), 700);
+	}
+
+	function measureSlide() {
+		const el = scroller;
+		if (!el) return;
+		const max = el.scrollHeight - el.clientHeight;
+		slideFrac = el.scrollHeight > 0 ? el.clientHeight / el.scrollHeight : 1;
+		slidePos = max > 0 ? el.scrollTop / max : 0;
+	}
+
+	// Re-measured on every scroll, and whenever the scroller or anything in it
+	// resizes: the samples under the corridor change height as they lay out.
+	$effect(() => {
+		const el = scroller;
+		if (!el) return;
+		measureSlide();
+		el.addEventListener('scroll', wakeSlide, { passive: true });
+		const ro = new ResizeObserver(measureSlide);
+		ro.observe(el);
+		for (const child of el.children) ro.observe(child);
+		return () => {
+			el.removeEventListener('scroll', wakeSlide);
+			ro.disconnect();
+			clearTimeout(slideIdle);
+		};
+	});
+
+	/** Dragging the thumb scrolls the window by the same proportion. */
+	function dragSlide(event: PointerEvent) {
+		const el = scroller;
+		const track = slideTrack;
+		if (!el || !track) return;
+		event.preventDefault();
+		const thumb = event.currentTarget as HTMLElement;
+		thumb.setPointerCapture(event.pointerId);
+		const startY = event.clientY;
+		const startTop = el.scrollTop;
+		const span = track.clientHeight * (1 - slideFrac);
+		const max = el.scrollHeight - el.clientHeight;
+		const move = (e: PointerEvent) => {
+			if (span > 0) el.scrollTop = startTop + ((e.clientY - startY) / span) * max;
+		};
+		const end = () => {
+			thumb.removeEventListener('pointermove', move);
+			thumb.removeEventListener('pointerup', end);
+			thumb.removeEventListener('pointercancel', end);
+		};
+		thumb.addEventListener('pointermove', move);
+		thumb.addEventListener('pointerup', end);
+		thumb.addEventListener('pointercancel', end);
+	}
+
 	function select(event: MouseEvent | null, href: string) {
 		event?.preventDefault();
 		// A second click while the tube is dark would strand the layout
@@ -269,7 +340,7 @@
 						screen that stays put, and the canvas is never dragged out
 						of the window it was given.
 					-->
-					<div class="scroller" class:hidden={active !== null} onscroll={onWindowScroll}>
+					<div bind:this={scroller} class="scroller" class:hidden={active !== null} onscroll={onWindowScroll}>
 						<div bind:this={windowScreen} class="glassbox screenslot">
 							{#if stage.unsupported}
 								<div class="flex h-full flex-col justify-center gap-2 p-5">
@@ -285,6 +356,23 @@
 
 						<WorkPanel />
 					</div>
+
+					<!-- The scroll thumb, set into the frame beside the screen. Only
+					     there is anything to scroll, and only on the hub. -->
+					{#if active === null && slideFrac < 0.999}
+						<div bind:this={slideTrack} class="slide-track" aria-hidden="true">
+							<!-- Pointer only: the scroller itself still takes the wheel,
+							     touch and keys, so the thumb adds nothing to announce. -->
+							<span
+								class="slide-thumb"
+								class:slide-live={slideLive}
+								role="presentation"
+								style:--slide-frac={slideFrac}
+								style:--slide-pos={slidePos}
+								onpointerdown={dragSlide}
+							></span>
+						</div>
+					{/if}
 
 					<!--
 						Kept mounted on the hub too, so the routed page still owns
@@ -332,7 +420,7 @@
 							     door can raise a play/pause button above the link once a track
 							     is loaded — a button cannot sit inside a link. -->
 							{@const transport = portal.key === 'media' && player.current !== null}
-							<div class="door" class:door-loud={door.tone === 'loud'}>
+							<div class="door" class:door-loud={door.tone === 'loud'} data-door={portal.key}>
 								<a class="door-cover" href={portal.href} aria-label={portal.label} onclick={(e) => select(e, portal.href)}></a>
 								<span
 									class="cap"
@@ -650,9 +738,12 @@
 			contain: size;
 		}
 
+		/* Beside the window the doors stand one above another, a column of
+		   three, rather than three narrow doors across the third column. */
 		.lay-simple.lay-pitched .rail {
 			grid-column: 3;
 			grid-row: 2;
+			grid-template-columns: 1fr;
 		}
 	}
 
@@ -755,6 +846,68 @@
 		inset: 0;
 		overflow-y: auto;
 		overscroll-behavior: contain;
+		/* No gutter: the bar is drawn into the frame instead (.slide-*), so
+		   the corridor keeps the window's full width. */
+		scrollbar-width: none;
+	}
+
+	.scroller::-webkit-scrollbar {
+		display: none;
+	}
+
+	/* --- the scroll thumb in the frame ----------------------------------
+	   The track is laid over the strip beside the screen: the pane's margin
+	   here, the window's frame in Homey (--slide-w is that strip's width).
+	   The element is the whole strip, so it is easy to grab; what shows is a
+	   slim bar drawn by ::after. */
+	.slide-track {
+		--slide-w: 12px;
+
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		right: calc(var(--slide-w) * -1);
+		z-index: 2;
+		width: var(--slide-w);
+		pointer-events: none;
+	}
+
+	.slide-thumb {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: calc((100% - var(--slide-frac) * 100%) * var(--slide-pos));
+		height: calc(var(--slide-frac) * 100%);
+		min-height: 24px;
+		pointer-events: auto;
+		touch-action: none;
+		cursor: grab;
+		opacity: 0.45;
+		transition: opacity 150ms ease;
+	}
+
+	.slide-thumb:active {
+		cursor: grabbing;
+	}
+
+	.slide-thumb::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 50%;
+		width: 4px;
+		margin-left: -2px;
+		border-radius: 999px;
+		background-color: var(--color-accent);
+	}
+
+	/* Lit only while the window is scrolling or the thumb is held, so it
+	   stays part of the frame the rest of the time. */
+	.slide-live,
+	.slide-thumb:active {
+		opacity: 1;
+		transition-duration: 80ms;
 	}
 
 	/* The corridor's screen: a full window tall and pinned there, so scrolling
@@ -862,9 +1015,11 @@
 		color: var(--color-ink);
 	}
 
+	/* The door under the pointer takes the accent's wash; the loud door is
+	   told apart by its action button instead, so only one door is ever lit. */
 	.door:hover,
 	.door:has(.door-cover:focus-visible) {
-		background-color: var(--color-surface);
+		background-color: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-raised));
 	}
 
 	/* The link stretched over every door (see the markup). */
@@ -892,9 +1047,6 @@
 		outline-offset: 2px;
 	}
 
-	.door-loud {
-		background-color: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-raised));
-	}
 
 	/* --- the open door, which is where the corridor lives now ------------ */
 	.live {
@@ -1010,6 +1162,80 @@
 		border-radius: var(--radius-panel);
 		background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
 		color: var(--color-accent);
+	}
+
+	.door:hover .door-icon,
+	.door:has(.door-cover:focus-visible) .door-icon {
+		background-color: color-mix(in srgb, var(--color-accent) 22%, transparent);
+	}
+
+	/* Each sign moves in its own way once, on the way in: the resume tilts
+	   like a page, the plan's clipboard hops, the music note swings. They use
+	   the separate translate and rotate properties, which compose with any
+	   transform the sign already wears (Homey turns it on its point). */
+	.door-icon svg {
+		transform-origin: 50% 50%;
+	}
+
+	.door[data-door='resume']:hover .door-icon svg {
+		animation: door-tilt 600ms ease-out;
+	}
+
+	.door[data-door='plan']:hover .door-icon svg {
+		animation: door-hop 650ms ease-out;
+	}
+
+	.door[data-door='media']:hover .door-icon svg {
+		animation: door-swing 750ms ease-out;
+	}
+
+	@keyframes door-tilt {
+		0% {
+			rotate: 0deg;
+			translate: 0 0;
+		}
+		35% {
+			rotate: -12deg;
+			translate: 0 -2px;
+		}
+		65% {
+			rotate: 7deg;
+			translate: 0 -1px;
+		}
+		100% {
+			rotate: 0deg;
+			translate: 0 0;
+		}
+	}
+
+	@keyframes door-hop {
+		0%,
+		55%,
+		100% {
+			translate: 0 0;
+		}
+		28% {
+			translate: 0 -5px;
+		}
+		78% {
+			translate: 0 -2px;
+		}
+	}
+
+	@keyframes door-swing {
+		0%,
+		100% {
+			rotate: 0deg;
+		}
+		25% {
+			rotate: 14deg;
+		}
+		50% {
+			rotate: -10deg;
+		}
+		75% {
+			rotate: 5deg;
+		}
 	}
 
 	.door-icon-loud {
@@ -1139,5 +1365,334 @@
 		.live {
 			min-height: 220px;
 		}
+	}
+
+	/* --- the Homey style -------------------------------------------------
+	   The same layout built from things instead of hairlines: the wall runs
+	   edge to edge with no card on it, the heading rule is a cream strip
+	   between two majolica tiles, the window gets a real frame, and the doors
+	   are leaded glass (Tile & Glass) or cut into stone (Walnut). Frames are
+	   border-images, so they size to whatever box the layout hands them; the
+	   pictures are in static/homey and named by the theme tokens in app.css. */
+	:global([data-style='homey']) .mat {
+		padding: 0;
+		background: var(--homey-wall);
+		background-color: var(--homey-wall-color);
+	}
+
+	:global([data-style='homey']) .frame {
+		border: 0;
+		border-radius: 0;
+		background: none;
+	}
+
+	:global([data-style='homey']) .head {
+		border: 0;
+		border-radius: 0;
+		padding: 0.6rem 96px;
+		background:
+			var(--homey-majolica-a) left center / 72px 72px no-repeat,
+			var(--homey-majolica-b) right center / 72px 72px no-repeat,
+			linear-gradient(#2a3a6e, #2a3a6e) center 7px / calc(100% - 164px) 2px no-repeat,
+			linear-gradient(#2a3a6e, #2a3a6e) center calc(100% - 7px) / calc(100% - 164px) 2px no-repeat,
+			linear-gradient(170deg, #f8f2e2, #ebe3ce);
+		box-shadow:
+			0 6px 14px rgb(0 0 0 / 0.35),
+			inset 0 1px 0 rgb(255 255 255 / 0.6),
+			inset 0 -2px 3px rgb(80 60 30 / 0.15);
+	}
+
+	/* The end tiles are a fixed square, so a heading rule that has wrapped
+	   onto two lines drops them rather than stretching them. */
+	@media (max-width: 40rem) {
+		:global([data-style='homey']) .head {
+			padding: 0.8rem 18px;
+			background: linear-gradient(170deg, #f8f2e2, #ebe3ce);
+		}
+	}
+
+	:global([data-style='homey']) .wordmark {
+		font-family: var(--font-display);
+		font-style: italic;
+		font-weight: 700;
+		color: var(--color-ink);
+	}
+
+	:global([data-style='homey']) .divider {
+		width: 2px;
+		background-color: #2a3a6e;
+		opacity: 0.7;
+	}
+
+	:global([data-style='homey']) .win {
+		/* Visible, so the scroll thumb can sit in the frame; nothing else in
+		   the window reaches past its own box. */
+		overflow: visible;
+		border-radius: 0;
+		border-style: solid;
+		border-color: transparent;
+		background-color: var(--color-bg);
+		box-shadow: 0 12px 26px rgb(0 0 0 / 0.45);
+	}
+
+	/* An oak casement: 28px of moulding in the picture, 14px on screen. */
+	:global([data-theme='glass']) .win {
+		border-width: 14px;
+		border-image: url('/homey/frame-oak.jpg') 28 / 14px stretch;
+	}
+
+	/* A low stone surround set into the wall, the sill a little deeper than
+	   the band. The slices are the picture's band plus its reveal. */
+	:global([data-theme='walnut']) .win {
+		border-width: 33px 33px 27px;
+		border-image: url('/homey/frame-stone.jpg') 66 66 54 66 / 33px 33px 27px 33px stretch;
+	}
+
+	:global([data-style='homey']) .pane {
+		margin: 0;
+	}
+
+	/* In Homey the thumb is a brass bar riding a groove cut in the frame. */
+	:global([data-theme='glass']) .slide-track {
+		--slide-w: 14px;
+	}
+
+	:global([data-theme='walnut']) .slide-track {
+		--slide-w: 33px;
+	}
+
+	:global([data-style='homey']) .slide-track::before {
+		content: '';
+		position: absolute;
+		top: 6px;
+		bottom: 6px;
+		left: 50%;
+		width: 2px;
+		margin-left: -1px;
+		border-radius: 999px;
+		background-color: rgb(20 12 6 / 0.45);
+		box-shadow: 1px 0 0 rgb(255 245 225 / 0.25);
+	}
+
+	:global([data-style='homey']) .slide-thumb::after {
+		width: 6px;
+		margin-left: -3px;
+		background: linear-gradient(90deg, #7a5520, #e8c877 45%, #9a7430);
+		box-shadow:
+			0 1px 3px rgb(0 0 0 / 0.5),
+			inset 0 1px 0 rgb(255 245 210 / 0.6);
+	}
+
+	:global([data-theme='walnut']) .slide-thumb::after {
+		width: 8px;
+		margin-left: -4px;
+	}
+
+	:global([data-style='homey']) .glassbox {
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
+	}
+
+	/* The doors, as one framed tile on the hub. */
+	:global([data-style='homey']) .lay-simple.lay-pitched .rail {
+		border-style: solid;
+		border-color: transparent;
+		border-width: 8px;
+		border-radius: 0;
+		box-shadow: 0 10px 24px rgb(0 0 0 / 0.45);
+	}
+
+	:global([data-theme='glass']) .lay-simple.lay-pitched .rail {
+		border-image: url('/homey/frame-oak.jpg') 28 / 8px stretch;
+		background-color: #1a120c;
+	}
+
+	:global([data-theme='walnut']) .lay-simple.lay-pitched .rail {
+		border-image: url('/homey/frame-gilt.jpg') 16 / 8px stretch;
+		background: url('/homey/stone.jpg') center / cover;
+	}
+
+	/* Between doors: a heavy came in glass, a carved groove in stone. */
+	:global([data-theme='glass']) .lay-simple.lay-pitched .slot + .slot {
+		border-top: 5px solid #1a120c;
+	}
+
+	:global([data-theme='walnut']) .lay-simple.lay-pitched .slot + .slot {
+		border-top: 5px solid rgb(25 18 10 / 0.75);
+		box-shadow: inset 0 2px 0 rgb(255 248 230 / 0.35);
+	}
+
+	/* Under the window (40rem to 64rem) the rail is three across, so there the
+	   divider stands between doors; stacked, it runs across. */
+	@media (min-width: 40rem) and (max-width: 63.999rem) {
+		:global([data-theme='glass']) .lay-simple.lay-pitched .slot + .slot {
+			border-top: 0;
+			border-left: 5px solid #1a120c;
+		}
+
+		:global([data-theme='walnut']) .lay-simple.lay-pitched .slot + .slot {
+			border-top: 0;
+			border-left: 5px solid rgb(25 18 10 / 0.75);
+			box-shadow: inset 2px 0 0 rgb(255 248 230 / 0.35);
+		}
+	}
+
+	:global([data-style='homey']) .door {
+		padding-left: 1.2rem;
+		border-radius: 0;
+		background: none;
+	}
+
+	/* In 3D mode behind a door the doors are separate tiles down the side, one
+	   of them the corridor's own screen. Each gets the hub tile's frame and
+	   ground, so they read as the same doors cut apart. */
+	:global([data-style='homey']) .lay:not(.lay-pitched) .door,
+	:global([data-style='homey']) .live {
+		border-style: solid;
+		border-color: transparent;
+		border-width: 8px;
+		border-radius: 0;
+		box-shadow: 0 10px 24px rgb(0 0 0 / 0.45);
+	}
+
+	:global([data-theme='glass']) .lay:not(.lay-pitched) .door,
+	:global([data-theme='glass']) .live {
+		border-image: url('/homey/frame-oak.jpg') 28 / 8px stretch;
+	}
+
+	:global([data-theme='glass']) .live {
+		background-color: #1a120c;
+	}
+
+	:global([data-theme='walnut']) .lay:not(.lay-pitched) .door,
+	:global([data-theme='walnut']) .live {
+		border-image: url('/homey/frame-gilt.jpg') 16 / 8px stretch;
+		background: url('/homey/stone.jpg') center / cover;
+	}
+
+	/* The ground is a picture here, so a wash of colour would sit under it
+	   unseen; the tile brightens instead. */
+	:global([data-style='homey']) .lay:not(.lay-pitched) .door:hover,
+	:global([data-style='homey']) .lay:not(.lay-pitched) .door:has(.door-cover:focus-visible) {
+		filter: brightness(1.07);
+	}
+
+	/* The live tile's title is a cream strip, like the heading rule. */
+	:global([data-style='homey']) .livebar {
+		border-bottom: 0;
+		background: linear-gradient(170deg, #f8f2e2, #ebe3ce);
+		color: var(--color-ink);
+	}
+
+	:global([data-style='homey']) .livebar-title,
+	:global([data-style='homey']) .livebar-chip {
+		font-family: var(--font-display);
+		font-variant: small-caps;
+		letter-spacing: 0.14em;
+	}
+
+	:global([data-style='homey']) .livescreen {
+		margin: 6px;
+		border: 0;
+		border-radius: 0;
+	}
+
+	:global([data-style='homey']) .door:hover,
+	:global([data-style='homey']) .door:has(.door-cover:focus-visible) {
+		background-color: rgb(255 244 220 / 0.18);
+	}
+
+	:global([data-style='homey']) .cap,
+	:global([data-style='homey']) .brackets {
+		display: none;
+	}
+
+	/* Each door's own run of glass: green, warm, blue. */
+	:global([data-theme='glass']) .door[data-door='resume'] {
+		background: url('/homey/glass-resume.jpg') left center / auto 100% repeat-x;
+	}
+
+	:global([data-theme='glass']) .door[data-door='plan'] {
+		background: url('/homey/glass-plan.jpg') left center / auto 100% repeat-x;
+	}
+
+	:global([data-theme='glass']) .door[data-door='media'] {
+		background: url('/homey/glass-media.jpg') left center / auto 100% repeat-x;
+	}
+
+	/* The sign, set on its point: an opal jewel in glass, a marble inlay in stone. */
+	:global([data-style='homey']) .door-icon {
+		width: 40px;
+		height: 40px;
+		margin: 0 6px;
+		transform: rotate(45deg);
+		border-radius: 0;
+		color: var(--color-ink);
+	}
+
+	:global([data-style='homey']) .door-icon svg {
+		transform: rotate(-45deg);
+	}
+
+	:global([data-theme='glass']) .door-icon {
+		border: 3px solid #1a120c;
+		background: url('/homey/glass-opal.jpg') center / cover;
+	}
+
+	:global([data-theme='walnut']) .door-icon {
+		border: 1px solid rgb(40 30 20 / 0.6);
+		background: url('/homey/marble.jpg') center / cover;
+		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.4);
+	}
+
+	:global([data-style='homey']) .door-name {
+		font-family: var(--font-display);
+		font-variant: small-caps;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--color-ink);
+	}
+
+	:global([data-style='homey']) .door-action,
+	:global([data-style='homey']) .door-action-loud {
+		font-family: var(--font-display);
+		font-variant: small-caps;
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		color: var(--color-ink);
+	}
+
+	:global([data-style='homey']) .door-action-loud {
+		color: var(--color-accent);
+	}
+
+	/* In glass the name and the action are opal panes leaded into the run. */
+	:global([data-theme='glass']) .door-body,
+	:global([data-theme='glass']) .door-action {
+		border: 3px solid #1a120c;
+		border-radius: 0;
+		background: url('/homey/glass-opal.jpg') center / 100% 100%;
+	}
+
+	:global([data-theme='glass']) .door-body {
+		justify-content: center;
+		padding: 0.4rem 0.9rem;
+	}
+
+	/* In stone they are cut straight into the wall. */
+	:global([data-theme='walnut']) .door-name,
+	:global([data-theme='walnut']) .door-action {
+		color: #1a1209;
+		text-shadow: 0 1px 0 rgb(255 248 232 / 0.6);
+	}
+
+	:global([data-theme='walnut']) .door-action {
+		border: 0;
+		background: none;
+	}
+
+	:global([data-theme='walnut']) .door-action-loud {
+		color: var(--color-accent);
 	}
 </style>

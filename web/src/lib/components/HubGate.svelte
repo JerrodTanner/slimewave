@@ -309,4 +309,66 @@
 			display: none;
 		}
 	}
+
+	/* --- the Homey style -------------------------------------------------
+	   The cover is a frosted pane over a still of the lamplit hall rather
+	   than a schematic: the live corridor sits under the page's wall here and
+	   cannot show through, so the picture stands in for it. The still is
+	   blurred past the edge of the box so the blur does not fade at the rim. */
+	:global([data-style='homey']) .gate {
+		overflow: hidden;
+		background: #140d08;
+	}
+
+	:global([data-style='homey']) .gate::before {
+		content: '';
+		position: absolute;
+		inset: -40px;
+		background: var(--homey-hall) center / cover;
+		filter: blur(17px) saturate(1.1);
+	}
+
+	:global([data-style='homey']) .gate::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-color: rgb(24 14 6 / 0.14);
+	}
+
+	:global([data-style='homey']) .hazard,
+	:global([data-style='homey']) .bracket,
+	:global([data-style='homey']) .schematic,
+	:global([data-style='homey']) .cross {
+		display: none;
+	}
+
+	:global([data-style='homey']) .lockup {
+		z-index: 1;
+		--mark-color: #e8c877;
+		filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.55));
+	}
+
+	:global([data-style='homey']) .wordmark {
+		font-family: var(--font-display);
+		font-style: italic;
+		font-weight: 700;
+		color: #f3e7c6;
+		text-shadow:
+			0 3px 18px rgb(0 0 0 / 0.6),
+			0 0 40px rgb(240 200 120 / 0.25);
+	}
+
+	:global([data-style='homey']) .cta {
+		border-color: #f3e7c6;
+		background-color: rgb(20 12 6 / 0.35);
+		font-family: var(--font-display);
+		font-variant: small-caps;
+		color: #f3e7c6;
+	}
+
+	:global([data-style='homey']) .gate:hover .cta,
+	:global([data-style='homey']) .gate:focus-visible .cta {
+		background-color: #f3e7c6;
+		color: var(--color-ink);
+	}
 </style>

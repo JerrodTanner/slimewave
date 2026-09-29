@@ -141,6 +141,62 @@
 	--scene-light: #cfe4ff;
 }
 
+/* --- the Homey style ------------------------------------------------------
+   Furniture made of things rather than rules: glazed tile, leaded glass,
+   wood and stone, from pictures in static/homey. The two themes share one
+   palette for the copy — navy ink and rust on cream glaze, since every
+   panel the copy sits on is cream — and differ in what the room is made of.
+   `--homey-*` names those pictures, and each component that has Homey
+   furniture reads them under [data-style='homey']. */
+[data-theme='glass'],
+[data-theme='walnut'] {
+	--color-bg: #efe8d6;
+	--color-bg-deep: #fbf6e8;
+	--color-surface: #f6f0df;
+	--color-surface-raised: #fbf7ec;
+	--color-line: #9aa2b8;
+	--color-line-bright: #5f6d93;
+	--color-ink: #1d2b52;
+	--color-muted: #4a5a8a;
+	--color-accent: #8a2e14;
+	--color-accent-ink: #f3ecd8;
+	--color-accent-2: #2f5a3e;
+	--color-warn: #8a4b00;
+
+	/* No webfonts in a one-binary site: these are the old-style serifs most
+	   systems carry, Palatino first for its small caps. */
+	--font-display: 'Palatino Linotype', 'Book Antiqua', Palatino, 'Iowan Old Style', Georgia, serif;
+	--font-body: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+	--radius-panel: 3px;
+	--tracking-display: 0;
+
+	--homey-majolica-a: url('/homey/majolica-a.jpg');
+	--homey-majolica-b: url('/homey/majolica-b.jpg');
+	--homey-ring: url('/homey/majolica-ring.jpg');
+	--homey-hall: url('/homey/hall.jpg');
+
+	/* Lamplight in the corridor. */
+	--scene-sky: #1a120b;
+	--scene-fog: #2a1d12;
+	--scene-ground: #3a2616;
+	--scene-grid: #6b4a2a;
+	--scene-portal: #d9a441;
+	--scene-portal-alt: #3d8a8f;
+	--scene-light: #ffd7a0;
+}
+
+/* Tile & Glass: a sage tiled room, an oak window, doors of leaded glass. */
+[data-theme='glass'] {
+	--homey-wall: url('/homey/wall-sage.jpg') 0 0 / 304px 304px;
+	--homey-wall-color: #6d8a84;
+}
+
+/* Walnut: walnut boards, a low stone window, doors cut into the same stone. */
+[data-theme='walnut'] {
+	--homey-wall: url('/homey/wall-walnut.jpg') 0 0 / 512px 360px;
+	--homey-wall-color: #3b2415;
+}
+
 @layer base {
 	/* The plate behind the main card, and how much of it shows. Kept as custom
 	   properties so the advanced panel can retune them live; these are the
@@ -155,7 +211,8 @@
 		color-scheme: dark;
 	}
 
-	[data-theme='newsprint'] {
+	[data-theme='newsprint'],
+	[data-style='homey'] {
 		color-scheme: light;
 	}
 

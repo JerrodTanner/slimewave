@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="newsprint">
+<html lang="en" data-theme="newsprint" data-style="clean">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -17,6 +17,9 @@
 				localStorage.removeItem('slimewave:theme');
 				var stored = localStorage.getItem('slimewave:theme:v2');
 				if (stored) document.documentElement.dataset.theme = stored;
+				// The style follows from the theme; these are the Homey ones
+				// (each theme's `style` in lib/theme/themes.ts).
+				if (stored === 'glass' || stored === 'walnut') document.documentElement.dataset.style = 'homey';
 			} catch (e) {
 				/* private mode, blocked storage: the default theme is fine */
 			}

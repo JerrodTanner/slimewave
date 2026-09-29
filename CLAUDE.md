@@ -48,8 +48,17 @@ then the tile.
     `lay-pitched` in `HubFrame.svelte`. The logo in `HubGate.svelte` sits in the
     same place in both modes; the CTA is absolutely positioned below it, so it
     never shifts the logo.
-- **Themes** — five, each one block of CSS variables in `app.css` plus an entry in
+- **Themes** — each one block of CSS variables in `app.css` plus an entry in
   `themes.ts`. The `--scene-*` variables are read back and handed to Babylon.
+- **Styles** — the cog menu's **Style** row: **Clean** (the hairline panels;
+  Newsprint, Aero, Slimewave, Deepwater) or **Homey** (tile, leaded glass, wood
+  and stone; Tile & Glass, Walnut). A theme belongs to one style, and the style
+  is never stored: it follows from the theme and is set as `data-style` on
+  `<html>` (before first paint too, in `app.html`). Homey's furniture is scoped
+  `[data-style='homey']` blocks in `HubFrame`, `IndustriesTile` and `HubGate`,
+  using pictures in `web/static/homey/`. Those came from the Urban 128x resource
+  pack and a Euro Tile Store product photo, with no license found for either;
+  replace them before promoting the style.
 - **Backdrop** — the card-plate image behind the frame. Its opacity defaults to 50%
   (`cardPlate.svelte.ts`) and can be adjusted in the cog menu.
 
