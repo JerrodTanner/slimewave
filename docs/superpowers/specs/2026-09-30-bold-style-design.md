@@ -68,8 +68,11 @@ From top to bottom:
 1. **Hero, full viewport height.** The existing header stays. Below it:
    - The headline **"Less busywork. More business."**, centered, at about
      `clamp(3rem, 9vw, 9rem)`, on two lines on phones.
-   - The pitch in small muted type: "I build reporting, databases, and
-     workflows for businesses."
+   - A sub-line in small muted type: "Get your business digitized. Move more
+     work, faster, with the team you already have." The site header keeps its
+     own sentence ("I build reporting, databases, and workflows for
+     businesses."): the header says what Jerrod does, and the hero says what
+     the visitor gets.
 2. **Camo band, full-bleed.** It breaks out of the frame's padding and spans
    the viewport.
    - The camo is an inline SVG of blob paths, written by hand and filled with
