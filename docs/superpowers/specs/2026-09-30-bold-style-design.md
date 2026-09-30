@@ -105,9 +105,14 @@ From top to bottom:
      | 07 | Inventory tracking | Built a web tool for managing a university's textbook inventory (Keiser) | Databases |
      | 08 | Moving between systems | Automated the order crosswalk for a hospital's move from Cerner to Epic (Broward Health) | Databases |
 
-     The rows live in a `JOBS` array in `BoldHero.svelte`. The icons are stroked
-     `d` strings on a 24×24 grid (the `doorIcons.ts` convention): chart, contact
-     card, bell, receipt, double check, tag, box, and swap arrows, and every proof
+     The rows live in a `JOBS` array in `BoldHero.svelte`. The icons are `d` strings
+     on a 24×24 grid (the `doorIcons.ts` convention), drawn with more detail
+     than the door icons: report page with bars, contact card, ringing bell
+     with an alert dot, receipt with a dollar sign, checklist, card with a tag,
+     stacked boxes, and two databases with swap arrows. Two additions to the
+     convention: the body path is marked to take a 16% tint of the stroke
+     color, and an accent path (the bell dot, the tag) is solid in a new
+     `--camo-pop` token (gold in Street). and every proof
      line must trace to `resume.md`, the same rule as the tile.
 3. **CTA.** "What's eating your week?" with a **Plan a Project** button to
    `/plan`.
