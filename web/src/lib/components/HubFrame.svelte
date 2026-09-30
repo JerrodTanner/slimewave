@@ -96,6 +96,24 @@
 		});
 	});
 
+	/**
+	 * Where the page lands after a door. Walking through one always opens the
+	 * section at the top, even from far down the Bold page. Coming back to
+	 * the hub under Bold lands on the menu rather than the pitch, since the
+	 * visitor has already read it; a fresh load still starts at the top.
+	 */
+	let lastActive: PortalKey | null = null;
+	$effect(() => {
+		const here = active;
+		untrack(() => {
+			const from = lastActive;
+			lastActive = here;
+			if (!mat) return;
+			if (here !== null) mat.scrollTop = 0;
+			else if (from !== null && bold && menu) menu.scrollIntoView({ block: 'start' });
+		});
+	});
+
 	const progress = $derived(player.duration > 0 ? player.position / player.duration : 0);
 
 	/**
