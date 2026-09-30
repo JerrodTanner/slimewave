@@ -99,7 +99,7 @@ From top to bottom:
      | 01 | Weekly business reports | Led radiology reporting for hospital operations, tailored to make each team faster (Broward Health) | Reporting |
      | 01a | Self-serve dashboards for every team | Built Epic SlicerDicer reports for department managers, doctors and nurses (Broward Health; **needs a resume bullet first**) | Reporting |
      | 01b | Log monitoring & error alerts | Built an app to parse large log volumes, speeding up production debugging (Lennar) | Reporting |
-     | 02 | Customer history, in one place | Built booking-app features that put what sales reps need right in front of them (Vacatia) | Databases |
+     | 02 | Customer history, in one place | Tracked tenant and business-name history across leased office space, helping it bring in an extra $1M a year (**needs a resume bullet first**) | Databases |
      | 03 | Business & customer notifications | Flagged critical CT findings, like strokes, and alerted doctors right away (Broward Health) | Workflows |
      | 04 | Invoices & billing | Automated invoice generation for rent collection, and rebuilt half a department's charges (Keiser, Broward Health) | Workflows |
      | 05 | Reconciliation & error checks | Caught $12k a month in 401k matching errors; saved HR 20 hours a week on benefits (Keiser) | Reporting |
