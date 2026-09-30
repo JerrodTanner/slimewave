@@ -73,8 +73,9 @@ From top to bottom:
      own sentence ("I build reporting, databases, and workflows for
      businesses."): the header says what Jerrod does, and the hero says what
      the visitor gets.
-2. **Camo band, full-bleed.** It breaks out of the frame's padding and spans
-   the viewport.
+2. **Camo band, full-bleed.** It breaks out of the frame's padding and runs
+   edge to edge of the frame (a full-viewport bleed would add a horizontal
+   scrollbar, since `100vw` counts the vertical one).
    - The camo is an inline SVG, written by hand and filled with
      `--camo-1/2/3`: five large smooth shapes on one 1400×900 canvas (sliced
      to cover, not tiled), plus a soft diagonal sheen. The three tones are
