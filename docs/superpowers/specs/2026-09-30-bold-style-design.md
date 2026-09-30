@@ -101,7 +101,7 @@ From top to bottom:
      | 01b | Log monitoring & error alerts | Built an app to parse large log volumes, speeding up production debugging (Lennar) | Reporting |
      | 02 | Customer history, in one place | Tracked tenant and business-name history across leased office space, helping it bring in an extra $1M a year (**needs a resume bullet first**) | Databases |
      | 03 | Business & customer notifications | Flagged critical CT findings, like strokes, and alerted doctors right away (Broward Health) | Workflows |
-     | 04 | Invoices & billing | Automated invoice generation for rent collection, and rebuilt half a department's charges (Keiser, Broward Health) | Workflows |
+     | 04 | Invoices & billing | Automated invoice generation for rent collection (Keiser) | Workflows |
      | 05 | Reconciliation & error checks | Caught $12k a month in 401k matching errors; saved HR 20 hours a week on benefits (Keiser) | Reporting |
      | 06 | Payment & expense labeling | Auto-labeled payment types, saving accounts payable 10 hours a week (Keiser) | Workflows |
      | 07 | Inventory tracking | Built a web tool for managing a university's textbook inventory (Keiser) | Databases |
