@@ -9,6 +9,10 @@ import { DEFAULT_THEME, STYLE_DEFAULT_THEME, isThemeId, themeById, type Style, t
  * style. Changing the key is a one-time reset: old values are ignored, the new
  * default lands, and the next deliberate choice is stored under the new key.
  * Bump it when the default changes, not when a theme is merely edited.
+ *
+ * Not bumped for Bold, on purpose. A theme is only stored when someone picks
+ * one, so visitors who never chose already get the new default; a bump would
+ * only override the people who deliberately chose something else.
  */
 const STORAGE_KEY = 'slimewave:theme:v2';
 const LEGACY_STORAGE_KEYS = ['slimewave:theme'];

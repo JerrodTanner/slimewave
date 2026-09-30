@@ -112,6 +112,89 @@
 	--scene-light: #ffffff;
 }
 
+/* --- street: the Bold house style ----------------------------------------
+   Apple's calm on the page, one loud streetwear band on the front page. The
+   camo tones sit close together so it reads as camo at a glance and stays
+   quiet up close; white on the lightest of them is 8:1. The scene values are
+   newsprint's, because the corridor is paused under Bold and only needs
+   something sane to hold. */
+[data-theme='street'] {
+	--color-bg: #f4f2ec;
+	--color-bg-deep: #ffffff;
+	--color-surface: #ffffff;
+	--color-surface-raised: #ffffff;
+	--color-line: #d6d2c7;
+	--color-line-bright: #111110;
+	--color-ink: #111110;
+	--color-muted: #5b5850;
+	--color-accent: #223f1f;
+	--color-accent-ink: #ffffff;
+	--color-accent-2: #d8a31c;
+	--color-warn: #a35c00;
+
+	--font-display: 'Helvetica Neue', 'Arial Black', system-ui, sans-serif;
+	--font-body: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+	--radius-panel: 2px;
+	--tracking-display: -0.05em;
+
+	--paper-mat: #e9e6de;
+	--paper-mat-ink: #e9e6de;
+
+	--camo-1: #1b3319;
+	--camo-2: #223f1f;
+	--camo-3: #2b4d27;
+	--camo-ink: #ffffff;
+	--camo-plate: rgb(0 0 0 / 0.42);
+	--camo-pop: #d8a31c;
+
+	--scene-sky: #26272c;
+	--scene-fog: #1c1d22;
+	--scene-ground: #2f3036;
+	--scene-grid: #74787e;
+	--scene-portal: #223f1f;
+	--scene-portal-alt: #d8a31c;
+	--scene-light: #ffffff;
+}
+
+/* --- night: Street after dark ---------------------------------------------- */
+[data-theme='night'] {
+	--color-bg: #0b0a0e;
+	--color-bg-deep: #050407;
+	--color-surface: #141219;
+	--color-surface-raised: #1b1822;
+	--color-line: #26232e;
+	--color-line-bright: #f4f2f8;
+	--color-ink: #f4f2f8;
+	--color-muted: #9a94aa;
+	--color-accent: #8f63e0;
+	--color-accent-ink: #ffffff;
+	--color-accent-2: #e0b84a;
+	--color-warn: #ffb347;
+
+	--font-display: 'Helvetica Neue', 'Arial Black', system-ui, sans-serif;
+	--font-body: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+	--radius-panel: 2px;
+	--tracking-display: -0.05em;
+
+	--paper-mat: #050407;
+	--paper-mat-ink: #050407;
+
+	--camo-1: #1c1233;
+	--camo-2: #24183f;
+	--camo-3: #2e1f50;
+	--camo-ink: #ffffff;
+	--camo-plate: rgb(0 0 0 / 0.42);
+	--camo-pop: #e0b84a;
+
+	--scene-sky: #0b0a0e;
+	--scene-fog: #141219;
+	--scene-ground: #1b1822;
+	--scene-grid: #3a3448;
+	--scene-portal: #8f63e0;
+	--scene-portal-alt: #e0b84a;
+	--scene-light: #f4f2f8;
+}
+
 /* --- deepwater: the quiet one, for actually reading things --- */
 [data-theme='deepwater'] {
 	--color-bg: #070d18;
@@ -212,6 +295,7 @@
 	}
 
 	[data-theme='newsprint'],
+	[data-theme='street'],
 	[data-style='homey'] {
 		color-scheme: light;
 	}
@@ -467,6 +551,11 @@
 			var(--card-plate);
 		background-size: cover;
 		background-position: center;
+	}
+
+	/* Bold is a flat page: the plate is Clean's furniture. */
+	[data-style='bold'] .site-card {
+		background-image: none;
 	}
 
 	.prose-slim {

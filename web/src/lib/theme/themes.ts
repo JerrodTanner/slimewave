@@ -7,6 +7,8 @@
  * them to the UI.
  */
 export type ThemeId =
+	| 'street'
+	| 'night'
 	| 'newsprint'
 	| 'aero'
 	| 'slimewave'
@@ -15,13 +17,16 @@ export type ThemeId =
 	| 'walnut';
 
 /**
- * The two looks the site can wear. A style is the furniture — flat hairline
+ * The three looks the site can wear. A style is the furniture — flat hairline
  * panels, or tile, glass, wood and stone — and a theme is a palette within
  * it, which is why every theme belongs to exactly one style. The style is
  * never stored on its own: it follows from the theme, so the two can never
  * disagree.
+ *
+ * Bold is the odd one out: it has no furniture and no 3D. Its front page is
+ * a scroll-down pitch instead of a window onto the corridor.
  */
-export type Style = 'clean' | 'homey';
+export type Style = 'bold' | 'clean' | 'homey';
 
 export interface Theme {
 	id: ThemeId;
@@ -34,9 +39,23 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
 	{
+		id: 'street',
+		name: 'Street',
+		blurb: 'Off-white, heavy black type, a band of forest camo. The house style.',
+		style: 'bold',
+		swatch: ['#f4f2ec', '#223f1f', '#d8a31c']
+	},
+	{
+		id: 'night',
+		name: 'Night',
+		blurb: 'Black, white type, a band of midnight-purple camo.',
+		style: 'bold',
+		swatch: ['#0b0a0e', '#24183f', '#e0b84a']
+	},
+	{
 		id: 'newsprint',
 		name: 'Newsprint',
-		blurb: 'Paper white, hairline black, one print green. The house style.',
+		blurb: 'Paper white, hairline black, one print green.',
 		style: 'clean',
 		swatch: ['#eceae2', '#0b7a34', '#1f39ff']
 	},
@@ -77,16 +96,18 @@ export const THEMES: Theme[] = [
 	}
 ];
 
-export const DEFAULT_THEME: ThemeId = 'newsprint';
+export const DEFAULT_THEME: ThemeId = 'street';
 
 export const STYLES: { id: Style; name: string }[] = [
+	{ id: 'bold', name: 'Bold' },
 	{ id: 'clean', name: 'Clean' },
 	{ id: 'homey', name: 'Homey' }
 ];
 
 /** Where a style lands the first time it is picked. */
 export const STYLE_DEFAULT_THEME: Record<Style, ThemeId> = {
-	clean: DEFAULT_THEME,
+	bold: DEFAULT_THEME,
+	clean: 'newsprint',
 	homey: 'glass'
 };
 

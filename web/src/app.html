@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="newsprint" data-style="clean">
+<html lang="en" data-theme="street" data-style="bold">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -16,10 +16,15 @@
 				// before the current house style must not outrank it.
 				localStorage.removeItem('slimewave:theme');
 				var stored = localStorage.getItem('slimewave:theme:v2');
-				if (stored) document.documentElement.dataset.theme = stored;
-				// The style follows from the theme; these are the Homey ones
-				// (each theme's `style` in lib/theme/themes.ts).
-				if (stored === 'glass' || stored === 'walnut') document.documentElement.dataset.style = 'homey';
+				if (stored) {
+					document.documentElement.dataset.theme = stored;
+					// The style follows from the theme (each theme's `style` in
+					// lib/theme/themes.ts). The tag above defaults to Bold, so a
+					// stored Clean theme has to say so or it would paint as Bold.
+					var homey = stored === 'glass' || stored === 'walnut';
+					var bold = stored === 'street' || stored === 'night';
+					document.documentElement.dataset.style = homey ? 'homey' : bold ? 'bold' : 'clean';
+				}
 			} catch (e) {
 				/* private mode, blocked storage: the default theme is fine */
 			}
