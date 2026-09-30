@@ -86,10 +86,10 @@ From top to bottom:
    - White on every camo tone must reach a contrast of at least 4.5:1, checked
      by calculation, not by eye.
    - The heading **"*Time savers* & workflow upgrades"** ("Time savers" on a
-     tilted white label), then eight page-wide rows. Each row has an icon badge (a white tilted square with
-     the row number pinned to its corner), a generic job a
-     business would recognize, a "Done it" line from the resume, and a sticker
-     tag (Reporting / Databases / Workflows). The rows sit on a dark
+     tilted white label), then eight page-wide rows. Each row has an icon badge (a straight 64px white rounded square with
+     a 38px icon), the row number in small mono above a generic job a business
+     would recognize, a "Done it" line from the resume, and a straight tag
+     (Reporting / Databases / Workflows). The rows sit on a dark
      translucent plate with a thick white left edge. On hover a row slides
      right and flips to white, and its badge flips to camo, which is turned off under reduced motion.
      On phones they collapse to two columns.
@@ -106,8 +106,8 @@ From top to bottom:
      | 08 | Moving between systems | Automated the order crosswalk for a hospital's move from Cerner to Epic (Broward Health) | Databases |
 
      The rows live in a `JOBS` array in `BoldHero.svelte`. The icons are stroked
-     `d` strings on a 24×24 grid (the `doorIcons.ts` convention): chart, person
-     with clock, bell, receipt, double check, tag, box, and swap arrows, and every "Done it"
+     `d` strings on a 24×24 grid (the `doorIcons.ts` convention): chart, contact
+     card, bell, receipt, double check, tag, box, and swap arrows, and every "Done it"
      line must trace to `resume.md`, the same rule as the tile.
 3. **CTA.** "What's eating your week?" with a **Plan a Project** button to
    `/plan`.
