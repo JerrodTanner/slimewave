@@ -6,15 +6,15 @@ Status: approved in chat, awaiting spec review
 ## Intent
 
 The front page should sell the business at first glance, the way an Apple or
-BAPE landing page does: one huge message, then proof. The look is a hybrid.
+BAPE landing page does: one huge message, then what can be done for them. The look is a hybrid.
 The pacing and whitespace come from Apple, and there is one loud streetwear
-accent: a camo band behind one real number and a list of jobs to automate.
+accent: a camo band behind a list of jobs to automate.
 
 The audience is unchanged: small-business owners who might hire Jerrod for
 back-office automation, and recruiters.
 
-Success means that a first-time visitor sees the headline and the big number
-before anything else, and one click takes them to `/plan`.
+Success means that a first-time visitor sees the headline before anything
+else, then the list of jobs, and one click takes them to `/plan`.
 
 ## Decisions
 
@@ -22,7 +22,7 @@ before anything else, and one click takes them to `/plan`.
 | --- | --- |
 | Where the pitch lives | A new third style, **Bold**, which becomes the default |
 | Relationship to the existing menu | The hero fills the first screen, and the current menu sits one scroll below |
-| Loud accent | An original camo band in three tones of the theme |
+| Loud accent | An original camo band: large smooth shapes in three close tones of the theme |
 | Headline | "Less busywork. More business." |
 | 3D | None under Bold. There is no window and no corridor, and the 3D Navigation toggle is hidden |
 | Returning visitors | A stored theme wins. The storage key is not bumped |
@@ -75,25 +75,24 @@ From top to bottom:
      the visitor gets.
 2. **Camo band, full-bleed.** It breaks out of the frame's padding and spans
    the viewport.
-   - The camo is an inline SVG of blob paths, written by hand and filled with
-     `--camo-1/2/3`. It is original work, so it needs no `CREDITS.md` entry,
-     and it is `aria-hidden`.
-   - On it is one figure, very large, in heavy white type, with a caption:
-     **20 HRS**: back per week · HR reconciliation.
-   - The figure counts up once, the first time the band enters the viewport
-     (IntersectionObserver). With `prefers-reduced-motion` they render at their
-     final values. The final value is always in the markup, so screen
-     readers never hear a mid-count number.
+   - The camo is an inline SVG, written by hand and filled with
+     `--camo-1/2/3`: five large smooth shapes on one 1400×900 canvas (sliced
+     to cover, not tiled), plus a soft diagonal sheen. The three tones are
+     close together, so it reads as camo at a glance and stays quiet up close.
+     The rows on top are the loud part. It is original work, so it needs no
+     `CREDITS.md` entry, and it is `aria-hidden`.
+   - Tones: Street `#1b3319 / #223f1f / #2b4d27`, Night
+     `#1c1233 / #24183f / #2e1f50`.
    - White on every camo tone must reach a contrast of at least 4.5:1, checked
      by calculation, not by eye.
-   - Below the figure, still on the camo: **"What I can automate *for
-     you*"** and eight page-wide rows. Each row has an icon badge (a white tilted square with
+   - The heading **"*Time savers* & workflow upgrades"** ("Time savers" on a
+     tilted white label), then eight page-wide rows. Each row has an icon badge (a white tilted square with
      the row number pinned to its corner), a generic job a
      business would recognize, a "Done it" line from the resume, and a sticker
      tag (Reporting / Databases / Workflows). The rows sit on a dark
      translucent plate with a thick white left edge. On hover a row slides
-     right and flips to white, and its badge flips to camo, which is turned off under reduced motion. On
-     phones they collapse to two columns.
+     right and flips to white, and its badge flips to camo, which is turned off under reduced motion.
+     On phones they collapse to two columns.
 
      | # | Job | Done it (resume source) | Tag |
      | --- | --- | --- | --- |
@@ -114,9 +113,6 @@ From top to bottom:
    `/plan`.
 4. **The main menu, without the window.** The industries tile runs full
    width, with the three doors across below it.
-
-The figure is already on `resume.md` (20 hours per week). That keeps the rule that every claim on the site appears on
-the resume.
 
 `.mat` currently has `lg:overflow-hidden`. Under Bold on the hub, it scrolls on
 desktop too.
@@ -143,7 +139,7 @@ desktop too.
 ## 5. Docs
 
 `CLAUDE.md` gets a short paragraph on Bold: it is the default style, it has
-the hero and number wall, and it has no window, no corridor and no 3D mode.
+the hero and the camo band of automation rows, and it has no window, no corridor and no 3D mode.
 The four-things description of the main menu gets a note that it applies to
 Clean and Homey.
 
@@ -152,9 +148,9 @@ Clean and Homey.
 - `cd web && npm run check` stays at 0 errors. `go test ./...` still passes
   (the backend does not change).
 - In a real browser:
-  - Bold at desktop and phone widths: the hero, the band, the count-up and the
+  - Bold at desktop and phone widths: the hero, the band, the row hovers and the
     CTA.
-  - With reduced-motion on, the figure renders at its final value.
+  - With reduced-motion on, the rows do not slide.
   - Walk through each door and back. The door page opens at the top, and the
     hub comes back to the menu.
   - Switch between Street, Night, Newsprint and Tile & Glass. Leaving Bold
