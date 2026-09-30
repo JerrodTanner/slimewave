@@ -86,7 +86,7 @@ From top to bottom:
      readers never hear a mid-count number.
    - White on every camo tone must reach a contrast of at least 4.5:1, checked
      by calculation, not by eye.
-   - Below the figures, still on the camo: **"What I can automate *for
+   - Below the figure, still on the camo: **"What I can automate *for
      you*"** and eight page-wide rows. Each row has an icon badge (a white tilted square with
      the row number pinned to its corner), a generic job a
      business would recognize, a "Done it" line from the resume, and a sticker
