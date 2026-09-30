@@ -22,7 +22,7 @@ The main menu has four things:
 
 Under **Bold** (the default style) the main menu is different: a hero ("Less
 busywork. More business."), a camo band of automation rows (`JOBS` in
-`BoldHero.svelte`, each proof line also on the resume), a CTA to `/plan`,
+`BoldHero.svelte`), a CTA to `/plan`,
 then the tile and doors. There is no window. The four things above describe
 Clean and Homey.
 
@@ -30,8 +30,9 @@ Clean and Homey.
 builds a plain-text project brief. The brief goes out as a `mailto:` draft;
 nothing is posted or stored.
 
-Every claim on the tile (and on Bold's automation rows) must also be on the
-resume. Change `resume.md` first, then the tile.
+Never edit `resume.md` (or the resume PDF) unless Jerrod explicitly asks.
+Claims on the tile and the automation rows do not have to appear on the
+resume.
 
 ## How it works
 

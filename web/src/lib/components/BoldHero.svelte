@@ -6,8 +6,7 @@
 	 * The page is Apple-calm and the band is the one loud thing. The camo is
 	 * drawn here by hand (original work, so nothing to credit) as a few large
 	 * shapes in close tones, sliced to cover rather than tiled, so it never
-	 * reads as wallpaper. Every proof line is on resume.md; change it there
-	 * first, the same rule as the industries tile.
+	 * reads as wallpaper.
 	 */
 	let { select }: { select: (event: MouseEvent | null, href: string) => void } = $props();
 

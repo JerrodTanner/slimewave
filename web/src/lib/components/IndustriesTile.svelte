@@ -11,7 +11,7 @@
 	 *
 	 * Icons are stroked `d` strings on a 24×24 grid, the same convention as
 	 * lib/game/doorIcons.ts, so they sit beside the door glyphs without looking
-	 * borrowed. The figures come from the resume; change them there first.
+	 * borrowed.
 	 */
 	const INDUSTRIES = [
 		{
