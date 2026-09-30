@@ -20,12 +20,18 @@ The main menu has four things:
   and the email address.
 - **Three doors** — Resume (`/resume`), Plan a Project (`/plan`), Media (`/music`).
 
+Under **Bold** (the default style) the main menu is different: a hero ("Less
+busywork. More business."), a camo band of automation rows (`JOBS` in
+`BoldHero.svelte`, each proof line also on the resume), a CTA to `/plan`,
+then the tile and doors. There is no window. The four things above describe
+Clean and Homey.
+
 `/plan` is a questionnaire (domain, web design, reporting, database) that
 builds a plain-text project brief. The brief goes out as a `mailto:` draft;
 nothing is posted or stored.
 
-Every claim on the tile must also be on the resume. Change `resume.md` first,
-then the tile.
+Every claim on the tile (and on Bold's automation rows) must also be on the
+resume. Change `resume.md` first, then the tile.
 
 ## How it works
 
@@ -39,7 +45,8 @@ then the tile.
   `portals.ts` holds the door list, `portalForPath` and `isFramed`.
 - **Modes** (`ui.svelte.ts`, default `simple`, saved in localStorage). The cog menu
   labels them **3D Navigation off** (`simple`) / **on** (`advanced`); the code
-  keeps the simple/advanced names:
+  keeps the simple/advanced names. Under Bold the mode is always simple and
+  the row is hidden; the stored choice (`#chosen`) is kept for the other styles:
   - *simple* — the corridor is a sealed backdrop, with no way in. Behind a door, the doors move into the header.
   - *advanced* — "click to activate" opens the corridor for first-person play.
     Behind a door, the doors stay in a side column.
@@ -50,7 +57,9 @@ then the tile.
     never shifts the logo.
 - **Themes** — each one block of CSS variables in `app.css` plus an entry in
   `themes.ts`. The `--scene-*` variables are read back and handed to Babylon.
-- **Styles** — the cog menu's **Style** row: **Clean** (the hairline panels;
+- **Styles** — the cog menu's **Style** row: **Bold** (the default; Street,
+  Night: a scroll-down pitch with no furniture, no window and no 3D, and the
+  stage paused but still mounted), **Clean** (the hairline panels;
   Newsprint, Aero, Slimewave, Deepwater) or **Homey** (tile, leaded glass, wood
   and stone; Tile & Glass, Walnut). A theme belongs to one style, and the style
   is never stored: it follows from the theme and is set as `data-style` on
@@ -70,6 +79,7 @@ then the tile.
 | Resume (the page) | `web/src/lib/content/resume.md`, typeset by `routes/resume/+page.svelte` |
 | Resume (download) | `PDFs/Jerrod Tanner Resume.pdf`. **Separate file, re-export by hand when `resume.md` changes** |
 | Industries tile copy | `INDUSTRIES` array in `IndustriesTile.svelte` |
+| Automation rows (Bold) | `JOBS` array in `BoldHero.svelte` |
 | Plan-page sample images | `web/static/samples/`, listed in `SAMPLES` in `routes/plan/+page.svelte` |
 | Music | `audio/Artist/Album/Track.mp3`, indexed from disk |
 
