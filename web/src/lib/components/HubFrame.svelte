@@ -2,6 +2,7 @@
 	import { untrack, type Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import BoldHero from './BoldHero.svelte';
 	import HubGate from './HubGate.svelte';
 	import IndustriesTile from './IndustriesTile.svelte';
 	import SettingsMenu from './SettingsMenu.svelte';
@@ -18,6 +19,7 @@
 	import { gameViewport } from '$lib/game/viewport.svelte';
 	import { formatTime, player } from '$lib/state/player.svelte';
 	import { ui } from '$lib/state/ui.svelte';
+	import { theme } from '$lib/theme/theme.svelte';
 
 	/**
 	 * The furniture: a heading rule, one big window, and the doors as a rail
@@ -50,6 +52,19 @@
 	const barred = $derived(active !== null || stage.unsupported || hubGate.open);
 	/** On the hub the pitch tile takes the column above the Media door. The hub wears the simple layout in both modes. */
 	const pitched = $derived(active === null);
+	/**
+	 * Bold is a page you scroll, not a window you look through: the pitch
+	 * above the menu, and no corridor at all. Without the window there is no
+	 * placeholder to claim, so the canvas is left stranded at nothing and the
+	 * stage pauses (see GameStage).
+	 */
+	const bold = $derived(theme.style === 'bold');
+	/** The Bold hub: the pitch and the menu, with no window. */
+	const boldHub = $derived(bold && active === null);
+
+	/** The page's own scroller, and the menu the way back lands on. */
+	let mat = $state<HTMLElement | null>(null);
+	let menu = $state<HTMLElement | null>(null);
 
 	/** The two placeholders the corridor can occupy. Only one exists at a time. */
 	let windowScreen = $state<HTMLElement | null>(null);
@@ -204,7 +219,8 @@
 {/snippet}
 
 <div
-	class="mat pointer-events-auto fixed inset-0 z-20 overflow-y-auto lg:overflow-hidden"
+	bind:this={mat}
+	class="mat pointer-events-auto fixed inset-0 z-20 overflow-y-auto {bold ? '' : 'lg:overflow-hidden'}"
 >
 	<div class="frame site-card flex min-h-full flex-col gap-4 sm:gap-5">
 		<!-- The heading rule. It carries the one sentence that says what the
@@ -268,7 +284,22 @@
 			{/if}
 		</header>
 
-		<div class="lay flex min-h-0 flex-1 flex-col" class:lay-simple={!playable || active === null} class:lay-pitched={pitched}>
+		{#if boldHub}
+			<BoldHero {select} />
+		{/if}
+
+		<div
+			bind:this={menu}
+			class="lay flex min-h-0 flex-1 flex-col"
+			class:lay-simple={!playable || active === null}
+			class:lay-pitched={pitched}
+			class:lay-bold={boldHub}
+		>
+			{#if boldHub}
+				<!-- The hub route still owns its <svelte:head>; with no window
+				     to hold it, it mounts here, out of sight. -->
+				<div class="hidden">{@render children()}</div>
+			{:else}
 			<!-- the big window: the corridor on the hub, the section's page behind a door -->
 			<section class="win flex flex-col" class:win-hub={active === null} class:win-docked={docked}>
 				<!-- The bar is the page's, and only shows when it has something to
@@ -384,6 +415,7 @@
 					</div>
 				</div>
 			</section>
+			{/if}
 
 			{#if pitched}
 				<div class="pitch"><IndustriesTile /></div>
@@ -744,6 +776,31 @@
 			grid-column: 3;
 			grid-row: 2;
 			grid-template-columns: 1fr;
+		}
+	}
+
+	/* --- bold: the tile over the doors, no window ------------------------
+	   With the window gone the grid above has nothing to span, so the menu
+	   is one column: the tile at full width, the three doors across under
+	   it. Later in the sheet than the pitched grid, so it wins at every
+	   width. */
+	.lay-simple.lay-pitched.lay-bold {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.lay-bold .pitch {
+		contain: none;
+	}
+
+	@media (min-width: 40rem) {
+		.lay-simple.lay-pitched.lay-bold .rail {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.lay-simple.lay-pitched.lay-bold .slot + .slot {
+			border-top: 0;
+			border-left: 1px solid var(--color-line);
 		}
 	}
 
