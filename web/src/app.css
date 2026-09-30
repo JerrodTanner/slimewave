@@ -167,7 +167,7 @@
 	--color-ink: #f4f2f8;
 	--color-muted: #9a94aa;
 	--color-accent: #8f63e0;
-	--color-accent-ink: #ffffff;
+	--color-accent-ink: #0b0a0e; /* 4.7:1 on the accent; white is only 4.2 */
 	--color-accent-2: #e0b84a;
 	--color-warn: #ffb347;
 

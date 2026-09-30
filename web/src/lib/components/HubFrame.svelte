@@ -800,14 +800,15 @@
 	/* --- bold: the tile over the doors, no window ------------------------
 	   With the window gone the grid above has nothing to span, so the menu
 	   is one column: the tile at full width, the three doors across under
-	   it. Later in the sheet than the pitched grid, so it wins at every
-	   width. */
+	   it. Each rule carries the pitched grid's own classes plus `lay-bold`,
+	   so it outranks that grid on specificity, not just on sheet order:
+	   `contain: size` left in force there collapses the tile to a sliver. */
 	.lay-simple.lay-pitched.lay-bold {
 		display: flex;
 		flex-direction: column;
 	}
 
-	.lay-bold .pitch {
+	.lay-simple.lay-pitched.lay-bold .pitch {
 		contain: none;
 	}
 
