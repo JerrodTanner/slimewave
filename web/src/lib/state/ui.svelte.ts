@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { theme } from '$lib/theme/theme.svelte';
 
 const MODE_KEY = 'slimewave:mode';
 
@@ -23,7 +24,17 @@ export type Mode = 'simple' | 'advanced';
 
 class UiState {
 	backdrop = $state<Backdrop>('ambient');
-	mode = $state<Mode>('simple');
+	/** What the visitor picked, kept even while Bold overrides it. */
+	#chosen = $state<Mode>('simple');
+
+	/**
+	 * The mode in force. Bold has no 3D, so it is always simple there, but
+	 * the stored choice is left alone: going back to Clean or Homey returns
+	 * whatever the visitor had.
+	 */
+	get mode(): Mode {
+		return theme.style === 'bold' ? 'simple' : this.#chosen;
+	}
 	/** Open state of the settings menu behind the header's cog. */
 	settingsOpen = $state(false);
 
@@ -41,11 +52,11 @@ class UiState {
 			/* storage blocked */
 		}
 
-		if (storedMode === 'simple' || storedMode === 'advanced') this.mode = storedMode;
+		if (storedMode === 'simple' || storedMode === 'advanced') this.#chosen = storedMode;
 	}
 
 	setMode(value: Mode) {
-		this.mode = value;
+		this.#chosen = value;
 		this.#store(MODE_KEY, value);
 	}
 

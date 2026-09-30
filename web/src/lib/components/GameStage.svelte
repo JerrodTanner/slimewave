@@ -10,6 +10,7 @@
 	import { room } from '$lib/game/room.svelte';
 	import { createHubScene } from '$lib/game/hubScene';
 	import { ui } from '$lib/state/ui.svelte';
+	import { theme } from '$lib/theme/theme.svelte';
 	import PortalLabels from './PortalLabels.svelte';
 	import HudOverlay from './HudOverlay.svelte';
 	import ViewModel from './ViewModel.svelte';
@@ -95,9 +96,16 @@
 		untrack(() => stage.activate('hub'));
 	});
 
+	// Bold draws no corridor anywhere, so the render loop stops rather than
+	// running under a canvas nobody can see. Paused, not disposed: the canvas
+	// never unmounts, and leaving Bold picks the same scene back up.
 	$effect(() => {
 		if (!stage.ready) return;
-		const next = immersive ? 'immersive' : ui.backdrop === 'ambient' ? 'ambient' : 'paused';
+		const next = immersive
+			? 'immersive'
+			: ui.backdrop === 'ambient' && theme.style !== 'bold'
+				? 'ambient'
+				: 'paused';
 		untrack(() => stage.setMode(next));
 	});
 

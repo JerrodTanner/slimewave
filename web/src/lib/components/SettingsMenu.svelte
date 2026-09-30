@@ -78,22 +78,25 @@
 		<div class="menu">
 			<div class="notch"></div>
 
-			<!-- Shown as 3D Navigation off/on; stored as the simple/advanced mode. -->
-			<div class="row">
-				<span class="label">3D Navigation</span>
-				<div class="seg">
-					<button
-						type="button"
-						class:seg-on={ui.mode === 'simple'}
-						onclick={() => ui.setMode('simple')}>off</button
-					>
-					<button
-						type="button"
-						class:seg-on={ui.mode === 'advanced'}
-						onclick={() => ui.setMode('advanced')}>on</button
-					>
+			<!-- Shown as 3D Navigation off/on; stored as the simple/advanced mode.
+			     Bold has no corridor, so the row has nothing to switch there. -->
+			{#if active.style !== 'bold'}
+				<div class="row">
+					<span class="label">3D Navigation</span>
+					<div class="seg">
+						<button
+							type="button"
+							class:seg-on={ui.mode === 'simple'}
+							onclick={() => ui.setMode('simple')}>off</button
+						>
+						<button
+							type="button"
+							class:seg-on={ui.mode === 'advanced'}
+							onclick={() => ui.setMode('advanced')}>on</button
+						>
+					</div>
 				</div>
-			</div>
+			{/if}
 
 			<div class="row row-style">
 				<span class="label">Style</span>
