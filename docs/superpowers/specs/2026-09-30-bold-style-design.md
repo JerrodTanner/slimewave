@@ -86,7 +86,7 @@ From top to bottom:
    - White on every camo tone must reach a contrast of at least 4.5:1, checked
      by calculation, not by eye.
    - The heading **"*Time savers* & workflow upgrades"** ("Time savers" on a
-     tilted white label), then eight page-wide rows. Each row has an icon badge (a straight 64px white rounded square with
+     tilted white label), then ten page-wide rows. Each row has an icon badge (a straight 64px white rounded square with
      a 38px icon), a generic job a business would recognize, a proof line
      from the resume (no label, no row number), and a straight tag
      (Reporting / Databases / Workflows). The rows sit on a dark
@@ -97,6 +97,8 @@ From top to bottom:
      | # | Job | Proof line (resume source) | Tag |
      | --- | --- | --- | --- |
      | 01 | Weekly business reports | Led radiology reporting for hospital operations, tailored to make each team faster (Broward Health) | Reporting |
+     | 01a | Self-serve dashboards for every team | Built Epic SlicerDicer reports for department managers, doctors and nurses (Broward Health; **needs a resume bullet first**) | Reporting |
+     | 01b | Log monitoring & error alerts | Built an app to parse large log volumes, speeding up production debugging (Lennar) | Reporting |
      | 02 | Customer history, in one place | Built booking-app features that put what sales reps need right in front of them (Vacatia) | Databases |
      | 03 | Business & customer notifications | Flagged critical CT findings, like strokes, and alerted doctors right away (Broward Health) | Workflows |
      | 04 | Invoices & billing | Automated invoice generation for rent collection, and rebuilt half a department's charges (Keiser, Broward Health) | Workflows |
@@ -107,7 +109,8 @@ From top to bottom:
 
      The rows live in a `JOBS` array in `BoldHero.svelte`. The icons are `d` strings
      on a 24×24 grid (the `doorIcons.ts` convention), drawn with more detail
-     than the door icons: report page with bars, contact card, ringing bell
+     than the door icons: report page with bars, dashboard with a pie and
+     bars, log page under a magnifier, contact card, ringing bell
      with an alert dot, receipt with a dollar sign, checklist, card with a tag,
      stacked boxes, and two databases with swap arrows. Two additions to the
      convention: the body path is marked to take a 16% tint of the stroke
@@ -164,6 +167,8 @@ Clean and Homey.
     keep Newsprint. With 3D on under Clean, switching to Bold and back keeps it
     on.
   - No flash of Clean on a hard reload under Bold.
+  - Every row icon sits centered in its badge. The mockup once let the camo
+    background rule catch the icons and pin them to the row corner.
 
 ## Out of scope
 
