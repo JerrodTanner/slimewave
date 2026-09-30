@@ -89,6 +89,27 @@ From top to bottom:
    - They sit three across on desktop and stack on phones.
    - White on every camo tone must reach a contrast of at least 4.5:1, checked
      by calculation, not by eye.
+   - Below the figures, still on the camo: **"What I can automate *for
+     you*"** and eight page-wide rows. Each row has an index, a generic job a
+     business would recognize, a "Done it" line from the resume, and a sticker
+     tag (Reporting / Databases / Workflows). The rows sit on a dark
+     translucent plate with a thick white left edge. On hover a row slides
+     right and flips to white, which is turned off under reduced motion. On
+     phones they collapse to two columns.
+
+     | # | Job | Done it (resume source) | Tag |
+     | --- | --- | --- | --- |
+     | 01 | Weekly business reports | Led radiology reporting for hospital operations, tailored to make each team faster (Broward Health) | Reporting |
+     | 02 | Customer history, in one place | Built booking-app features that put what sales reps need right in front of them (Vacatia) | Databases |
+     | 03 | Business & customer notifications | Flagged critical CT findings, like strokes, and alerted doctors right away (Broward Health) | Workflows |
+     | 04 | Invoices & billing | Automated invoice generation for rent collection, and rebuilt half a department's charges (Keiser, Broward Health) | Workflows |
+     | 05 | Reconciliation & error checks | Caught $12k a month in 401k matching errors; saved HR 20 hours a week on benefits (Keiser) | Reporting |
+     | 06 | Payment & expense labeling | Auto-labeled payment types, saving accounts payable 10 hours a week (Keiser) | Workflows |
+     | 07 | Inventory tracking | Built a web tool for managing a university's textbook inventory (Keiser) | Databases |
+     | 08 | Moving between systems | Automated the order crosswalk for a hospital's move from Cerner to Epic (Broward Health) | Databases |
+
+     The rows live in a `JOBS` array in `BoldHero.svelte`, and every "Done it"
+     line must trace to `resume.md`, the same rule as the tile.
 3. **CTA.** "What's eating your week?" with a **Plan a Project** button to
    `/plan`.
 4. **The main menu, without the window.** The industries tile runs full
