@@ -8,12 +8,12 @@ Status: approved in chat, awaiting spec review
 The front page should sell the business at first glance, the way an Apple or
 BAPE landing page does: one huge message, then proof. The look is a hybrid.
 The pacing and whitespace come from Apple, and there is one loud streetwear
-accent: a camo band behind three real numbers.
+accent: a camo band behind one real number and a list of jobs to automate.
 
 The audience is unchanged: small-business owners who might hire Jerrod for
 back-office automation, and recruiters.
 
-Success means that a first-time visitor sees the headline and the three numbers
+Success means that a first-time visitor sees the headline and the big number
 before anything else, and one click takes them to `/plan`.
 
 ## Decisions
@@ -78,23 +78,21 @@ From top to bottom:
    - The camo is an inline SVG of blob paths, written by hand and filled with
      `--camo-1/2/3`. It is original work, so it needs no `CREDITS.md` entry,
      and it is `aria-hidden`.
-   - On it are three figures in heavy white type, each with a caption:
-     - **20 HRS**: back per week · HR reconciliation
-     - **$12K**: caught per month · 401k errors
-     - **10×**: faster · booking queries
-   - The figures count up once, the first time the band enters the viewport
+   - On it is one figure, very large, in heavy white type, with a caption:
+     **20 HRS**: back per week · HR reconciliation.
+   - The figure counts up once, the first time the band enters the viewport
      (IntersectionObserver). With `prefers-reduced-motion` they render at their
-     final values. The final values are always in the markup, so screen
+     final values. The final value is always in the markup, so screen
      readers never hear a mid-count number.
-   - They sit three across on desktop and stack on phones.
    - White on every camo tone must reach a contrast of at least 4.5:1, checked
      by calculation, not by eye.
    - Below the figures, still on the camo: **"What I can automate *for
-     you*"** and eight page-wide rows. Each row has an index, a generic job a
+     you*"** and eight page-wide rows. Each row has an icon badge (a white tilted square with
+     the row number pinned to its corner), a generic job a
      business would recognize, a "Done it" line from the resume, and a sticker
      tag (Reporting / Databases / Workflows). The rows sit on a dark
      translucent plate with a thick white left edge. On hover a row slides
-     right and flips to white, which is turned off under reduced motion. On
+     right and flips to white, and its badge flips to camo, which is turned off under reduced motion. On
      phones they collapse to two columns.
 
      | # | Job | Done it (resume source) | Tag |
@@ -108,15 +106,16 @@ From top to bottom:
      | 07 | Inventory tracking | Built a web tool for managing a university's textbook inventory (Keiser) | Databases |
      | 08 | Moving between systems | Automated the order crosswalk for a hospital's move from Cerner to Epic (Broward Health) | Databases |
 
-     The rows live in a `JOBS` array in `BoldHero.svelte`, and every "Done it"
+     The rows live in a `JOBS` array in `BoldHero.svelte`. The icons are stroked
+     `d` strings on a 24×24 grid (the `doorIcons.ts` convention): chart, person
+     with clock, bell, receipt, double check, tag, box, and swap arrows, and every "Done it"
      line must trace to `resume.md`, the same rule as the tile.
 3. **CTA.** "What's eating your week?" with a **Plan a Project** button to
    `/plan`.
 4. **The main menu, without the window.** The industries tile runs full
    width, with the three doors across below it.
 
-Every figure is already on `resume.md`: 20 hours per week, $12k per month, and
-up to 10× faster. That keeps the rule that every claim on the site appears on
+The figure is already on `resume.md` (20 hours per week). That keeps the rule that every claim on the site appears on
 the resume.
 
 `.mat` currently has `lg:overflow-hidden`. Under Bold on the hub, it scrolls on
@@ -155,7 +154,7 @@ Clean and Homey.
 - In a real browser:
   - Bold at desktop and phone widths: the hero, the band, the count-up and the
     CTA.
-  - With reduced-motion on, the figures render at their final values.
+  - With reduced-motion on, the figure renders at its final value.
   - Walk through each door and back. The door page opens at the top, and the
     hub comes back to the menu.
   - Switch between Street, Night, Newsprint and Tile & Glass. Leaving Bold
