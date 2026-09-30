@@ -60,6 +60,7 @@ Summer 2024 – Summer 2025
 - Led Radiant reporting for operations and general analytics
   - Facilitated communication between operations, the Cogito team, and our TS
   - Tailored reports to improve efficiency
+- Built SlicerDicer reports in Epic for department managers, doctors, and nurses
 - Tutored and trained a new analyst, increasing team productivity
 - Audited and rebuilt half of Radiant procedures' charges
   - Worked with revenue integrity, hospital billing, and operations
@@ -76,6 +77,7 @@ Summer 2021 – Summer 2024
 - Developed Python tooling to automate payment type labeling, saving accounts payable 10 hours per week and assisting with auditing
 - Wrote a Python tool to detect errors in 401k matching, leading to $12k per month in savings
 - Developed tooling to automate invoice generation to assist in collecting rent
+- Built property-management tracking of tenant and business-name history for leased office space, helping bring in an extra $1M per year
 - Built a Django tool with a web UI for managing textbook inventory
 
 ### Intern
