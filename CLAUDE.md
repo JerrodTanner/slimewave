@@ -56,9 +56,10 @@ then the tile.
   is never stored: it follows from the theme and is set as `data-style` on
   `<html>` (before first paint too, in `app.html`). Homey's furniture is scoped
   `[data-style='homey']` blocks in `HubFrame`, `IndustriesTile` and `HubGate`,
-  using pictures in `web/static/homey/`. Those came from the Urban 128x resource
-  pack and a Euro Tile Store product photo, with no license found for either;
-  replace them before promoting the style.
+  using pictures in `web/static/homey/`. Every one is original work or built
+  from CC0 Poly Haven textures; `CREDITS.md` lists each file and its source.
+  Keep it that way: anything added there must be original or CC0, with an entry
+  in `CREDITS.md`.
 - **Backdrop** — the card-plate image behind the frame. Its opacity defaults to 50%
   (`cardPlate.svelte.ts`) and can be adjusted in the cog menu.
 
