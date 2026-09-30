@@ -87,14 +87,14 @@ From top to bottom:
      by calculation, not by eye.
    - The heading **"*Time savers* & workflow upgrades"** ("Time savers" on a
      tilted white label), then eight page-wide rows. Each row has an icon badge (a straight 64px white rounded square with
-     a 38px icon), the row number in small mono above a generic job a business
-     would recognize, a "Done it" line from the resume, and a straight tag
+     a 38px icon), a generic job a business would recognize, a proof line
+     from the resume (no label, no row number), and a straight tag
      (Reporting / Databases / Workflows). The rows sit on a dark
      translucent plate with a thick white left edge. On hover a row slides
      right and flips to white, and its badge flips to camo, which is turned off under reduced motion.
      On phones they collapse to two columns.
 
-     | # | Job | Done it (resume source) | Tag |
+     | # | Job | Proof line (resume source) | Tag |
      | --- | --- | --- | --- |
      | 01 | Weekly business reports | Led radiology reporting for hospital operations, tailored to make each team faster (Broward Health) | Reporting |
      | 02 | Customer history, in one place | Built booking-app features that put what sales reps need right in front of them (Vacatia) | Databases |
@@ -107,7 +107,7 @@ From top to bottom:
 
      The rows live in a `JOBS` array in `BoldHero.svelte`. The icons are stroked
      `d` strings on a 24×24 grid (the `doorIcons.ts` convention): chart, contact
-     card, bell, receipt, double check, tag, box, and swap arrows, and every "Done it"
+     card, bell, receipt, double check, tag, box, and swap arrows, and every proof
      line must trace to `resume.md`, the same rule as the tile.
 3. **CTA.** "What's eating your week?" with a **Plan a Project** button to
    `/plan`.
