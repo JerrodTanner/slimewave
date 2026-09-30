@@ -68,8 +68,8 @@ From top to bottom:
 1. **Hero, full viewport height.** The existing header stays. Below it:
    - The headline **"Less busywork. More business."**, centered, at about
      `clamp(3rem, 9vw, 9rem)`, on two lines on phones.
-   - A sub-line in small muted type: "Get your business digitized. Move more
-     work, faster, with the team you already have." The site header keeps its
+   - A sub-line in small muted type: "Digitize your operations, move more work,
+     and leave the paperwork behind." The site header keeps its
      own sentence ("I build reporting, databases, and workflows for
      businesses."): the header says what Jerrod does, and the hero says what
      the visitor gets.
