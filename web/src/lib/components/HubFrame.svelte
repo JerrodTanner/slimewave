@@ -20,6 +20,7 @@
 	import { formatTime, player } from '$lib/state/player.svelte';
 	import { ui } from '$lib/state/ui.svelte';
 	import { theme } from '$lib/theme/theme.svelte';
+	import { themesForStyle } from '$lib/theme/themes';
 
 	/**
 	 * The furniture: a heading rule, one big window, and the doors as a rail
@@ -262,11 +263,16 @@
 				{/if}
 			</div>
 
-			<SettingsMenu />
+			<!-- Bold's header is only the name and its switches, as the mockup
+			     draws it: the hero under it already makes the pitch, so the
+			     sentence would say it twice. The cog moves to the far end there. -->
+			{#if !bold}
+				<SettingsMenu />
 
-			<span class="divider" aria-hidden="true"></span>
+				<span class="divider" aria-hidden="true"></span>
 
-			<SiteMission {select} />
+				<SiteMission {select} />
+			{/if}
 
 			<!-- Docked, the rail's doors live here instead, the open one marked. -->
 			<nav class="headdoors" aria-label="Pages">
@@ -295,6 +301,21 @@
 			     transport. Advanced mode keeps the mark everywhere. -->
 			{#if player.current && !playable && active !== null && active !== 'media'}
 				<MiniPlayer size={62} />
+			{:else if bold}
+				<!-- Bold's two palettes are one click apart, so they sit in the
+				     header as pills rather than behind the cog; the cog still
+				     holds the style, which is the way out of Bold. -->
+				<div class="themepills" role="group" aria-label="Theme">
+					{#each themesForStyle('bold') as t (t.id)}
+						<button
+							type="button"
+							class="themepill"
+							aria-pressed={theme.current === t.id}
+							onclick={() => theme.set(t.id)}>{t.name}</button
+						>
+					{/each}
+				</div>
+				<SettingsMenu />
 			{:else}
 				{#key path}
 					<SineMark width={108} />
@@ -606,6 +627,57 @@
 		width: 1px;
 		height: 26px;
 		background-color: var(--color-line);
+	}
+
+	/* --- bold: the header as the mockup draws it -------------------------
+	   Not a card but a bar: one hairline under it, the page's own ground
+	   behind it, and the name set in the same heavy type as the headline. */
+	:global([data-style='bold']) .head {
+		min-height: 64px;
+		padding: 0.6rem 0;
+		border: 0;
+		border-bottom: 1px solid var(--color-line);
+		border-radius: 0;
+		background: none;
+	}
+
+	/* The slot's fixed width is there to hold the sentence still across a
+	   door; Bold has no sentence, so the name takes only what it needs. */
+	:global([data-style='bold']) .headslot {
+		width: auto;
+		min-width: 0;
+	}
+
+	:global([data-style='bold']) .wordmark {
+		font-family: var(--font-display);
+		font-size: 1.15rem;
+		font-weight: 900;
+		letter-spacing: -0.04em;
+		color: var(--color-ink);
+	}
+
+	.themepills {
+		display: flex;
+		flex-shrink: 0;
+		gap: 6px;
+	}
+
+	.themepill {
+		padding: 6px 10px;
+		border: 1px solid var(--color-line);
+		border-radius: 999px;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-ink);
+		background-color: var(--color-surface);
+		cursor: pointer;
+	}
+
+	.themepill[aria-pressed='true'] {
+		border-color: var(--color-ink);
+		color: var(--color-bg);
+		background-color: var(--color-ink);
 	}
 
 	/* --- the window ------------------------------------------------------ */

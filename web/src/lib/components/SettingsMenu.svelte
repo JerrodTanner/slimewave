@@ -229,6 +229,18 @@
 		border-radius: var(--radius-panel);
 	}
 
+	/* Bold puts the cog at the far end of the header, where a menu hung
+	   from its left edge would run off the page, so it hangs from the right. */
+	:global([data-style='bold']) .menu {
+		left: auto;
+		right: -10px;
+	}
+
+	:global([data-style='bold']) .notch {
+		left: auto;
+		right: 20px;
+	}
+
 	/* Points at the cog, which is what the menu came out of. */
 	.notch {
 		position: absolute;
