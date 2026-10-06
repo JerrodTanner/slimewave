@@ -60,12 +60,11 @@
 	 * stage pauses (see GameStage).
 	 */
 	const bold = $derived(theme.style === 'bold');
-	/** The Bold hub: the pitch and the menu, with no window. */
+	/** The Bold hub: the pitch alone, its doors as links in the header. */
 	const boldHub = $derived(bold && active === null);
 
-	/** The page's own scroller, and the menu the way back lands on. */
+	/** The page's own scroller. */
 	let mat = $state<HTMLElement | null>(null);
-	let menu = $state<HTMLElement | null>(null);
 
 	/** The two placeholders the corridor can occupy. Only one exists at a time. */
 	let windowScreen = $state<HTMLElement | null>(null);
@@ -97,21 +96,12 @@
 		});
 	});
 
-	/**
-	 * Where the page lands after a door. Walking through one always opens the
-	 * section at the top, even from far down the Bold page. Coming back to
-	 * the hub under Bold lands on the menu rather than the pitch, since the
-	 * visitor has already read it; a fresh load still starts at the top.
-	 */
-	let lastActive: PortalKey | null = null;
+	// Walking through a door, or back out of one, always opens at the top,
+	// even from far down the Bold page.
 	$effect(() => {
-		const here = active;
+		void active;
 		untrack(() => {
-			const from = lastActive;
-			lastActive = here;
-			if (!mat) return;
-			if (here !== null) mat.scrollTop = 0;
-			else if (from !== null && bold && menu) menu.scrollIntoView({ block: 'start' });
+			if (mat) mat.scrollTop = 0;
 		});
 	});
 
@@ -122,14 +112,17 @@
 	 * there, because the corridor reads them too; everything here is only ever
 	 * seen on the rail.
 	 *
+	 * `name` is the label in sentence case, for Bold's header links; the
+	 * capitals in PORTALS are what the corridor paints.
+	 *
 	 * A tile says where it goes and what you will do there — no blurb under it.
 	 * Three doors do not need explaining, and the rail reads as a row of tokens
 	 * rather than a page of copy.
 	 */
-	const DOORS: Record<PortalKey, { tone?: 'loud' | 'alt'; action: string }> = {
-		resume: { action: 'READ' },
-		plan: { tone: 'loud', action: 'PLAN' },
-		media: { tone: 'alt', action: 'OPEN' }
+	const DOORS: Record<PortalKey, { tone?: 'loud' | 'alt'; action: string; name: string }> = {
+		resume: { action: 'READ', name: 'Resume' },
+		plan: { tone: 'loud', action: 'PLAN', name: 'Plan a Project' },
+		media: { tone: 'alt', action: 'OPEN', name: 'Media' }
 	};
 
 	/**
@@ -274,9 +267,10 @@
 				<SiteMission {select} />
 			{/if}
 
-			<!-- Docked, the rail's doors live here instead, the open one marked. -->
+			<!-- Docked, the rail's doors live here instead, the open one marked.
+			     Bold has no rail at all, so its doors are always here, as links. -->
 			<nav class="headdoors" aria-label="Pages">
-				{#if docked}
+				{#if docked || boldHub}
 					{#each PORTALS as portal (portal.key)}
 						<a
 							href={portal.href}
@@ -285,8 +279,12 @@
 							aria-current={active === portal.key ? 'page' : undefined}
 							onclick={(e) => (active === portal.key ? e.preventDefault() : select(e, portal.href))}
 						>
-							<span class="winbar-icon">{@render doorIcon(portal.key, 18)}</span>
-							{portal.label}
+							{#if bold}
+								{DOORS[portal.key].name}
+							{:else}
+								<span class="winbar-icon">{@render doorIcon(portal.key, 18)}</span>
+								{portal.label}
+							{/if}
 						</a>
 					{/each}
 				{/if}
@@ -328,11 +326,9 @@
 		{/if}
 
 		<div
-			bind:this={menu}
 			class="lay flex min-h-0 flex-1 flex-col"
 			class:lay-simple={!playable || active === null}
 			class:lay-pitched={pitched}
-			class:lay-bold={boldHub}
 		>
 			{#if boldHub}
 				<!-- The hub route still owns its <svelte:head>; with no window
@@ -456,12 +452,12 @@
 			</section>
 			{/if}
 
-			{#if pitched}
+			{#if pitched && !boldHub}
 				<div class="pitch"><IndustriesTile /></div>
 			{/if}
 
 			<!-- the doors, three across under the window -->
-			{#if !docked}
+			{#if !docked && !boldHub}
 			<aside class="rail">
 				{#each PORTALS as portal (portal.key)}
 					{@const door = DOORS[portal.key]}
@@ -639,6 +635,47 @@
 		border-bottom: 1px solid var(--color-line);
 		border-radius: 0;
 		background: none;
+	}
+
+	/* --- bold: the ground -------------------------------------------------
+	   Big, uneven tiles, each a soft grey gradient, with the page's own
+	   colour as the grout between them. Every tile is one gradient layer,
+	   sized and placed in viewport units and fixed to the viewport, so the
+	   wall stays put while the page scrolls over it. Mixed from the theme's
+	   ink and ground, so Night gets the same wall in the dark. */
+	:global([data-style='bold']) .frame {
+		--tile-a: color-mix(in srgb, var(--color-ink) 4%, var(--color-bg));
+		--tile-b: color-mix(in srgb, var(--color-ink) 11%, var(--color-bg));
+		background-color: var(--color-bg);
+		background-image:
+			linear-gradient(150deg, var(--tile-a), var(--tile-b)),
+			linear-gradient(200deg, var(--tile-b), var(--tile-a)),
+			linear-gradient(120deg, var(--tile-a), var(--tile-b)),
+			linear-gradient(170deg, var(--tile-b), var(--tile-a)),
+			linear-gradient(135deg, var(--tile-b), var(--tile-a)),
+			linear-gradient(160deg, var(--tile-a), var(--tile-b)),
+			linear-gradient(110deg, var(--tile-b), var(--tile-a)),
+			linear-gradient(190deg, var(--tile-a), var(--tile-b));
+		background-size:
+			57vw 45vh,
+			42vw 26vh,
+			18vw 18.5vh,
+			23.5vw 18.5vh,
+			32vw 54vh,
+			39vw 30vh,
+			39vw 23.5vh,
+			28vw 54vh;
+		background-position:
+			0 0,
+			58vw 0,
+			58vw 26.5vh,
+			76.5vw 26.5vh,
+			0 46vh,
+			33vw 46vh,
+			33vw 76.5vh,
+			72.5vw 46vh;
+		background-repeat: no-repeat;
+		background-attachment: fixed;
 	}
 
 	/* The slot's fixed width is there to hold the sentence still across a
@@ -869,32 +906,6 @@
 		}
 	}
 
-	/* --- bold: the tile over the doors, no window ------------------------
-	   With the window gone the grid above has nothing to span, so the menu
-	   is one column: the tile at full width, the three doors across under
-	   it. Each rule carries the pitched grid's own classes plus `lay-bold`,
-	   so it outranks that grid on specificity, not just on sheet order:
-	   `contain: size` left in force there collapses the tile to a sliver. */
-	.lay-simple.lay-pitched.lay-bold {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.lay-simple.lay-pitched.lay-bold .pitch {
-		contain: none;
-	}
-
-	@media (min-width: 40rem) {
-		.lay-simple.lay-pitched.lay-bold .rail {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
-		}
-
-		.lay-simple.lay-pitched.lay-bold .slot + .slot {
-			border-top: 0;
-			border-left: 1px solid var(--color-line);
-		}
-	}
-
 	.winbar {
 		display: flex;
 		align-items: center;
@@ -951,6 +962,36 @@
 		border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
 		background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
 		cursor: default;
+	}
+
+	/* Bold's doors are plain links in the bar, the open one underlined. */
+	:global([data-style='bold']) .headdoor {
+		padding: 0.25rem 0;
+		border: 0;
+		border-radius: 0;
+		background: none;
+		font-family: inherit;
+		font-size: 0.9rem;
+		font-weight: 600;
+		letter-spacing: 0;
+		text-transform: none;
+		color: var(--color-muted);
+	}
+
+	:global([data-style='bold']) .headdoor:hover,
+	:global([data-style='bold']) .headdoor-here {
+		color: var(--color-ink);
+		background: none;
+	}
+
+	:global([data-style='bold']) .headdoor-here {
+		text-decoration: underline;
+		text-underline-offset: 0.35em;
+	}
+
+	:global([data-style='bold']) .headdoors {
+		gap: 1.4rem;
+		margin-right: 0.6rem;
 	}
 
 	.winbar-title {

@@ -23,7 +23,7 @@
 	];
 
 	/** Each sample's section, so a request from the pitch tile can be answered. */
-	const sections: Record<string, HTMLElement> = {};
+	const sections: Record<string, HTMLElement> = $state({});
 
 	// Clearing the request is what makes it a request rather than a selection:
 	// the same row asked twice scrolls twice. Writing the state this effect

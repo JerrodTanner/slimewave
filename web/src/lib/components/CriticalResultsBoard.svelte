@@ -399,7 +399,11 @@
 		}
 	}
 
+	/* A column, so the note can sink to the bottom: every note and its rule
+	   then sit on one line across the row, however long the text above runs. */
 	.step {
+		display: flex;
+		flex-direction: column;
 		padding-left: clamp(0.9rem, 1.5cqw, 1.9rem);
 		border-left: 1px solid #D9D0BF;
 	}
@@ -438,14 +442,14 @@
 	}
 
 	.stepline {
-		margin: clamp(0.4rem, 0.5cqw, 0.625rem) 0 0;
+		margin: clamp(0.4rem, 0.5cqw, 0.625rem) 0 clamp(0.6rem, 0.8cqw, 1rem);
 		font-size: clamp(0.8125rem, 0.825cqw, 1.03rem);
 		line-height: 1.55;
 		color: #4C463C;
 	}
 
 	.stepnote {
-		margin: clamp(0.6rem, 0.8cqw, 1rem) 0 0;
+		margin: auto 0 0;
 		padding-top: clamp(0.4rem, 0.5cqw, 0.625rem);
 		border-top: 1px solid #D9D0BF;
 		font-size: clamp(0.5625rem, 0.6cqw, 0.75rem);

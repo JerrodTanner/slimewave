@@ -22,10 +22,13 @@ The main menu has four things:
 
 Under **Bold** (the default style) the main menu is different: a hero ("Less
 busywork. More business."), a camo band of automation rows (`JOBS` in
-`BoldHero.svelte`), a CTA to `/plan`,
-then the tile and doors. There is no window. The header is a flat bar with
-only the name, Street/Night pills and the cog; it drops the header sentence,
-since the hero makes the pitch. The four things above describe Clean and Homey.
+`BoldHero.svelte`; a row with an `infographic` opens a drawer holding a work
+sample sheet, e.g. `LogKingBoard.svelte`), then a closing contact section
+(message box, CONTACT ME, Plan a Project, the email). There is no window, no
+tile and no door tiles. The header is a flat bar with the name, the three
+doors as plain links, Street/Night pills and the cog; it drops the header
+sentence, since the hero makes the pitch. The page sits on a fixed wall of big
+grey gradient tiles. The four things above describe Clean and Homey.
 
 `/plan` is a questionnaire (domain, web design, reporting, database) that
 builds a plain-text project brief. The brief goes out as a `mailto:` draft;
