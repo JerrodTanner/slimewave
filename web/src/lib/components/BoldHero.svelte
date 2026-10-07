@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { JOBS, type Job } from '$lib/content/jobs';
 	import { CONTACT, drafts, formatUsPhone, isEmail, isUsPhone, send, type SendState } from '$lib/contact';
+	import { callSlots, describeCall, easternToday, holiday, zoneName } from '$lib/callTimes';
 	import SendMenu from './SendMenu.svelte';
 
 	/**
@@ -27,22 +28,19 @@
 	let sendState = $state<SendState>('idle');
 	let sendError = $state('');
 
-	/**
-	 * Half-hour slots from 7 AM to 9 PM in the visitor's own zone. The span is
-	 * wide on purpose: a visitor a few zones away from Florida still finds a
-	 * time that lands inside Jerrod's day, and early or late suits people who
-	 * can only talk outside their own working hours. The value stays 24-hour
-	 * for the date maths; the label is the 12-hour clock people read.
-	 */
-	const TIMES = Array.from({ length: 29 }, (_, i) => {
-		const minutes = 7 * 60 + i * 30;
-		const value = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-		const label = new Date(`2000-01-01T${value}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-		return { value, label };
-	});
+	// Jerrod's hours in Eastern, shown on the visitor's clock (lib/callTimes).
 	const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	const today = easternToday();
 	let callDay = $state('');
 	let callTime = $state('');
+	const slots = $derived(callSlots(callDay, zone));
+	const dayOff = $derived(callDay ? holiday(callDay) : null);
+	const dayPast = $derived(!!callDay && callDay < today);
+	// A day change can take the picked time away (today's past hours), so
+	// the pick falls back to any time rather than naming a slot not offered.
+	$effect(() => {
+		if (callTime && !slots.some((s) => s.value === callTime)) callTime = '';
+	});
 	let callPhone = $state('');
 	const phoneOk = $derived(isUsPhone(callPhone));
 	/**
@@ -65,19 +63,8 @@
 		phonePause = setTimeout(() => (phoneSettled = true), 1200);
 	}
 
-	/** The day and time as a person would say them, whichever were picked. */
-	const callWhen = $derived.by(() => {
-		const day = callDay
-			? new Date(`${callDay}T12:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-			: '';
-		const time = callTime
-			? new Date(`2000-01-01T${callTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-			: '';
-		if (day && time) return `${day} at ${time} (${zone})`;
-		if (day) return `${day}, any time`;
-		if (time) return `any day at ${time} (${zone})`;
-		return '';
-	});
+	/** The day and time as Jerrod reads them: Eastern, with the visitor's clock beside it. */
+	const callWhen = $derived(describeCall(callDay, callTime, zone));
 
 	/** The whole email: the message, then whatever call details were given. */
 	const body = $derived(
@@ -93,6 +80,8 @@
 	const canSend = $derived(
 		(!!message.trim() || phoneOk) &&
 			(callPhone === '' || phoneOk) &&
+			!dayOff &&
+			!dayPast &&
 			isEmail(replyTo) &&
 			sendState !== 'sending'
 	);
@@ -247,16 +236,21 @@
 				</label>
 				<label class="call-field">
 					<span>Day (optional)</span>
-					<input type="date" id="call-day" bind:value={callDay} />
+					<input type="date" id="call-day" min={today} aria-invalid={!!dayOff || dayPast} bind:value={callDay} />
 				</label>
 				<label class="call-field">
-					<span>Time ({zone.split('/').pop()?.replace('_', ' ')})</span>
+					<span>Time ({zoneName(zone)})</span>
 					<select id="call-time" bind:value={callTime}>
 						<option value="">Any time</option>
-						{#each TIMES as t (t.value)}<option value={t.value}>{t.label}</option>{/each}
+						{#each slots as t (t.value)}<option value={t.value}>{t.label}</option>{/each}
 					</select>
 				</label>
 			</div>
+			{#if dayOff || dayPast}
+				<p class="call-note bad">
+					{dayOff ? `That day is ${dayOff}, so no calls. Pick another day.` : 'That day has passed. Pick today or later.'}
+				</p>
+			{/if}
 		</div>
 
 		<button class="btn-bold" type="button" disabled={!canSend} onclick={contact}>
