@@ -1,26 +1,21 @@
 <script lang="ts">
-	import CriticalResultsBoard from './CriticalResultsBoard.svelte';
+	import { JOBS } from '$lib/content/jobs';
 	import { workMenu } from '$lib/state/workMenu.svelte';
 
 	/**
-	 * The work samples, stacked under the corridor in the window's own scroll.
-	 *
-	 * Same shape as INDUSTRIES in IndustriesTile: the copy lives here, beside
-	 * the thing that renders it. Adding a sample means writing its component,
-	 * adding a row below, and naming its `key` in the matching proof point on
-	 * the pitch tile — which is what takes a reader straight to it.
+	 * The work samples, stacked under the corridor in the window's own scroll:
+	 * one per time saver in lib/content/jobs, in the same order as the rows on
+	 * the pitch tile, keyed by the row's name, which is what the tile asks for.
 	 *
 	 * A sample is a sheet that carries its own masthead, so nothing of the
 	 * site's own type goes above it: any line there reads as a second,
 	 * competing headline. The title is for the accessible name only.
 	 */
-	const WORK = [
-		{
-			key: 'critical-results',
-			title: 'Alerts for critically injured patients',
-			body: CriticalResultsBoard
-		}
-	];
+	const WORK = JOBS.filter((job) => job.infographic).map((job) => ({
+		key: job.name,
+		title: job.name,
+		body: job.infographic!
+	}));
 
 	/** Each sample's section, so a request from the pitch tile can be answered. */
 	const sections: Record<string, HTMLElement> = $state({});

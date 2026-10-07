@@ -1,11 +1,9 @@
 <script lang="ts">
-	import type { Component } from 'svelte';
-	import CriticalResultsBoard from './CriticalResultsBoard.svelte';
-	import LogKingBoard from './LogKingBoard.svelte';
+	import { JOBS, type Job } from '$lib/content/jobs';
 
 	/**
-	 * The Bold front page, above the tile and the doors: one huge line, then
-	 * the jobs a business would hand over, on a band of camo.
+	 * The Bold front page: one huge line, then the jobs a business would hand
+	 * over (JOBS, in lib/content/jobs) on a band of camo, then the contact.
 	 *
 	 * The page is Apple-calm and the band is the one loud thing. The camo is
 	 * drawn here by hand (original work, so nothing to credit) as a few large
@@ -14,113 +12,6 @@
 	 */
 	let { select }: { select: (event: MouseEvent | null, href: string) => void } = $props();
 
-	/** A plain stroke, or the icon's body (tinted) or its accent (solid pop). */
-	type Stroke = string | { d: string; tone: 'body' | 'pop' };
-
-	interface Job {
-		name: string;
-		proof: string;
-		tag: 'Reporting' | 'Databases' | 'Workflows';
-		icon: Stroke[];
-		/** A work sample that drawers out under the row; the proof becomes its subheader. */
-		infographic?: Component;
-	}
-
-	const JOBS: Job[] = [
-		{
-			name: 'Customer history & automated billing',
-			proof: 'Example: Tracking tenant and business-name history across leased office space, and automating the rent invoices.',
-			tag: 'Databases',
-			icon: [
-				{ d: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z', tone: 'body' },
-				'M11 10a2 2 0 1 1-4 0a2 2 0 1 1 4 0',
-				'M5.5 16.5a3.5 3.5 0 0 1 7 0',
-				'M15 9h4',
-				'M15 12.5h4',
-				'M15 16h2.5'
-			]
-		},
-		{
-			name: 'Reconciliation & error checks',
-			proof: 'Example: Catching 401k matching errors, and reconciling insurance benefits for HR.',
-			tag: 'Reporting',
-			icon: [
-				{ d: 'M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z', tone: 'body' },
-				'm7.5 8 1.5 1.5L12 6.5',
-				'M14 8h3',
-				'm7.5 13 1.5 1.5 3-3',
-				'M14 13h3',
-				'm7.5 18 1.5 1.5 3-3',
-				'M14 18h3'
-			]
-		},
-		{
-			name: 'Business & customer notifications',
-			proof: 'Example: Flagging critical CT findings, like strokes, and alerting hospital staff right away inside their EHR.',
-			tag: 'Workflows',
-			infographic: CriticalResultsBoard,
-			icon: [
-				{ d: 'M6 9a6 6 0 0 1 12 0c0 6 3 8 3 8H3s3-2 3-8', tone: 'body' },
-				'M10.3 21a1.94 1.94 0 0 0 3.4 0',
-				'M2 7.5a10 10 0 0 1 2.2-4.5',
-				'M22 7.5A10 10 0 0 0 19.8 3',
-				{ d: 'M20.5 11a2.5 2.5 0 1 1-5 0a2.5 2.5 0 1 1 5 0', tone: 'pop' }
-			]
-		},
-		{
-			name: 'Payment & expense labeling',
-			proof: 'Example: Auto-labeling payment types, which saved accounts payable 10 hours a week.',
-			tag: 'Workflows',
-			icon: [
-				{ d: 'M2 5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2Z', tone: 'body' },
-				'M2 7.5h20',
-				'M5.5 11.5h4',
-				{ d: 'M13 16h6l3 2.75-3 2.75h-6Z', tone: 'pop' }
-			]
-		},
-		{
-			name: 'KPI reporting at a glance',
-			proof: 'Example: Building Epic SlicerDicer reports for department managers, doctors and nurses.',
-			tag: 'Reporting',
-			icon: [
-				{ d: 'M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z', tone: 'body' },
-				'M2 7.5h20',
-				'M11 14a3 3 0 1 1-6 0a3 3 0 1 1 6 0',
-				{ d: 'M8 11a3 3 0 0 1 3 3H8Z', tone: 'pop' },
-				'M14.5 18v-3',
-				'M18 18v-6'
-			]
-		},
-		{
-			name: 'Full-stack hosting, data tracking & styled reports',
-			proof: 'Example: Building and hosting LogKing, which parses uploaded in-game activity logs into a database and serves them back as polished, shareable player performance reports.',
-			tag: 'Reporting',
-			infographic: LogKingBoard,
-			icon: [
-				{ d: 'M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z', tone: 'body' },
-				'M7 7h6',
-				'M7 11h8',
-				'M7 15h4',
-				{ d: 'M20 17.5a3 3 0 1 1-6 0a3 3 0 1 1 6 0', tone: 'pop' },
-				'm19.2 19.7 2.3 2.3'
-			]
-		},
-		{
-			name: 'Moving between systems',
-			proof: "Example: Automating the order crosswalk for a hospital's move from Cerner to Epic.",
-			tag: 'Databases',
-			icon: [
-				{ d: 'M2 6c0-1.1 1.6-2 3.5-2S9 4.9 9 6v12c0 1.1-1.6 2-3.5 2S2 19.1 2 18Z', tone: 'body' },
-				'M2 6c0 1.1 1.6 2 3.5 2S9 7.1 9 6',
-				'M15 6c0-1.1 1.6-2 3.5-2S22 4.9 22 6v12c0 1.1-1.6 2-3.5 2S15 19.1 15 18Z',
-				'M15 6c0 1.1 1.6 2 3.5 2S22 7.1 22 6',
-				'M10.5 10h3',
-				'm12.5 8.5 1.5 1.5-1.5 1.5',
-				'M13.5 15h-3',
-				'm11.5 13.5-1.5 1.5 1.5 1.5'
-			]
-		}
-	];
 
 	// The same inbox and the same mail draft as the tile's contact box under
 	// the other styles: nothing is posted or stored.

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import WorkSheet from './WorkSheet.svelte';
 	/**
 	 * The LogKing work sample, set as the same printed sheet as the critical
 	 * results one: how a night of play gets from the game to a report anyone in
@@ -321,6 +322,11 @@
 	);
 	const overall = $derived(tab === 'leaderboard');
 	const board = $derived(RANKINGS[overall ? 'All bosses' : boss][rankMetric]);
+	/** "How it was done", one string per paragraph. */
+	const STORY = [
+		'LogKing is my own rebuild of Warcraft Logs, the reporting and rankings site the World of Warcraft community runs on — a full company’s product, rebuilt solo for private servers it doesn’t support. With no access to the server itself, everything is built from the player’s side: an in-game add-on captures the activity, and the website does the rest.',
+		'I built and host the whole stack: one Go program serving the pages, a SQLite database, and a small cloud server behind automatic HTTPS, with nightly backups. Uploads from different players merge into one record, so a team sees one night, not six copies of it.'
+	];
 </script>
 
 <!-- The five drawings, on the same 48 grid and duotone as the critical results sheet. -->
@@ -385,38 +391,18 @@
 	</div>
 {/snippet}
 
-<div class="sheet">
-	<p class="eyebrow">
-		Game data · player reports ·
-		<a href="https://logking.duckdns.org" target="_blank" rel="noopener">logking.duckdns.org</a>
-	</p>
-	<h3 class="masthead">Player performance reports from in-game activity logs</h3>
-
-	<div class="rule-heavy"></div>
-
-	<p class="deck">
-		A night of play becomes a report the whole team can open. The game writes the log, a desktop
-		app uploads it automatically while you play, and the server checks it, stores it, and turns
-		it into a page per player.
-	</p>
-
-	<ol class="steps">
-		{#each STEPS as step, i (step.name)}
-			<li class="step">
-				<p class="numeral" class:hot={step.hot}>{i + 1}</p>
-				<div class="artbox">{@render stepIcon(i)}</div>
-				<h4 class="stepname" class:hot={step.hot}>{step.name}</h4>
-				<p class="stepline">{step.line}</p>
-				<p class="stepnote" class:hot={step.hot}>{step.note}</p>
-			</li>
-		{/each}
-	</ol>
-
-	<div class="rule-hair"></div>
-
-	<h4 class="subhead">What the team sees</h4>
-
-	<div class="seen">
+<WorkSheet
+	eyebrow="Game data · player reports"
+	site="https://logking.duckdns.org"
+	title="Player performance reports from in-game activity logs"
+	deck="A night of play becomes a report the whole team can open. The game writes the log, a desktop app uploads it automatically while you play, and the server checks it, stores it, and turns it into a page per player."
+	steps={STEPS}
+	icon={stepIcon}
+	accent={{ ink: '#17564F', rule: '#C3D9D3' }}
+	seenTitle="What the team sees"
+	story={STORY}
+>
+	{#snippet seen()}
 		<!-- A working miniature of the site, not a screenshot of it. -->
 		<div class="screen">
 			<div class="chrome">
@@ -575,43 +561,10 @@
 				link, so a report pasted into the team chat opens on the same numbers.
 			</p>
 		</aside>
-	</div>
-
-	<div class="rule-hair"></div>
-
-	<div class="story">
-		<h4 class="storyhead">How it was done</h4>
-		<div class="storycols">
-			<p>
-				Players on a private game server had no way to review their nights: the usual reporting
-				sites don’t support it, and there is no access to the server itself. So everything is
-				built from the player’s side — an in-game add-on captures the activity, and the website
-				does the rest.
-			</p>
-			<p>
-				I built and host the whole stack: one Go program serving the pages, a SQLite database,
-				and a small cloud server behind automatic HTTPS, with nightly backups. Uploads from
-				different players merge into one record, so a team sees one night, not six copies of it.
-			</p>
-		</div>
-	</div>
-</div>
+	{/snippet}
+</WorkSheet>
 
 <style>
-	/* The same stock as CriticalResultsBoard: #F6F1E7 paper, #1C1A17 ink,
-	   #4C463C body, #8A7F6E / #6E6558 small type, #D9D0BF rules, and the
-	   #DCE6E2 / #17564F / #6E9E96 duotone. Teal stands in for the crimson. */
-	.sheet {
-		container-type: inline-size;
-		padding: clamp(0.8rem, 1.8cqw, 2.25rem);
-		background-color: #F6F1E7;
-		color: #1C1A17;
-		font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
-		line-height: 1.5;
-	}
-
-	.eyebrow,
-	.stepnote,
 	.chrome,
 	.calloutlabel,
 	.list thead th,
@@ -620,155 +573,9 @@
 		font-family: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
 	}
 
-	.masthead,
-	.stepname,
-	.subhead,
-	.numeral,
-	.calloutline,
-	.storyhead {
+	.calloutline {
 		font-family: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
 		font-weight: 700;
-	}
-
-	.eyebrow {
-		margin: 0;
-		font-size: clamp(0.625rem, 0.65cqw, 0.8125rem);
-		letter-spacing: 0.24em;
-		text-transform: uppercase;
-		color: #8A7F6E;
-	}
-
-	.masthead {
-		margin: clamp(0.5rem, 0.8cqw, 1rem) 0 0;
-		font-size: clamp(1.75rem, 3.1cqw, 3.875rem);
-		line-height: 1.02;
-		letter-spacing: -0.015em;
-		text-wrap: balance;
-	}
-
-	.rule-heavy {
-		height: 3px;
-		margin: clamp(0.9rem, 1.4cqw, 1.75rem) 0 clamp(0.7rem, 1cqw, 1.25rem);
-		background-color: #1C1A17;
-	}
-
-	.rule-hair {
-		height: 1px;
-		margin: clamp(1.1rem, 2.2cqw, 2.75rem) 0 clamp(0.9rem, 1.6cqw, 2rem);
-		background-color: #1C1A17;
-	}
-
-	.deck {
-		margin: 0;
-		max-width: 66ch;
-		font-size: clamp(0.9rem, 0.9cqw, 1.125rem);
-		line-height: 1.5;
-		color: #4C463C;
-	}
-
-	.steps {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(1rem, 1.9cqw, 2.4rem);
-		margin: clamp(1.4rem, 2.6cqw, 3.25rem) 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	@container (min-width: 34rem) {
-		.steps {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-
-	@container (min-width: 62rem) {
-		.steps {
-			grid-template-columns: repeat(5, minmax(0, 1fr));
-		}
-	}
-
-	/* A column, so the note can sink to the bottom: every note and its rule
-	   then sit on one line across the row, however long the text above runs. */
-	.step {
-		display: flex;
-		flex-direction: column;
-		padding-left: clamp(0.9rem, 1.5cqw, 1.9rem);
-		border-left: 1px solid #D9D0BF;
-	}
-
-	.step:first-child {
-		padding-left: 0;
-		border-left: 0;
-	}
-
-	.numeral {
-		margin: 0;
-		font-size: clamp(2rem, 3.1cqw, 3.875rem);
-		line-height: 1;
-	}
-
-	.hot {
-		color: #17564F;
-	}
-
-	.artbox {
-		margin-top: clamp(0.6rem, 0.9cqw, 1.15rem);
-		height: clamp(3.5rem, 5.2cqw, 6.5rem);
-		display: flex;
-		align-items: center;
-	}
-
-	.art {
-		width: clamp(3.5rem, 5.2cqw, 6.5rem);
-		height: clamp(3.5rem, 5.2cqw, 6.5rem);
-	}
-
-	.stepname {
-		margin: clamp(0.7rem, 1cqw, 1.25rem) 0 0;
-		font-size: clamp(1.0625rem, 1.35cqw, 1.6875rem);
-		line-height: 1.15;
-	}
-
-	.stepline {
-		margin: clamp(0.4rem, 0.5cqw, 0.625rem) 0 clamp(0.6rem, 0.8cqw, 1rem);
-		font-size: clamp(0.8125rem, 0.825cqw, 1.03rem);
-		line-height: 1.55;
-		color: #4C463C;
-	}
-
-	.stepnote {
-		margin: auto 0 0;
-		padding-top: clamp(0.4rem, 0.5cqw, 0.625rem);
-		border-top: 1px solid #D9D0BF;
-		font-size: clamp(0.5625rem, 0.6cqw, 0.75rem);
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: #6E6558;
-	}
-
-	.stepnote.hot {
-		border-top-color: #C3D9D3;
-		color: #17564F;
-	}
-
-	.subhead {
-		margin: 0 0 clamp(0.9rem, 1.4cqw, 1.75rem);
-		font-size: clamp(1.25rem, 1.8cqw, 2.25rem);
-		line-height: 1.1;
-	}
-
-	.seen {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(1.1rem, 2.4cqw, 3rem);
-		align-items: start;
-	}
-
-	@container (min-width: 56rem) {
-		.seen {
-			grid-template-columns: minmax(0, 1320fr) minmax(0, 460fr);
-			gap: clamp(2rem, 4cqw, 5rem);
-		}
 	}
 
 	.screen {
@@ -832,6 +639,7 @@
 	}
 
 	/* --- the miniature site ------------------------------------------------ */
+
 	button,
 	select {
 		font: inherit;
@@ -952,6 +760,7 @@
 
 	/* The whole row opens the breakdown: the name's button is stretched over
 	   it, so the row is one big target and still a real button for keyboards. */
+
 	.prow {
 		position: relative;
 	}
@@ -988,6 +797,7 @@
 	}
 
 	/* Narrow, the role and the rate go first; the total and share carry the point. */
+
 	.c-parse,
 	.c-deaths,
 	.c-hits,
@@ -996,6 +806,7 @@
 	}
 
 	@container (min-width: 40rem) {
+
 		.c-parse,
 		.c-deaths,
 		.c-hits {
@@ -1077,6 +888,7 @@
 	}
 
 	/* The pull's share cell carries the amount as well as the percentage. */
+
 	.list .c-share .bar {
 		width: calc(100% - 9.5em);
 	}
@@ -1130,25 +942,21 @@
 	}
 
 	/* The live site's parse colours, each darkened to hold up on cream. */
+
 	.list .p-gold { color: #A86F00; }
+
 	.list .p-pink { color: #B0407A; }
+
 	.list .p-purple { color: #6A3FA0; }
+
 	.list .p-blue { color: #2F5FA8; }
+
 	.list .p-green { color: #3C7D3A; }
+
 	.list .p-grey { color: #8A7F6E; }
 
 	.c-parse {
 		font-weight: 700;
-	}
-
-	.eyebrow a {
-		color: inherit;
-		text-decoration: underline;
-		text-underline-offset: 0.2em;
-	}
-
-	.eyebrow a:hover {
-		color: #17564F;
 	}
 
 	.calloutsub {
@@ -1159,6 +967,7 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
+
 		.caret {
 			transition: none;
 		}
@@ -1180,42 +989,5 @@
 		margin: clamp(0.5rem, 0.6cqw, 0.75rem) 0 0;
 		font-size: clamp(1.0625rem, 1.35cqw, 1.6875rem);
 		line-height: 1.22;
-	}
-
-	.story {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(0.8rem, 1.5cqw, 1.9rem);
-	}
-
-	@container (min-width: 56rem) {
-		.story {
-			grid-template-columns: minmax(0, 320fr) minmax(0, 1440fr);
-		}
-	}
-
-	.storyhead {
-		margin: 0;
-		font-size: clamp(1.0625rem, 1.2cqw, 1.5rem);
-		line-height: 1.2;
-	}
-
-	.storycols {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(0.8rem, 1.5cqw, 1.9rem);
-	}
-
-	@container (min-width: 48rem) {
-		.storycols {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-
-	.storycols p {
-		margin: 0;
-		font-size: clamp(0.8125rem, 0.85cqw, 1.0625rem);
-		line-height: 1.55;
-		color: #4C463C;
 	}
 </style>

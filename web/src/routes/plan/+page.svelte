@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { DESIGNS } from '$lib/content/designs';
 	import PageShell from '$lib/components/PageShell.svelte';
 
 	/**
@@ -19,16 +20,10 @@
 
 	/**
 	 * Sample pages for the web design section, shown one at a time in a
-	 * modal. Drop the images in web/static/samples/ and list them here in the
-	 * order they should be browsed.
+	 * modal: the same list, and the same descriptions, as the UI/UX gallery
+	 * on the Bold front page. Add one in lib/content/designs.
 	 */
-	const SAMPLES: { src: string; caption: string }[] = [
-		{ src: '/samples/lk-front.png', caption: 'LogKing — front page: top raiders and log upload' },
-		{ src: '/samples/lk-rankings.png', caption: 'LogKing — rankings leaderboard' },
-		{ src: '/samples/lk-players.png', caption: 'LogKing — player profile' },
-		{ src: '/samples/ba-eventcheckin.png', caption: 'Booking app — event manifest and check-in' },
-		{ src: '/samples/redeemable.png', caption: 'Vacation certificate receipt' }
-	];
+	const SAMPLES = DESIGNS;
 
 	let samplesDialog = $state<HTMLDialogElement | null>(null);
 	let sampleIndex = $state(0);
@@ -492,8 +487,11 @@
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
 			</button>
 			<figure>
-				<img src={sample.src} alt={sample.caption} />
-				<figcaption>{sample.caption}</figcaption>
+				<img src={sample.src} alt="{sample.project}: {sample.title}" />
+				<figcaption>
+					<span class="samples-where">{sample.project} — {sample.title}</span>
+					<span class="samples-about">{sample.about}</span>
+				</figcaption>
 			</figure>
 			<button type="button" class="samples-arrow" aria-label="Next sample" onclick={() => stepSample(1)} disabled={SAMPLES.length < 2}>
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
@@ -652,12 +650,27 @@
 	.samples-stage img {
 		display: block;
 		max-width: 100%;
-		max-height: calc(100dvh - 190px);
+		/* Room left under the picture for its description. */
+		max-height: calc(100dvh - 280px);
 		object-fit: contain;
 		border: 1px solid var(--color-line);
 	}
 
 	.samples-stage figcaption {
+		display: grid;
+		gap: 0.3rem;
+		max-width: 60ch;
+		text-align: center;
+	}
+
+	.samples-where {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.08em;
+		color: var(--color-accent);
+	}
+
+	.samples-about {
 		font-size: 0.875rem;
 		color: var(--color-muted);
 	}

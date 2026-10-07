@@ -1,53 +1,18 @@
 <script lang="ts">
+	import { JOBS, type Stroke } from '$lib/content/jobs';
 	import { workMenu } from '$lib/state/workMenu.svelte';
 
 	/**
-	 * The pitch in one tile: the same kind of work, done in three industries.
+	 * The pitch in one tile, under Clean and Homey: the same time savers as
+	 * the rows on the Bold front page (JOBS, in lib/content/jobs), then a
+	 * message box and the way to send it.
 	 *
-	 * A row whose `sample` names a work sample is a way in as well as a claim:
-	 * clicking it scrolls the window straight down to that sample's sheet. The
-	 * key is the sample's `key` in the WORK list in WorkPanel. `null` means the
-	 * sheet is not written yet, and the row stays a plain claim until it is.
-	 *
-	 * Icons are stroked `d` strings on a 24×24 grid, the same convention as
-	 * lib/game/doorIcons.ts, so they sit beside the door glyphs without looking
-	 * borrowed.
+	 * Every row is a way in as well as a claim: clicking it scrolls the window
+	 * straight down to that job's work sample (WorkPanel), asking by the
+	 * job's name. Icons are the rows' own, stroked on the 24 grid that
+	 * lib/game/doorIcons uses, so they sit beside the door glyphs.
 	 */
-	const INDUSTRIES = [
-		{
-			name: 'Healthcare',
-			tool: 'Epic · Radiant',
-			sample: 'critical-results',
-			proof: 'Parsed CT data streams to catch critically tagged findings, like strokes, and alert doctors right away.',
-			icon: [
-				'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z',
-				'M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27'
-			]
-		},
-		{
-			name: 'Finance ops',
-			tool: 'Python · SQL',
-			sample: null,
-			proof: 'Reconciliation tools that save HR 20 hours a week and catch $12k a month in 401k errors.',
-			icon: [
-				'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z',
-				'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8',
-				'M12 17.5v-11'
-			]
-		},
-		{
-			name: 'Hospitality',
-			tool: 'C# · SQL Server',
-			sample: null,
-			proof: 'Booking features for sales reps, and backend queries made up to 10× faster.',
-			icon: [
-				'M3 20a1 1 0 0 1-1-1v-1a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1Z',
-				'M20 16a8 8 0 1 0-16 0',
-				'M12 4v4',
-				'M10 4h4'
-			]
-		}
-	];
+	const strokeD = (stroke: Stroke) => (typeof stroke === 'string' ? stroke : stroke.d);
 
 	// Same inbox as the brief on /plan. A mail draft, so nothing is posted or stored.
 	const CONTACT = 'jerrod@jerrodtanner.com';
@@ -58,9 +23,11 @@
 	);
 </script>
 
-{#snippet glyph(paths: string[], size: number)}
+{#snippet glyph(paths: Stroke[], size: number)}
 	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-		{#each paths as d (d)}<path {d} />{/each}
+		{#each paths as stroke, i (i)}
+			<path d={strokeD(stroke)} class:body={typeof stroke !== 'string' && stroke.tone === 'body'} />
+		{/each}
 	</svg>
 {/snippet}
 
@@ -68,32 +35,31 @@
 	<span class="cap"></span>
 
 	<p class="kicker">BACK-OFFICE AUTOMATION</p>
-	<h2 id="industries-head" class="head">Experience automating back‑office work in three industries</h2>
+	<h2 id="industries-head" class="head">Time savers &amp; workflow upgrades</h2>
 
 	<ul class="rows">
-		{#each INDUSTRIES as row (row.name)}
-			{@const sample = row.sample}
-			<li class="row" class:row-linked={sample !== null} data-row={row.name}>
-				<!-- The link is stretched over the whole row, the same way a door
+		{#each JOBS as job (job.name)}
+			<li class="row" class:row-linked={job.infographic}>
+				<!-- The button is stretched over the whole row, the same way a door
 				     on the rail carries its cover, so the claim itself is the
 				     target rather than a "see more" tacked on the end. -->
-				{#if sample !== null}
+				{#if job.infographic}
 					<button
 						type="button"
 						class="rowcover"
-						aria-label="See the {row.name.toLowerCase()} example"
-						onclick={() => workMenu.show(sample)}
+						aria-label="See the {job.name.toLowerCase()} example"
+						onclick={() => workMenu.show(job.name)}
 					></button>
 				{/if}
-				<span class="icon">{@render glyph(row.icon, 22)}</span>
-				<div class="min-w-0">
+				<span class="icon">{@render glyph(job.icon, 22)}</span>
+				<div class="min-w-0 flex-1">
 					<div class="rowhead">
-						<span class="name">{row.name}</span>
-						<span class="tool">{row.tool}</span>
+						<span class="name">{job.name}</span>
+						<span class="tool">{job.tag}</span>
 					</div>
-					<p class="proof">{row.proof}</p>
+					<p class="proof">{job.proof}</p>
 				</div>
-				{#if sample !== null}
+				{#if job.infographic}
 					<span class="go" aria-hidden="true">{@render glyph(['M5 12h14', 'm13 6 6 6-6 6'], 14)}</span>
 				{/if}
 			</li>
@@ -136,7 +102,7 @@
 		background-color: var(--color-surface-raised);
 		padding: 1.1rem 1.2rem 1.2rem 2rem;
 		container-type: inline-size;
-		/* Fills a fixed-height parent (the hub column), rows sharing the height. */
+		/* Fills a fixed-height parent (the hub column), scrolling past it. */
 		flex: 1 1 auto;
 		display: flex;
 		flex-direction: column;
@@ -176,18 +142,10 @@
 	.rows {
 		flex: 1 1 auto;
 		display: grid;
-		grid-auto-rows: 1fr;
 		gap: 0.6rem;
 		margin: 0;
 		padding: 0;
 		list-style: none;
-	}
-
-	/* Three across when there is room, stacked when there is not. */
-	@container (min-width: 44rem) {
-		.rows {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
-		}
 	}
 
 	.row {
@@ -234,44 +192,6 @@
 		opacity: 1;
 	}
 
-	/* Healthcare's sign keeps a heartbeat while its row is under the pointer:
-	   the heart gives a double beat and the pulse line redraws across it like
-	   a monitor trace. 30 is the line's length in the icon's own units. */
-	.row[data-row='Healthcare']:hover .icon svg,
-	.row[data-row='Healthcare']:has(.rowcover:focus-visible) .icon svg {
-		animation: heartbeat 1.1s ease-in-out infinite;
-	}
-
-	.row[data-row='Healthcare']:hover .icon :global(path:nth-child(2)),
-	.row[data-row='Healthcare']:has(.rowcover:focus-visible) .icon :global(path:nth-child(2)) {
-		stroke-dasharray: 30;
-		animation: trace 1.1s linear infinite;
-	}
-
-	@keyframes heartbeat {
-		0%,
-		40%,
-		100% {
-			scale: 1;
-		}
-		12% {
-			scale: 1.18;
-		}
-		26% {
-			scale: 1.08;
-		}
-	}
-
-	@keyframes trace {
-		0% {
-			stroke-dashoffset: 30;
-		}
-		70%,
-		100% {
-			stroke-dashoffset: 0;
-		}
-	}
-
 	.icon {
 		display: inline-flex;
 		align-items: center;
@@ -283,6 +203,10 @@
 		border-radius: var(--radius-panel);
 		background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
 		color: var(--color-accent);
+	}
+
+	.icon .body {
+		fill: color-mix(in srgb, currentColor 16%, transparent);
 	}
 
 	.rowhead {

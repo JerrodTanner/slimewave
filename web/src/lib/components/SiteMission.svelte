@@ -2,8 +2,9 @@
 	import { PORTAL } from '$lib/game/portals';
 
 	/**
-	 * The one sentence that says what I do, with the work itself wired to the
-	 * door that starts it — so the copy is navigation as well as copy.
+	 * The one line that says what I do, the same as the Bold headline, with
+	 * its promise wired to the door that starts it — so the copy is
+	 * navigation as well as copy.
 	 *
 	 * It sits in the header card, which the hub and the flat pages both wear,
 	 * so it lives here rather than in either of them. The hub hands in its own
@@ -18,10 +19,8 @@
 </script>
 
 <p class="mission">
-	I build
-	<a href={PORTAL.plan.href} onclick={(e) => select?.(e, PORTAL.plan.href)}
-		>reporting, databases, and workflows</a
-	> for businesses.
+	Less busywork.
+	<a href={PORTAL.plan.href} onclick={(e) => select?.(e, PORTAL.plan.href)}>More business.</a>
 </p>
 
 <style>

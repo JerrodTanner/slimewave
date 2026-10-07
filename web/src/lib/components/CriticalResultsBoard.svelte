@@ -1,4 +1,5 @@
 <script lang="ts">
+	import WorkSheet from './WorkSheet.svelte';
 	/**
 	 * One work sample, set as a printed sheet: how a critical CT finding gets
 	 * from the scanner to the name a nurse is already looking at.
@@ -122,6 +123,11 @@
 		observer.observe(note);
 		return () => observer.disconnect();
 	});
+	/** "How it was done", one string per paragraph. */
+	const STORY = [
+		'Radiology managers across every site wanted critical findings to be visually obvious. Working with the hospital’s head Imaging Support Specialist and the application integration team, I traced exactly where our imaging software was writing critical findings into the HL7 messages that the radiologists’ reading machines send to the EHR.',
+		'I then worked with our EHR vendor’s technical support to settle on a native solution that could display that specific field — so critical findings are finally clear to every staff member responsible for the care of an ER patient.'
+	];
 </script>
 
 <!--
@@ -188,34 +194,17 @@
 	</svg>
 {/snippet}
 
-<div class="sheet">
-	<p class="eyebrow">Radiology · critical results</p>
-	<h3 class="masthead">Alerts for critically injured patients</h3>
-
-	<div class="rule-heavy"></div>
-
-	<p class="deck">
-		Critical imaging findings take an automated path. The result feed is parsed on arrival,
-		matched against critical-finding rules, and raised on the ER patient list.
-	</p>
-
-	<ol class="steps">
-		{#each STEPS as step, i (step.name)}
-			<li class="step">
-				<p class="numeral" class:hot={step.hot}>{i + 1}</p>
-				<div class="artbox">{@render stepIcon(i)}</div>
-				<h4 class="stepname" class:hot={step.hot}>{step.name}</h4>
-				<p class="stepline">{step.line}</p>
-				<p class="stepnote" class:hot={step.hot}>{step.note}</p>
-			</li>
-		{/each}
-	</ol>
-
-	<div class="rule-hair"></div>
-
-	<h4 class="subhead">What the unit actually sees</h4>
-
-	<div class="seen">
+<WorkSheet
+	eyebrow="Radiology · critical results"
+	title="Alerts for critically injured patients"
+	deck="Critical imaging findings take an automated path. The result feed is parsed on arrival, matched against critical-finding rules, and raised on the ER patient list."
+	steps={STEPS}
+	icon={stepIcon}
+	accent={{ ink: '#9E2B20', rule: '#E2C4BF' }}
+	seenTitle="What the unit actually sees"
+	story={STORY}
+>
+	{#snippet seen()}
 		<!-- Not a screenshot of anybody's EHR: the columns a unit list really
 		     has, drawn here, so nothing of a real chart is reproduced. -->
 		<div class="screen">
@@ -272,54 +261,10 @@
 				to the Interventional Radiology Room
 			</p>
 		</aside>
-	</div>
-
-	<div class="rule-hair"></div>
-
-	<div class="story">
-		<h4 class="storyhead">How it was done</h4>
-		<div class="storycols">
-			<p>
-				Radiology managers across every site wanted critical findings to be visually obvious.
-				Working with the hospital’s head Imaging Support Specialist and the application
-				integration team, I traced exactly where our imaging software was writing critical
-				findings into the HL7 messages that the radiologists’ reading machines send to the EHR.
-			</p>
-			<p>
-				I then worked with our EHR vendor’s technical support to settle on a native solution that
-				could display that specific field — so critical findings are finally clear to every staff
-				member responsible for the care of an ER patient.
-			</p>
-		</div>
-	</div>
-</div>
+	{/snippet}
+</WorkSheet>
 
 <style>
-	/* --- the stock --------------------------------------------------------
-	   Lifted from the mockup: #F6F1E7 paper, #1C1A17 ink, #4C463C body,
-	   #8A7F6E and #6E6558 for the small type, #D9D0BF rules, #9E2B20 for
-	   anything critical, and #DCE6E2 / #17564F / #6E9E96 for the drawings.
-	   Deliberately outside the theme tokens, exactly like the resume sheet:
-	   this is a printed leave-behind that happens to be shown on a screen, and
-	   it has to read the same under every theme.
-
-	   The one concession is the typeface. The mockup sets its headings in
-	   Fraunces; a site that ships as one binary does not pull a webfont, so
-	   this uses the same local serif stack the wordmark does — the same trade
-	   the aero theme makes for Nunito and Hind. */
-	.sheet {
-		container-type: inline-size;
-		/* Tight all round: the sheet is read inside a window rather than held
-		   in a hand, so a printed margin only costs it room. */
-		padding: clamp(0.8rem, 1.8cqw, 2.25rem);
-		background-color: #F6F1E7;
-		color: #1C1A17;
-		font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
-		line-height: 1.5;
-	}
-
-	.eyebrow,
-	.stepnote,
 	.chrome,
 	.calloutlabel,
 	.list thead th,
@@ -328,161 +273,9 @@
 		font-family: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
 	}
 
-	.masthead,
-	.stepname,
-	.subhead,
-	.numeral,
-	.calloutline,
-	.storyhead {
+	.calloutline {
 		font-family: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
 		font-weight: 700;
-	}
-
-	/* --- masthead --------------------------------------------------------- */
-	.eyebrow {
-		margin: 0;
-		font-size: clamp(0.625rem, 0.65cqw, 0.8125rem);
-		letter-spacing: 0.24em;
-		text-transform: uppercase;
-		color: #8A7F6E;
-	}
-
-	.masthead {
-		margin: clamp(0.5rem, 0.8cqw, 1rem) 0 0;
-		font-size: clamp(1.75rem, 3.1cqw, 3.875rem);
-		line-height: 1.02;
-		letter-spacing: -0.015em;
-		text-wrap: balance;
-	}
-
-	.rule-heavy {
-		height: 3px;
-		margin: clamp(0.9rem, 1.4cqw, 1.75rem) 0 clamp(0.7rem, 1cqw, 1.25rem);
-		background-color: #1C1A17;
-	}
-
-	.rule-hair {
-		height: 1px;
-		margin: clamp(1.1rem, 2.2cqw, 2.75rem) 0 clamp(0.9rem, 1.6cqw, 2rem);
-		background-color: #1C1A17;
-	}
-
-	.deck {
-		margin: 0;
-		max-width: 66ch;
-		font-size: clamp(0.9rem, 0.9cqw, 1.125rem);
-		line-height: 1.5;
-		color: #4C463C;
-	}
-
-	/* --- the five steps ---------------------------------------------------
-	   Hairline rules between the columns, as on the sheet: a border on every
-	   column but the first gives the same four lines at any column count. */
-	.steps {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(1rem, 1.9cqw, 2.4rem);
-		margin: clamp(1.4rem, 2.6cqw, 3.25rem) 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	@container (min-width: 34rem) {
-		.steps {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-
-	@container (min-width: 62rem) {
-		.steps {
-			grid-template-columns: repeat(5, minmax(0, 1fr));
-		}
-	}
-
-	/* A column, so the note can sink to the bottom: every note and its rule
-	   then sit on one line across the row, however long the text above runs. */
-	.step {
-		display: flex;
-		flex-direction: column;
-		padding-left: clamp(0.9rem, 1.5cqw, 1.9rem);
-		border-left: 1px solid #D9D0BF;
-	}
-
-	.step:first-child {
-		padding-left: 0;
-		border-left: 0;
-	}
-
-	.numeral {
-		margin: 0;
-		font-size: clamp(2rem, 3.1cqw, 3.875rem);
-		line-height: 1;
-	}
-
-	.hot {
-		color: #9E2B20;
-	}
-
-	.artbox {
-		margin-top: clamp(0.6rem, 0.9cqw, 1.15rem);
-		height: clamp(3.5rem, 5.2cqw, 6.5rem);
-		display: flex;
-		align-items: center;
-	}
-
-	.art {
-		width: clamp(3.5rem, 5.2cqw, 6.5rem);
-		height: clamp(3.5rem, 5.2cqw, 6.5rem);
-	}
-
-	.stepname {
-		margin: clamp(0.7rem, 1cqw, 1.25rem) 0 0;
-		font-size: clamp(1.0625rem, 1.35cqw, 1.6875rem);
-		line-height: 1.15;
-	}
-
-	.stepline {
-		margin: clamp(0.4rem, 0.5cqw, 0.625rem) 0 clamp(0.6rem, 0.8cqw, 1rem);
-		font-size: clamp(0.8125rem, 0.825cqw, 1.03rem);
-		line-height: 1.55;
-		color: #4C463C;
-	}
-
-	.stepnote {
-		margin: auto 0 0;
-		padding-top: clamp(0.4rem, 0.5cqw, 0.625rem);
-		border-top: 1px solid #D9D0BF;
-		font-size: clamp(0.5625rem, 0.6cqw, 0.75rem);
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: #6E6558;
-	}
-
-	.stepnote.hot {
-		border-top-color: #E2C4BF;
-		color: #9E2B20;
-	}
-
-	/* --- what the unit sees ------------------------------------------------ */
-	.subhead {
-		margin: 0 0 clamp(0.9rem, 1.4cqw, 1.75rem);
-		font-size: clamp(1.25rem, 1.8cqw, 2.25rem);
-		line-height: 1.1;
-	}
-
-	.seen {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(1.1rem, 2.4cqw, 3rem);
-		align-items: start;
-	}
-
-	@container (min-width: 56rem) {
-		.seen {
-			grid-template-columns: minmax(0, 1320fr) minmax(0, 460fr);
-			/* Wide enough for the pointer to sit in, rather than across the note. */
-			gap: clamp(2rem, 4cqw, 5rem);
-		}
 	}
 
 	.screen {
@@ -559,12 +352,14 @@
 
 	/* Narrow, the room and the age are the first things a reader can do
 	   without; the problem is what carries the finding. */
+
 	.c-room,
 	.c-age {
 		display: none;
 	}
 
 	@container (min-width: 40rem) {
+
 		.c-room,
 		.c-age {
 			display: table-cell;
@@ -576,6 +371,7 @@
 	}
 
 	@container (min-width: 30rem) {
+
 		.c-name {
 			display: table-cell;
 		}
@@ -616,6 +412,7 @@
 	}
 
 	/* --- the note beside the list ------------------------------------------ */
+
 	.callout {
 		position: relative;
 	}
@@ -625,6 +422,7 @@
 	}
 
 	@container (min-width: 56rem) {
+
 		.pointer {
 			display: block;
 			position: absolute;
@@ -651,43 +449,5 @@
 		margin: clamp(0.5rem, 0.6cqw, 0.75rem) 0 0;
 		font-size: clamp(1.0625rem, 1.35cqw, 1.6875rem);
 		line-height: 1.22;
-	}
-
-	/* --- the story --------------------------------------------------------- */
-	.story {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(0.8rem, 1.5cqw, 1.9rem);
-	}
-
-	@container (min-width: 56rem) {
-		.story {
-			grid-template-columns: minmax(0, 320fr) minmax(0, 1440fr);
-		}
-	}
-
-	.storyhead {
-		margin: 0;
-		font-size: clamp(1.0625rem, 1.2cqw, 1.5rem);
-		line-height: 1.2;
-	}
-
-	.storycols {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(0.8rem, 1.5cqw, 1.9rem);
-	}
-
-	@container (min-width: 48rem) {
-		.storycols {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-
-	.storycols p {
-		margin: 0;
-		font-size: clamp(0.8125rem, 0.85cqw, 1.0625rem);
-		line-height: 1.55;
-		color: #4C463C;
 	}
 </style>

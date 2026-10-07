@@ -6,10 +6,9 @@
  * It is a request rather than a selection: the panel clears it as soon as it
  * has moved, so asking for the same sample twice scrolls to it twice.
  *
- * The key is the sample's `key` in the WORK list in WorkPanel.svelte, and a
- * proof point names it in the `sample` field of INDUSTRIES in
- * IndustriesTile.svelte. A row naming a sample that is not there yet simply
- * does nothing, which is what lets the two lists be filled in either order.
+ * The key is a time saver's `name` in lib/content/jobs: the tile's rows ask
+ * by it, and WorkPanel keys each sample by it. A row whose job has no sample
+ * simply does nothing.
  */
 class WorkMenuState {
 	request = $state<string | null>(null);

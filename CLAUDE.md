@@ -8,22 +8,26 @@ serves a JSON API, media files, and a SvelteKit SPA. The visible brand is
 
 A business tool first, portfolio second. The audience is small-business owners
 who might hire Jerrod for reporting, databases, and workflows, plus recruiters
-reading the resume. The header sentence is the pitch: "I build reporting,
-databases, and workflows for businesses."
+reading the resume. The pitch is one line, the Bold headline, which Clean and
+Homey also carry in their header (`SiteMission.svelte`): "Less busywork. More
+business."
 
 The main menu has four things:
 
 - **The window** — a 3D corridor (Babylon.js). Walking into a doorway navigates.
-- **The industries tile** (`IndustriesTile.svelte`) — "Experience automating
-  back-office work in three industries": healthcare, finance ops, hospitality,
-  one proof point each. At the bottom: a message box, a CONTACT ME button,
+- **The pitch tile** (`IndustriesTile.svelte`) — "Time savers & workflow
+  upgrades": the same rows as Bold's band, each scrolling the window down to
+  its work sample. At the bottom: a message box, a CONTACT ME button,
   and the email address.
 - **Three doors** — Resume (`/resume`), Plan a Project (`/plan`), Media (`/music`).
 
 Under **Bold** (the default style) the main menu is different: a hero ("Less
 busywork. More business."), a camo band of automation rows (`JOBS` in
+`lib/content/jobs.ts`, rendered by
 `BoldHero.svelte`; a row with an `infographic` opens a drawer holding a work
-sample sheet, e.g. `LogKingBoard.svelte`), then a closing contact section
+sample sheet, e.g. `LogKingBoard.svelte`. Five-step sheets are laid out by
+`WorkSheet.svelte`, split ones by `SplitSheet.svelte`; the UI/UX gallery is
+`DesignBoard.svelte`), then a closing contact section
 (message box, CONTACT ME, Plan a Project, the email). There is no window, no
 tile and no door tiles. The header is a flat bar with the name, the three
 doors as plain links, Street/Night pills and the cog; it drops the header
@@ -83,9 +87,8 @@ resume.
 | --- | --- |
 | Resume (the page) | `web/src/lib/content/resume.md`, typeset by `routes/resume/+page.svelte` |
 | Resume (download) | `PDFs/Jerrod Tanner Resume.pdf`. **Separate file, re-export by hand when `resume.md` changes** |
-| Industries tile copy | `INDUSTRIES` array in `IndustriesTile.svelte` |
-| Automation rows (Bold) | `JOBS` array in `BoldHero.svelte` |
-| Plan-page sample images | `web/static/samples/`, listed in `SAMPLES` in `routes/plan/+page.svelte` |
+| Time-saver rows (Bold band, Clean/Homey tile, window samples) | `JOBS` in `lib/content/jobs.ts` |
+| Design examples (UI/UX gallery, `/plan` sample pages) | `lib/content/designs.ts`; images in `web/static/samples/` and `web/static/designs/` |
 | Music | `audio/Artist/Album/Track.mp3`, indexed from disk |
 
 ## Routes
