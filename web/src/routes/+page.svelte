@@ -15,5 +15,5 @@
 </script>
 
 <svelte:head>
-	<title>Jerrod Tanner — ShineWave</title>
+	<title>ShineWave — Reporting, databases & workflow automation</title>
 </svelte:head>

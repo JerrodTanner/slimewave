@@ -19,19 +19,19 @@ export interface Design {
 
 export const DESIGNS: Design[] = [
 	{
-		src: '/samples/lk-front.png',
+		src: '/samples/lk-front.jpg',
 		project: 'LogKing',
 		title: 'Front page',
 		about: 'A leaderboard of top players up front, to build excitement and keep people coming back, with a quick-start guide and downloads beside it so a new user can upload their first log in minutes.'
 	},
 	{
-		src: '/samples/lk-rankings.png',
+		src: '/samples/lk-rankings.jpg',
 		project: 'LogKing',
 		title: 'Rankings',
 		about: 'Filters for raid, boss, phase, class and spec, and a damage or healing switch, so every player can find exactly where they stand. A short note under the table explains how the score is worked out.'
 	},
 	{
-		src: '/samples/lk-players.png',
+		src: '/samples/lk-players.jpg',
 		project: 'LogKing',
 		title: 'Player profile',
 		about: 'One player’s own page: their best result on every boss, with kill counts and fastest times, so progress across a season is easy to follow.'

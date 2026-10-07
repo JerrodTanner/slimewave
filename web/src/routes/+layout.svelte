@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import '../app.css';
 
-	import GameStage from '$lib/components/GameStage.svelte';
 	import HubFrame from '$lib/components/HubFrame.svelte';
 	import NowPlaying from '$lib/components/NowPlaying.svelte';
 	import SiteNav from '$lib/components/SiteNav.svelte';
@@ -39,7 +38,9 @@
 	const framed = $derived(isFramed(path));
 </script>
 
-<GameStage />
+<!-- The 3D corridor is off for now: Bold, the only style offered, has no
+     window for it, and mounting the stage is what downloads Babylon. Put
+     <GameStage /> back here (and its import) to bring 3D navigation back. -->
 
 {#if framed}
 	<HubFrame>{@render children()}</HubFrame>

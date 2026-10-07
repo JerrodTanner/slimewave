@@ -21,7 +21,8 @@ export const DOOR_ICON: Record<PortalKey, string[]> = {
 		'M9 18V5l12-2v13',
 		'M3 18a3 3 0 1 0 6 0a3 3 0 1 0-6 0',
 		'M15 16a3 3 0 1 0 6 0a3 3 0 1 0-6 0'
-	]
+	],
+	about: ['M8 8a4 4 0 1 0 8 0a4 4 0 1 0-8 0', 'M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7']
 };
 
 /**

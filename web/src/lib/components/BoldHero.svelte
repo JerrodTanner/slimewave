@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { JOBS, type Job } from '$lib/content/jobs';
-	import { CONTACT, drafts } from '$lib/contact';
+	import { CONTACT, drafts, formatUsPhone, invites, isUsPhone } from '$lib/contact';
 	import SendMenu from './SendMenu.svelte';
 
 	/**
@@ -19,6 +19,61 @@
 	// other styles (lib/contact): nothing is posted or stored.
 	let message = $state('');
 	const draft = $derived(drafts('Inquiry from jerrodtanner.com', message.trim()));
+
+	/**
+	 * The free call. The visitor picks a day and a time in their own zone;
+	 * the request goes out as a calendar invite or an email (SendMenu), so it
+	 * needs no booking service. Defaults to the next weekday at 10:00.
+	 */
+	const CALL_MINUTES = 30;
+	const TIMES = Array.from({ length: 17 }, (_, i) => {
+		const minutes = 9 * 60 + i * 30;
+		return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+	});
+	const pad = (n: number) => String(n).padStart(2, '0');
+	function nextWeekday() {
+		const d = new Date();
+		do d.setDate(d.getDate() + 1);
+		while (d.getDay() === 0 || d.getDay() === 6);
+		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+	}
+	let callDay = $state(nextWeekday());
+	let callTime = $state('10:00');
+	/** The number to ring: required, and a valid US one, before a call can be asked for. */
+	let callPhone = $state('');
+	const phoneOk = $derived(isUsPhone(callPhone));
+	/**
+	 * The correction shows only once typing has paused for 1.2 seconds on a
+	 * number that still isn't valid, so it never nags mid-number.
+	 */
+	let phoneSettled = $state(false);
+	let phonePause: ReturnType<typeof setTimeout> | undefined;
+	const phoneWrong = $derived(phoneSettled && callPhone !== '' && !phoneOk);
+
+	// Formats as digits go in, but leaves deletions alone: reformatting on
+	// Backspace would put back the bracket or dash just removed.
+	function typePhone(e: Event & { currentTarget: HTMLInputElement }) {
+		const input = e.currentTarget;
+		const inserting = e instanceof InputEvent ? e.inputType.startsWith('insert') : true;
+		callPhone = inserting ? formatUsPhone(input.value) : input.value;
+		input.value = callPhone;
+		phoneSettled = false;
+		clearTimeout(phonePause);
+		phonePause = setTimeout(() => (phoneSettled = true), 1200);
+	}
+	const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	const callStart = $derived(new Date(`${callDay}T${callTime}`));
+	const callReady = $derived(!Number.isNaN(callStart.getTime()));
+	const callWhen = $derived(
+		callReady
+			? callStart.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+			: ''
+	);
+	const callNote = $derived(
+		`I'd like a free 30-minute call on ${callWhen} (${zone}). You can reach me at ${callPhone.trim()}.${message.trim() ? `\n\n${message.trim()}` : ''}`
+	);
+	const callDraft = $derived(drafts('Free 30-minute call request', callNote));
+	const callInvites = $derived(callReady ? invites(callStart, CALL_MINUTES, 'Free 30-minute call with Jerrod Tanner', callNote) : null);
 
 	/** The camo band, which the hint under the headline scrolls into view. */
 	let band = $state<HTMLElement | null>(null);
@@ -93,27 +148,82 @@
 
 <section class="cta" aria-labelledby="bold-contact">
 	<h2 id="bold-contact">What's eating your week?</h2>
-	<p class="cta-sub">Tell me what you'd like automated, or plan a project step by step.</p>
+	<p class="cta-sub">
+		Tell me what you'd like automated, or plan a project step by step.
+		<span class="cta-where">ShineWave is based in Fort Lauderdale, Florida.</span>
+	</p>
 
-	<label class="sr-only" for="bold-message">Your message</label>
-	<textarea
-		id="bold-message"
-		class="message"
-		rows="4"
-		placeholder="What would you like automated?"
-		bind:value={message}
-	></textarea>
+	<div class="panel">
+		<label class="sr-only" for="bold-message">Your message</label>
+		<textarea
+			id="bold-message"
+			class="message"
+			rows="4"
+			placeholder="What would you like automated?"
+			bind:value={message}
+		></textarea>
 
-	<div class="send">
-		<a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
-		<span class="actions">
-			<a class="btn-quiet" href="/plan" onclick={(e) => select(e, '/plan')}>Plan a Project</a>
-			<SendMenu drafts={draft} disabled={!message.trim()}>
-				{#snippet trigger(props)}
-					<button class="btn-bold" {...props}>Contact me →</button>
-				{/snippet}
-			</SendMenu>
-		</span>
+		<div class="send">
+			<a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
+			<span class="actions">
+				<a class="btn-quiet" href="/plan" onclick={(e) => select(e, '/plan')}>Plan a Project</a>
+				<SendMenu drafts={draft} disabled={!message.trim()}>
+					{#snippet trigger(props)}
+						<button class="btn-bold" {...props}>Contact me →</button>
+					{/snippet}
+				</SendMenu>
+			</span>
+		</div>
+
+		<div class="call">
+			<p class="call-head"><strong>Prefer to talk it through?</strong> Book a free 30-minute call.</p>
+			<div class="call-row">
+				<label class="call-field call-phone">
+					<span>Phone</span>
+					<input
+						type="tel"
+						id="call-phone"
+						autocomplete="tel"
+						inputmode="tel"
+						placeholder="(555) 234-5678"
+						aria-invalid={phoneWrong}
+						aria-describedby="call-phone-note"
+						value={callPhone}
+						oninput={typePhone}
+					/>
+				</label>
+				<label class="call-field">
+					<span>Day</span>
+					<input type="date" id="call-day" bind:value={callDay} />
+				</label>
+				<label class="call-field">
+					<span>Time ({zone.split('/').pop()?.replace('_', ' ')})</span>
+					<select id="call-time" bind:value={callTime}>
+						{#each TIMES as t (t)}<option value={t}>{t}</option>{/each}
+					</select>
+				</label>
+				<SendMenu
+					drafts={callDraft}
+					disabled={!callReady || !phoneOk}
+					heading="Request with…"
+					extras={callInvites
+						? [
+								{ label: 'Google Calendar invite', href: callInvites.google },
+								{ label: 'Outlook calendar invite', href: callInvites.outlook }
+							]
+						: []}
+				>
+					{#snippet trigger(props)}
+						<button class="btn-quiet" {...props}>Request a call →</button>
+					{/snippet}
+				</SendMenu>
+			</div>
+			<p class="call-note" id="call-phone-note" class:bad={phoneWrong}>
+				{phoneWrong
+					? 'That doesn’t look like a US number yet: 10 digits, like (555) 234-5678.'
+					: 'Enter a US phone number.'}
+			</p>
+		</div>
 	</div>
 </section>
 
@@ -377,6 +487,13 @@
 		color: var(--color-muted);
 	}
 
+	.cta-where {
+		display: block;
+		margin-top: 0.25rem;
+		font: 600 0.75rem var(--font-mono);
+		letter-spacing: 0.08em;
+	}
+
 	.message {
 		width: 100%;
 		padding: 16px 18px;
@@ -416,16 +533,27 @@
 		gap: 10px;
 	}
 
+	/* One size for every pill in the contact panel, link or button, filled
+	   or outlined, so the three line up as a set. */
 	.btn-bold,
 	.btn-quiet {
-		padding: 14px 26px;
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 11.5rem;
+		height: 3rem;
+		padding: 0 1.25rem;
+		border: 1px solid transparent;
 		border-radius: 999px;
+		font: inherit;
 		font-weight: 700;
 		font-size: 1rem;
+		line-height: 1;
+		white-space: nowrap;
 	}
 
 	.btn-bold {
-		border: 0;
 		background-color: var(--color-accent);
 		color: var(--color-accent-ink);
 		cursor: pointer;
@@ -438,7 +566,7 @@
 	}
 
 	.btn-quiet {
-		border: 1px solid var(--color-line);
+		border-color: var(--color-line);
 		color: var(--color-ink);
 		background-color: var(--color-surface);
 	}
@@ -447,9 +575,94 @@
 		border-color: var(--color-ink);
 	}
 
+	button.btn-quiet {
+		cursor: pointer;
+	}
+
+	/* Both ways in share one panel: a frosted sheet of the page's own ground
+	   laid over the tiles, the message on top and the call under a rule. */
+	.panel {
+		display: grid;
+		gap: 1.25rem;
+		padding: clamp(16px, 2.6vw, 24px);
+		border: 1px solid var(--color-line);
+		border-radius: 24px;
+		background-color: color-mix(in srgb, var(--color-bg) 72%, transparent);
+		-webkit-backdrop-filter: blur(8px);
+		backdrop-filter: blur(8px);
+	}
+
+	.call {
+		display: grid;
+		gap: 0.75rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid var(--color-line);
+	}
+
+	.call-head {
+		margin: 0;
+		color: var(--color-muted);
+	}
+
+	.call-head strong {
+		color: var(--color-ink);
+	}
+
+	.call-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 10px;
+	}
+
+	.call-field {
+		display: grid;
+		gap: 4px;
+		font: 600 0.75rem var(--font-mono);
+		color: var(--color-muted);
+	}
+
+	/* The same pill as the buttons beside them, and the same white as the
+	   message box above. */
+	.call-field input,
+	.call-field select {
+		padding: 12px 16px;
+		border: 1px solid var(--color-line);
+		border-radius: 999px;
+		font: inherit;
+		font-size: 0.95rem;
+		color: var(--color-ink);
+		background-color: var(--color-surface);
+	}
+
+	.call-row :global(.send) {
+		margin-left: auto;
+	}
+
+	.call-phone input {
+		width: 11rem;
+	}
+
+	.call-field input[aria-invalid='true'] {
+		border-color: var(--color-warn, var(--color-ink));
+	}
+
+	.call-note {
+		margin: 0;
+		font-size: 0.8125rem;
+		color: var(--color-muted);
+	}
+
+	.call-note.bad {
+		color: var(--color-warn, var(--color-ink));
+	}
+
 	@media (max-width: 720px) {
+		/* Rows run tall here as the names wrap, so the badge sits beside the
+		   name at the top rather than floating in the middle. */
 		.job {
 			grid-template-columns: 52px 1fr;
+			align-items: start;
 			gap: 8px 16px;
 		}
 

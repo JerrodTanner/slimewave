@@ -13,11 +13,20 @@ import { DEFAULT_THEME, STYLE_DEFAULT_THEME, isThemeId, themeById, type Style, t
  * Not bumped for Bold, on purpose. A theme is only stored when someone picks
  * one, so visitors who never chose already get the new default; a bump would
  * only override the people who deliberately chose something else.
+ *
+ * Bold is now the only style offered, so a stored theme is only honoured when
+ * it is a Bold one (see `honoured`); an old Clean or Homey choice is dropped
+ * and the visitor lands on Bold. app.html applies the same rule before paint.
  */
 const STORAGE_KEY = 'slimewave:theme:v2';
 const LEGACY_STORAGE_KEYS = ['slimewave:theme'];
 /** The theme last worn in each style, so switching style and back returns to it. */
 const LAST_KEY = (style: Style) => `slimewave:theme-last:${style}`;
+
+/** A stored theme that still applies: a real id, and a Bold one. */
+function honoured(id: string | null | undefined): id is ThemeId {
+	return isThemeId(id) && themeById(id).style === 'bold';
+}
 
 /** Colours the 3D scene reads from the active theme. */
 export interface ScenePalette {
@@ -49,7 +58,7 @@ class ThemeState {
 	init() {
 		if (!browser) return;
 		const fromDom = document.documentElement.dataset.theme;
-		if (isThemeId(fromDom)) {
+		if (honoured(fromDom)) {
 			this.current = fromDom;
 			document.documentElement.dataset.style = this.style;
 			return;
@@ -57,7 +66,8 @@ class ThemeState {
 		try {
 			for (const key of LEGACY_STORAGE_KEYS) localStorage.removeItem(key);
 			const stored = localStorage.getItem(STORAGE_KEY);
-			if (isThemeId(stored)) this.set(stored);
+			if (honoured(stored)) this.set(stored);
+			else if (stored) localStorage.removeItem(STORAGE_KEY);
 		} catch {
 			/* storage blocked; the default stands */
 		}
@@ -115,7 +125,7 @@ class ThemeState {
 	/** Applies a theme that came from the server without echoing it back. */
 	applyFromServer(id: string) {
 		this.syncedWithServer = true;
-		if (!isThemeId(id) || id === this.current) return;
+		if (!honoured(id) || id === this.current) return;
 		this.set(id, { persist: false });
 		try {
 			localStorage.setItem(STORAGE_KEY, id);

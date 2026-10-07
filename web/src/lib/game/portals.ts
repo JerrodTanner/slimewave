@@ -1,6 +1,6 @@
 export type DoorSide = 'left' | 'right' | 'end';
 
-export type PortalKey = 'resume' | 'plan' | 'media';
+export type PortalKey = 'resume' | 'plan' | 'media' | 'about';
 
 export interface PortalSpec {
 	/** Stable handle, so the hub rail can find a door without matching copy. */
@@ -28,7 +28,8 @@ export interface PortalSpec {
 export const PORTALS: PortalSpec[] = [
 	{ key: 'resume', href: '/resume', label: 'RESUME', side: 'left', depth: 8 },
 	{ key: 'plan', href: '/plan', label: 'PLAN A PROJECT', side: 'right', depth: 8 },
-	{ key: 'media', href: '/music', label: 'MEDIA', side: 'left', depth: 18 }
+	{ key: 'media', href: '/music', label: 'MEDIA', side: 'left', depth: 18 },
+	{ key: 'about', href: '/about', label: 'ABOUT ME', side: 'right', depth: 18 }
 ];
 
 /** The doors by key, for the rail on the hub page. */

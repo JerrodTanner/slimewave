@@ -20,7 +20,6 @@
 	import { formatTime, player } from '$lib/state/player.svelte';
 	import { ui } from '$lib/state/ui.svelte';
 	import { theme } from '$lib/theme/theme.svelte';
-	import { themesForStyle } from '$lib/theme/themes';
 
 	/**
 	 * The furniture: a heading rule, one big window, and the doors as a rail
@@ -122,8 +121,12 @@
 	const DOORS: Record<PortalKey, { tone?: 'loud' | 'alt'; action: string; name: string }> = {
 		resume: { action: 'READ', name: 'Resume' },
 		plan: { tone: 'loud', action: 'PLAN', name: 'Plan a Project' },
-		media: { tone: 'alt', action: 'OPEN', name: 'Media' }
+		media: { tone: 'alt', action: 'OPEN', name: 'Media' },
+		about: { action: 'MEET', name: 'About me' }
 	};
+
+	/** Bold's header links: the business pages, with About me in Media's place. */
+	const BOLD_DOORS = PORTALS.filter((p) => p.key !== 'media');
 
 	/**
 	 * Scrolling a sample up over the corridor is leaving the corridor, so the
@@ -252,13 +255,24 @@
 						BACK TO MAIN MENU
 					</a>
 				{:else}
-					<span class="wordmark">ShineWave</span>
+					<span class="brand">
+						<span class="wordmark">ShineWave</span>
+						<!-- Under Bold the mark is the name's signature, in grey under
+						     it, rather than a separate thing at the far end. -->
+						{#if bold}
+							<span class="brandmark">
+								{#key path}
+									<SineMark width={64} />
+								{/key}
+							</span>
+						{/if}
+					</span>
 				{/if}
 			</div>
 
-			<!-- Bold's header is only the name and its switches, as the mockup
-			     draws it: the hero under it already makes the pitch, so the
-			     sentence would say it twice. The cog moves to the far end there. -->
+			<!-- Bold's header is only the name, the doors and the cog: the hero
+			     under it already makes the pitch, so the sentence would say it
+			     twice. The cog sits after the doors there (below). -->
 			{#if !bold}
 				<SettingsMenu />
 
@@ -271,7 +285,7 @@
 			     Bold has no rail at all, so its doors are always here, as links. -->
 			<nav class="headdoors" aria-label="Pages">
 				{#if docked || boldHub}
-					{#each PORTALS as portal (portal.key)}
+					{#each bold ? BOLD_DOORS : PORTALS as portal (portal.key)}
 						<a
 							href={portal.href}
 							class="headdoor"
@@ -290,6 +304,12 @@
 				{/if}
 			</nav>
 
+			<!-- Bold keeps the cog with the doors on the left; the cog holds the
+			     style and both Bold themes, so the header needs no theme pills. -->
+			{#if bold}
+				<SettingsMenu />
+			{/if}
+
 			<!-- Keyed on the route so the mark restarts its turn on every
 			     navigation. It runs off its own clock from mount, and a walk
 			     through a door is the natural place to put it back to zero. -->
@@ -299,25 +319,12 @@
 			     transport. Advanced mode keeps the mark everywhere. -->
 			{#if player.current && !playable && active !== null && active !== 'media'}
 				<MiniPlayer size={62} />
-			{:else if bold}
-				<!-- Bold's two palettes are one click apart, so they sit in the
-				     header as pills rather than behind the cog; the cog still
-				     holds the style, which is the way out of Bold. -->
-				<div class="themepills" role="group" aria-label="Theme">
-					{#each themesForStyle('bold') as t (t.id)}
-						<button
-							type="button"
-							class="themepill"
-							aria-pressed={theme.current === t.id}
-							onclick={() => theme.set(t.id)}>{t.name}</button
-						>
-					{/each}
-				</div>
-				<SettingsMenu />
-			{:else}
-				{#key path}
-					<SineMark width={108} />
-				{/key}
+			{:else if !bold}
+				<span class="headmark">
+					{#key path}
+						<SineMark width={108} />
+					{/key}
+				</span>
 			{/if}
 		</header>
 
@@ -638,24 +645,25 @@
 	}
 
 	/* --- bold: the ground -------------------------------------------------
-	   Big, uneven tiles, each a soft grey gradient, with the page's own
-	   colour as the grout between them. Every tile is one gradient layer,
-	   sized and placed in viewport units and fixed to the viewport, so the
-	   wall stays put while the page scrolls over it. Mixed from the theme's
-	   ink and ground, so Night gets the same wall in the dark. */
+	   Big, uneven tiles, each a soft gradient, with the page's own colour as
+	   the grout between them. Every tile is one gradient layer, sized and
+	   placed in viewport units and fixed to the viewport, so the wall stays
+	   put while the page scrolls over it. A theme can colour each tile
+	   (--tile-1 … --tile-8, and their -end), as Street's olive ramp does;
+	   otherwise the tiles are a grey mixed from its ink and ground. */
 	:global([data-style='bold']) .frame {
 		--tile-a: color-mix(in srgb, var(--color-ink) 4%, var(--color-bg));
 		--tile-b: color-mix(in srgb, var(--color-ink) 11%, var(--color-bg));
 		background-color: var(--color-bg);
 		background-image:
-			linear-gradient(150deg, var(--tile-a), var(--tile-b)),
-			linear-gradient(200deg, var(--tile-b), var(--tile-a)),
-			linear-gradient(120deg, var(--tile-a), var(--tile-b)),
-			linear-gradient(170deg, var(--tile-b), var(--tile-a)),
-			linear-gradient(135deg, var(--tile-b), var(--tile-a)),
-			linear-gradient(160deg, var(--tile-a), var(--tile-b)),
-			linear-gradient(110deg, var(--tile-b), var(--tile-a)),
-			linear-gradient(190deg, var(--tile-a), var(--tile-b));
+			linear-gradient(150deg, var(--tile-1, var(--tile-a)), var(--tile-1-end, var(--tile-b))),
+			linear-gradient(200deg, var(--tile-2, var(--tile-b)), var(--tile-2-end, var(--tile-a))),
+			linear-gradient(120deg, var(--tile-3, var(--tile-a)), var(--tile-3-end, var(--tile-b))),
+			linear-gradient(170deg, var(--tile-4, var(--tile-b)), var(--tile-4-end, var(--tile-a))),
+			linear-gradient(135deg, var(--tile-5, var(--tile-b)), var(--tile-5-end, var(--tile-a))),
+			linear-gradient(160deg, var(--tile-6, var(--tile-a)), var(--tile-6-end, var(--tile-b))),
+			linear-gradient(110deg, var(--tile-7, var(--tile-b)), var(--tile-7-end, var(--tile-a))),
+			linear-gradient(190deg, var(--tile-8, var(--tile-a)), var(--tile-8-end, var(--tile-b)));
 		background-size:
 			57vw 45vh,
 			42vw 26vh,
@@ -691,30 +699,6 @@
 		font-weight: 900;
 		letter-spacing: -0.04em;
 		color: var(--color-ink);
-	}
-
-	.themepills {
-		display: flex;
-		flex-shrink: 0;
-		gap: 6px;
-	}
-
-	.themepill {
-		padding: 6px 10px;
-		border: 1px solid var(--color-line);
-		border-radius: 999px;
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: var(--color-ink);
-		background-color: var(--color-surface);
-		cursor: pointer;
-	}
-
-	.themepill[aria-pressed='true'] {
-		border-color: var(--color-ink);
-		color: var(--color-bg);
-		background-color: var(--color-ink);
 	}
 
 	/* --- the window ------------------------------------------------------ */
@@ -990,8 +974,47 @@
 	}
 
 	:global([data-style='bold']) .headdoors {
+		flex: 0 0 auto;
+		justify-content: flex-start;
 		gap: 1.4rem;
-		margin-right: 0.6rem;
+		margin-left: 0.6rem;
+	}
+
+	/* On a phone the bar wraps under the name; tighter gaps keep the three
+	   links and the cog on one line there instead of stranding the cog. */
+	@media (max-width: 30rem) {
+		:global([data-style='bold']) .headdoors {
+			gap: 1rem;
+			margin-left: 0;
+		}
+
+		:global([data-style='bold']) .head {
+			column-gap: 1rem;
+		}
+	}
+
+	/* The mark always takes the far end of the bar. */
+	.headmark {
+		display: inline-flex;
+		margin-left: auto;
+	}
+
+	/* Bold sets its bar out from the middle: the name with the mark under
+	   it, the doors, the cog. */
+	:global([data-style='bold']) .head {
+		justify-content: center;
+	}
+
+	.brand {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2px;
+	}
+
+	.brandmark {
+		display: inline-flex;
+		--mark-color: var(--color-muted);
 	}
 
 	.winbar-title {

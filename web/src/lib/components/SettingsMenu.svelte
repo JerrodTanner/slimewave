@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { theme } from '$lib/theme/theme.svelte';
-	import { STYLES, themeById, themesForStyle } from '$lib/theme/themes';
+	import { themeById, themesForStyle } from '$lib/theme/themes';
 	import { cardPlate } from '$lib/state/cardPlate.svelte';
 	import { ui } from '$lib/state/ui.svelte';
 
@@ -14,7 +14,7 @@
 	 * theme row only offers the themes of the style that is on.
 	 *
 	 * The themes are shown as tokens rather than a named list because the
-	 * swatch is the honest preview: three colours are what a theme actually
+	 * preview is the honest one: a theme's own colours are what it actually
 	 * is. The active one is named above the row, since a token alone cannot
 	 * say which is which.
 	 */
@@ -98,20 +98,6 @@
 				</div>
 			{/if}
 
-			<div class="row row-style">
-				<span class="label">Style</span>
-				<div class="seg">
-					{#each STYLES as s (s.id)}
-						<button
-							type="button"
-							class:seg-on={active.style === s.id}
-							aria-pressed={active.style === s.id}
-							onclick={() => theme.setStyle(s.id)}>{s.name.toLowerCase()}</button
-						>
-					{/each}
-				</div>
-			</div>
-
 			<div class="row row-themes">
 				<div class="themehead">
 					<span class="label">Theme</span>
@@ -130,9 +116,17 @@
 							aria-pressed={t.id === theme.current}
 							onclick={() => theme.set(t.id)}
 						>
-							{#each t.swatch as color (color)}
-								<span style:background-color={color}></span>
-							{/each}
+							<span
+								class="mini"
+								style:--ground={t.preview.ground}
+								style:--card={t.preview.card}
+								style:--ink={t.preview.ink}
+								style:--accent={t.preview.accent}
+							>
+								<span class="mini-head"></span>
+								<span class="mini-line"></span>
+								<span class="mini-band"></span>
+							</span>
 						</button>
 					{/each}
 				</div>
@@ -261,10 +255,6 @@
 		padding: 10px 11px;
 	}
 
-	.row-style {
-		border-top: 1px solid var(--color-line);
-	}
-
 	.row-themes {
 		flex-direction: column;
 		align-items: stretch;
@@ -319,26 +309,52 @@
 		gap: 7px;
 	}
 
-	/* The gap between the bars is the card showing through, which is what
-	   gives each token its hairlines. */
+	/* Each token is the theme in miniature: its ground, the card on it, a
+	   headline in its ink and a band of its accent, all in the theme's own
+	   colours rather than the current one's. */
 	.token {
-		width: 34px;
+		width: 38px;
 		height: 30px;
 		padding: 0;
-		display: flex;
-		gap: 1px;
 		overflow: hidden;
-		background-color: var(--color-line);
 		border: 1px solid var(--color-line);
 		border-radius: var(--radius-panel);
 	}
 
-	.token:hover {
-		border-color: var(--color-line-bright);
+	.mini {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		width: 100%;
+		height: 100%;
+		padding: 4px;
+		border: 2px solid var(--ground);
+		background-color: var(--card);
 	}
 
-	.token span {
-		flex: 1;
+	.mini-head {
+		width: 70%;
+		height: 3px;
+		background-color: var(--ink);
+	}
+
+	.mini-line {
+		width: 45%;
+		height: 2px;
+		background-color: var(--ink);
+		opacity: 0.45;
+	}
+
+	.mini-band {
+		margin-top: auto;
+		height: 7px;
+		margin-inline: -4px;
+		margin-bottom: -4px;
+		background-color: var(--accent);
+	}
+
+	.token:hover {
+		border-color: var(--color-line-bright);
 	}
 
 	.token-on,

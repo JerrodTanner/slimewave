@@ -3,9 +3,20 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="description" content="Jerrod Tanner — engineer. Portfolio, writing, music, and a 3D hub you can walk around in." />
+		<meta name="description" content="ShineWave builds reporting, databases and workflow automation for small businesses. Based in Fort Lauderdale, Florida. Less busywork, more business: book a free 30-minute call." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="ShineWave" />
+		<meta property="og:title" content="Less busywork. More business. | ShineWave" />
+		<meta property="og:description" content="Reporting, databases and workflow automation for small businesses, from Fort Lauderdale, Florida. See real examples, then book a free 30-minute call." />
+		<meta property="og:url" content="https://jerrodtanner.com/" />
+		<meta property="og:image" content="https://jerrodtanner.com/og.jpg" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Less busywork. More business. The ShineWave landing page." />
+		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="color-scheme" content="dark light" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" type="image/png" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
 		<script>
 			// Applied before first paint so the chosen theme never flashes.
@@ -16,14 +27,13 @@
 				// before the current house style must not outrank it.
 				localStorage.removeItem('slimewave:theme');
 				var stored = localStorage.getItem('slimewave:theme:v2');
-				if (stored) {
+				// Every visitor lands on Bold: only a Bold theme is honoured, and
+				// a stored Clean or Homey one is dropped (lib/theme/theme.svelte.ts
+				// does the same), so the tag's defaults above stand.
+				if (stored === 'street' || stored === 'night') {
 					document.documentElement.dataset.theme = stored;
-					// The style follows from the theme (each theme's `style` in
-					// lib/theme/themes.ts). The tag above defaults to Bold, so a
-					// stored Clean theme has to say so or it would paint as Bold.
-					var homey = stored === 'glass' || stored === 'walnut';
-					var bold = stored === 'street' || stored === 'night';
-					document.documentElement.dataset.style = homey ? 'homey' : bold ? 'bold' : 'clean';
+				} else if (stored) {
+					localStorage.removeItem('slimewave:theme:v2');
 				}
 			} catch (e) {
 				/* private mode, blocked storage: the default theme is fine */

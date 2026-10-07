@@ -102,8 +102,21 @@ export const JOBS: Job[] = [
 		]
 	},
 	{
+		name: 'UI/UX design',
+		proof: 'Example: Booking check-in, customer receipts and reporting dashboards.',
+		tag: 'Design',
+		infographic: DesignBoard,
+		icon: [
+			{ d: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z', tone: 'body' },
+			'M2 8.5h20',
+			'M5.5 12.5h6',
+			'M5.5 16h4',
+			{ d: 'M14.5 12h4.5v4.5h-4.5Z', tone: 'pop' }
+		]
+	},
+	{
 		name: 'Full-stack hosting, data tracking & styled reports',
-		proof: 'Example: Building and hosting LogKing, which parses uploaded in-game activity logs into a database and serves them back as polished, shareable player performance reports.',
+		proof: 'Example: Designing, building and running LogKing on my own: a live product with automatic uploads, a database, leaderboards and shareable reports.',
 		tag: 'Reporting',
 		infographic: LogKingBoard,
 		icon: [
@@ -113,19 +126,6 @@ export const JOBS: Job[] = [
 			'M7 15h4',
 			{ d: 'M20 17.5a3 3 0 1 1-6 0a3 3 0 1 1 6 0', tone: 'pop' },
 			'm19.2 19.7 2.3 2.3'
-		]
-	},
-	{
-		name: 'UI/UX design',
-		proof: 'Example: View various examples.',
-		tag: 'Design',
-		infographic: DesignBoard,
-		icon: [
-			{ d: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z', tone: 'body' },
-			'M2 8.5h20',
-			'M5.5 12.5h6',
-			'M5.5 16h4',
-			{ d: 'M14.5 12h4.5v4.5h-4.5Z', tone: 'pop' }
 		]
 	}
 ];

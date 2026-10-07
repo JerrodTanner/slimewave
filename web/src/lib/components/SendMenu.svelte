@@ -29,11 +29,16 @@
 		drafts,
 		disabled = false,
 		align = 'right',
+		heading = 'Send with…',
+		extras = [],
 		trigger
 	}: {
 		drafts: Drafts;
 		disabled?: boolean;
 		align?: 'left' | 'right';
+		heading?: string;
+		/** Links listed before the email options, such as calendar invites. */
+		extras?: { label: string; href: string }[];
 		trigger: Snippet<[TriggerProps]>;
 	} = $props();
 
@@ -103,10 +108,13 @@
 
 	{#if open}
 		<div class="menu" popover="manual" role="menu" bind:this={menu}>
-			<p class="head">Send with…</p>
-			<a role="menuitem" href={drafts.mailto} onclick={() => (open = false)}>Mail app</a>
-			<a role="menuitem" href={drafts.gmail} target="_blank" rel="noopener" onclick={() => (open = false)}>Gmail</a>
-			<a role="menuitem" href={drafts.outlook} target="_blank" rel="noopener" onclick={() => (open = false)}>Outlook</a>
+			<p class="head">{heading}</p>
+			{#each extras as item (item.label)}
+				<a role="menuitem" href={item.href} target="_blank" rel="noopener" onclick={() => (open = false)}>{item.label}</a>
+			{/each}
+			<a role="menuitem" href={drafts.mailto} onclick={() => (open = false)}>{extras.length ? 'Email: mail app' : 'Mail app'}</a>
+			<a role="menuitem" href={drafts.gmail} target="_blank" rel="noopener" onclick={() => (open = false)}>{extras.length ? 'Email: Gmail' : 'Gmail'}</a>
+			<a role="menuitem" href={drafts.outlook} target="_blank" rel="noopener" onclick={() => (open = false)}>{extras.length ? 'Email: Outlook' : 'Outlook'}</a>
 			<button role="menuitem" type="button" onclick={copy}>{copied ? 'Address copied' : 'Copy address'}</button>
 		</div>
 	{/if}

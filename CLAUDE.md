@@ -29,9 +29,11 @@ sample sheet, e.g. `LogKingBoard.svelte`. Five-step sheets are laid out by
 `WorkSheet.svelte`, split ones by `SplitSheet.svelte`; the UI/UX gallery is
 `DesignBoard.svelte`), then a closing contact section
 (message box, CONTACT ME, Plan a Project, the email). There is no window, no
-tile and no door tiles. The header is a flat bar with the name, the three
-doors as plain links, Street/Night pills and the cog; it drops the header
-sentence, since the hero makes the pitch. The page sits on a fixed wall of big
+tile and no door tiles. The header is a flat bar, centred: the name with
+the logo mark in grey under it, Resume / Plan a Project / About me as plain
+links (Media is not linked under Bold), and the cog
+(which holds both Bold themes). It drops the header sentence, since
+the hero makes the pitch. The page sits on a fixed wall of big
 grey gradient tiles. The four things above describe Clean and Homey.
 
 `/plan` is a questionnaire (domain, web design, reporting, database) that
@@ -44,6 +46,11 @@ resume.
 
 ## How it works
 
+- **3D is off for now.** The root layout does not mount `GameStage`, and
+  `stage.svelte.ts` imports Babylon only on demand in `mount`, so no visitor
+  downloads it (the home page ships about 213 KB of JS instead of about 646 KB).
+  To bring 3D back, put `<GameStage />` and its import back in
+  `routes/+layout.svelte`; the notes below describe how it works when on.
 - **The canvas never unmounts.** A full page load would kill the WebGL context,
   so this is an SPA. `GameStage.svelte` creates the canvas once in the root layout.
   `HubFrame.svelte` holds empty placeholder boxes that the stage draws over.
@@ -66,13 +73,15 @@ resume.
     never shifts the logo.
 - **Themes** — each one block of CSS variables in `app.css` plus an entry in
   `themes.ts`. The `--scene-*` variables are read back and handed to Babylon.
-- **Styles** — the cog menu's **Style** row: **Bold** (the default; Street,
-  Night: a scroll-down pitch with no furniture, no window and no 3D, and the
-  stage paused but still mounted), **Clean** (the hairline panels;
-  Newsprint, Aero, Slimewave, Deepwater) or **Homey** (tile, leaded glass, wood
-  and stone; Tile & Glass, Walnut). A theme belongs to one style, and the style
-  is never stored: it follows from the theme and is set as `data-style` on
-  `<html>` (before first paint too, in `app.html`). Homey's furniture is scoped
+- **Styles** — **Bold** (Street, Night: a scroll-down pitch with no furniture,
+  no window and no 3D, and the stage paused but still mounted) is the only
+  style offered. **Clean** (the hairline panels; Newsprint, Aero, Slimewave,
+  Deepwater) and **Homey** (tile, leaded glass, wood and stone; Tile & Glass,
+  Walnut) are still in the code but unreachable: the cog has no Style row, and
+  a stored Clean or Homey theme is dropped on load (`app.html` and
+  `theme.svelte.ts` honour only Bold themes), so every visitor lands on Bold.
+  A theme belongs to one style, and the style is never stored: it follows from
+  the theme and is set as `data-style` on `<html>`. Homey's furniture is scoped
   `[data-style='homey']` blocks in `HubFrame`, `IndustriesTile` and `HubGate`,
   using pictures in `web/static/homey/`. Every one is original work or built
   from CC0 Poly Haven textures; `CREDITS.md` lists each file and its source.
@@ -88,12 +97,13 @@ resume.
 | Resume (the page) | `web/src/lib/content/resume.md`, typeset by `routes/resume/+page.svelte` |
 | Resume (download) | `PDFs/Jerrod Tanner Resume.pdf`. **Separate file, re-export by hand when `resume.md` changes** |
 | Time-saver rows (Bold band, Clean/Homey tile, window samples) | `JOBS` in `lib/content/jobs.ts` |
+| About me page (`/about`) | Photo `web/static/about/jerrod.jpg`; text is the resume's Professional Summary, read from `resume.md` (`RESUME_SUMMARY`) |
 | Design examples (UI/UX gallery, `/plan` sample pages) | `lib/content/designs.ts`; images in `web/static/samples/` and `web/static/designs/` |
 | Music | `audio/Artist/Album/Track.mp3`, indexed from disk |
 
 ## Routes
 
-Frontend: `/`, `/resume`, `/plan`, `/music`, `/music/[artist]`,
+Frontend: `/`, `/resume`, `/plan`, `/about`, `/music`, `/music/[artist]`,
 `/music/[artist]/[album]`. Nothing else is linked. `/work`, `/writing`, `/admin`
 and `/login` were removed as dead ends.
 

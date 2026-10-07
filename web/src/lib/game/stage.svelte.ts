@@ -1,6 +1,8 @@
 import { browser } from '$app/environment';
-import { Engine } from '@babylonjs/core/Engines/engine';
-import { Scene } from '@babylonjs/core/scene';
+// Types only: Babylon itself is loaded on demand in `mount`, so a page that
+// never mounts the stage (Bold, which has no corridor) never downloads it.
+import type { Engine } from '@babylonjs/core/Engines/engine';
+import type { Scene } from '@babylonjs/core/scene';
 import { theme, type ScenePalette } from '$lib/theme/theme.svelte';
 import { crt } from './crt.svelte';
 import { isFramed } from './portals';
@@ -39,6 +41,12 @@ class StageState {
 	pointerLocked = $state(false);
 
 	#engine: Engine | null = null;
+	/** Babylon's Scene class, once the engine has been loaded. */
+	#Scene: typeof Scene | null = null;
+	/** True while Babylon is being fetched, so a second mount waits for it. */
+	#loading = false;
+	/** A scene asked for before the engine finished loading, shown once it has. */
+	#pending: string | null = null;
 	#canvas: HTMLCanvasElement | null = null;
 	#factories = new Map<string, SceneFactory>();
 	#scenes = new Map<string, SceneHandle>();
@@ -72,10 +80,21 @@ class StageState {
 	 * does anything, which matters because Svelte can re-run effects.
 	 */
 	mount(canvas: HTMLCanvasElement) {
-		if (!browser || this.#engine) return;
+		if (!browser || this.#engine || this.#loading) return;
+		this.#loading = true;
+		void Promise.all([import('@babylonjs/core/Engines/engine'), import('@babylonjs/core/scene')]).then(
+			([{ Engine }, { Scene }]) => {
+				this.#loading = false;
+				this.#Scene = Scene;
+				this.#start(canvas, Engine);
+			}
+		);
+	}
 
+	/** The rest of `mount`, once Babylon has arrived. */
+	#start(canvas: HTMLCanvasElement, EngineClass: typeof Engine) {
 		try {
-			this.#engine = new Engine(canvas, true, {
+			this.#engine = new EngineClass(canvas, true, {
 				preserveDrawingBuffer: false,
 				stencil: true,
 				// Without this the context is lost on some mobile GPUs when the
@@ -104,6 +123,12 @@ class StageState {
 
 		this.#lastFrame = performance.now();
 		this.#engine.runRenderLoop(this.#renderFrame);
+
+		if (this.#pending) {
+			const id = this.#pending;
+			this.#pending = null;
+			this.activate(id);
+		}
 	}
 
 	/**
@@ -124,7 +149,11 @@ class StageState {
 
 	/** Builds the scene if needed and puts it on screen. */
 	activate(id: string) {
-		if (!this.#engine || this.activeSceneId === id) return;
+		if (!this.#engine || !this.#Scene) {
+			this.#pending = id;
+			return;
+		}
+		if (this.activeSceneId === id) return;
 
 		const existing = this.#scenes.get(id);
 		if (existing) {
@@ -138,7 +167,7 @@ class StageState {
 			return;
 		}
 
-		const scene = new Scene(this.#engine);
+		const scene = new this.#Scene(this.#engine);
 		const handle = factory({
 			scene,
 			canvas: this.#canvas!,

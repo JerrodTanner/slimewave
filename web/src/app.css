@@ -147,6 +147,25 @@
 	--camo-plate: rgb(0 0 0 / 0.42);
 	--camo-pop: #d8a31c;
 
+	/* The tile wall behind the Bold page: an olive ramp, one step per tile,
+	   pale at the top left and deepening toward the band (HubFrame). */
+	--tile-1: #eeeedc;
+	--tile-1-end: #e2e3cb;
+	--tile-2: #daddc1;
+	--tile-2-end: #d1d5b5;
+	--tile-3: #d0d4b4;
+	--tile-3-end: #c9ceaa;
+	--tile-4: #bdc29a;
+	--tile-4-end: #b9bf95;
+	--tile-5: #e4e5cf;
+	--tile-5-end: #d9dcc1;
+	--tile-6: #c7cba7;
+	--tile-6-end: #c2c6a0;
+	--tile-7: #b3ba8c;
+	--tile-7-end: #b1b88a;
+	--tile-8: #a9b17f;
+	--tile-8-end: #a9b17f;
+
 	--scene-sky: #26272c;
 	--scene-fog: #1c1d22;
 	--scene-ground: #2f3036;
