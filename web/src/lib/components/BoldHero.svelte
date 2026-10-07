@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { JOBS, type Job } from '$lib/content/jobs';
-	import { CONTACT, drafts, formatUsPhone, invites, isEmail, isUsPhone, send, type SendState } from '$lib/contact';
+	import { CONTACT, drafts, formatUsPhone, isEmail, isUsPhone, send, type SendState } from '$lib/contact';
 	import SendMenu from './SendMenu.svelte';
 
 	/**
@@ -16,55 +16,33 @@
 
 
 	// The same inbox as the tile's contact box under the other styles
-	// (lib/contact). The message is posted; the draft is only the fallback
-	// for when that fails.
+	// (lib/contact). One form covers both ways in: a message, a call, or
+	// both. The visitor's email is required so there is someone to reply to;
+	// the phone, day and time are optional and ride along in the same email.
+	// The draft is only the fallback for when the send fails.
 	let message = $state('');
 	let replyTo = $state('');
 	/** The honeypot, hidden from people; see handleContact on the server. */
 	let website = $state('');
 	let sendState = $state<SendState>('idle');
 	let sendError = $state('');
-	const canSend = $derived(!!message.trim() && isEmail(replyTo) && sendState !== 'sending');
-	const draft = $derived(drafts('Inquiry from jerrodtanner.com', message.trim()));
-
-	async function contact() {
-		sendState = 'sending';
-		const error = await send('message', replyTo, message, website);
-		if (error) {
-			sendState = 'failed';
-			sendError = error;
-		} else {
-			sendState = 'sent';
-			message = '';
-		}
-	}
-
-	// Typing again after a send starts a new message, so the status line from
-	// the last one clears.
-	$effect(() => {
-		if (sendState === 'sent' && message.trim()) sendState = 'idle';
-	});
 
 	/**
-	 * The free call. The visitor picks a day and a time in their own zone;
-	 * the request goes out as a calendar invite or an email (SendMenu), so it
-	 * needs no booking service. Defaults to the next weekday at 10:00.
+	 * Half-hour slots from 7 AM to 9 PM in the visitor's own zone. The span is
+	 * wide on purpose: a visitor a few zones away from Florida still finds a
+	 * time that lands inside Jerrod's day, and early or late suits people who
+	 * can only talk outside their own working hours. The value stays 24-hour
+	 * for the date maths; the label is the 12-hour clock people read.
 	 */
-	const CALL_MINUTES = 30;
-	const TIMES = Array.from({ length: 17 }, (_, i) => {
-		const minutes = 9 * 60 + i * 30;
-		return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+	const TIMES = Array.from({ length: 29 }, (_, i) => {
+		const minutes = 7 * 60 + i * 30;
+		const value = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+		const label = new Date(`2000-01-01T${value}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+		return { value, label };
 	});
-	const pad = (n: number) => String(n).padStart(2, '0');
-	function nextWeekday() {
-		const d = new Date();
-		do d.setDate(d.getDate() + 1);
-		while (d.getDay() === 0 || d.getDay() === 6);
-		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-	}
-	let callDay = $state(nextWeekday());
-	let callTime = $state('10:00');
-	/** The number to ring: required, and a valid US one, before a call can be asked for. */
+	const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	let callDay = $state('');
+	let callTime = $state('');
 	let callPhone = $state('');
 	const phoneOk = $derived(isUsPhone(callPhone));
 	/**
@@ -86,19 +64,70 @@
 		clearTimeout(phonePause);
 		phonePause = setTimeout(() => (phoneSettled = true), 1200);
 	}
-	const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-	const callStart = $derived(new Date(`${callDay}T${callTime}`));
-	const callReady = $derived(!Number.isNaN(callStart.getTime()));
-	const callWhen = $derived(
-		callReady
-			? callStart.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-			: ''
+
+	/** The day and time as a person would say them, whichever were picked. */
+	const callWhen = $derived.by(() => {
+		const day = callDay
+			? new Date(`${callDay}T12:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+			: '';
+		const time = callTime
+			? new Date(`2000-01-01T${callTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+			: '';
+		if (day && time) return `${day} at ${time} (${zone})`;
+		if (day) return `${day}, any time`;
+		if (time) return `any day at ${time} (${zone})`;
+		return '';
+	});
+
+	/** The whole email: the message, then whatever call details were given. */
+	const body = $derived(
+		[
+			message.trim(),
+			callPhone.trim() && `Phone: ${callPhone.trim()}`,
+			callWhen && `Good time for a call: ${callWhen}`
+		]
+			.filter(Boolean)
+			.join('\n\n')
 	);
-	const callNote = $derived(
-		`I'd like a free 30-minute call on ${callWhen} (${zone}). You can reach me at ${callPhone.trim()}.${message.trim() ? `\n\n${message.trim()}` : ''}`
+	// A message or a number to call is enough; a number has to be a real one.
+	const canSend = $derived(
+		(!!message.trim() || phoneOk) &&
+			(callPhone === '' || phoneOk) &&
+			isEmail(replyTo) &&
+			sendState !== 'sending'
 	);
-	const callDraft = $derived(drafts('Free 30-minute call request', callNote));
-	const callInvites = $derived(callReady ? invites(callStart, CALL_MINUTES, 'Free 30-minute call with Jerrod Tanner', callNote) : null);
+	const draft = $derived(drafts('Inquiry from jerrodtanner.com', body));
+
+	async function contact() {
+		sendState = 'sending';
+		const error = await send('message', replyTo, body, website);
+		if (error) {
+			sendState = 'failed';
+			sendError = error;
+		} else {
+			sendState = 'sent';
+			message = '';
+		}
+	}
+
+	// The address is copied rather than opened as a mailto: link, which does
+	// nothing for anyone without a mail app.
+	let addressCopied = $state(false);
+	async function copyAddress() {
+		try {
+			await navigator.clipboard.writeText(CONTACT);
+			addressCopied = true;
+			setTimeout(() => (addressCopied = false), 2000);
+		} catch {
+			// Clipboard blocked: the address is on the page, selectable.
+		}
+	}
+
+	// Typing again after a send starts a new message, so the status line from
+	// the last one clears.
+	$effect(() => {
+		if (sendState === 'sent' && message.trim()) sendState = 'idle';
+	});
 
 	/** The camo band, which the hint under the headline scrolls into view. */
 	let band = $state<HTMLElement | null>(null);
@@ -174,7 +203,7 @@
 <section class="cta" aria-labelledby="bold-contact">
 	<h2 id="bold-contact">What's eating your week?</h2>
 	<p class="cta-sub">
-		Tell me what you'd like automated, or plan a project step by step.
+		Tell me what you'd like automated.
 		<span class="cta-where">ShineWave is based in Fort Lauderdale, Florida.</span>
 	</p>
 
@@ -188,42 +217,23 @@
 			bind:value={message}
 		></textarea>
 
-		<div class="send">
-			<label class="call-field reply">
-				<span>Your email, so I can reply</span>
-				<input type="email" id="bold-reply" autocomplete="email" placeholder="you@yourbusiness.com" bind:value={replyTo} />
-			</label>
-			<!-- The honeypot: out of sight and out of the tab order, so only a
-			     bot filling every field it finds ever puts anything in it. -->
-			<input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" bind:value={website} />
-			<span class="actions">
-				<a class="btn-quiet" href="/plan" onclick={(e) => select(e, '/plan')}>Plan a Project</a>
-				<button class="btn-bold" type="button" disabled={!canSend} onclick={contact}>
-					{sendState === 'sending' ? 'Sending…' : 'Contact me →'}
-				</button>
-			</span>
-		</div>
-
-		<p class="call-note" class:bad={sendState === 'failed'} role="status">
-			{#if sendState === 'sent'}
-				Sent. I'll reply to {replyTo.trim()}.
-			{:else if sendState === 'failed'}
-				{sendError}
-				<SendMenu drafts={draft} align="left" heading="Send it with…">
-					{#snippet trigger(props)}
-						<button class="link" {...props}>Send it from your own email instead</button>
-					{/snippet}
-				</SendMenu>
-			{:else}
-				Or write to <a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
-			{/if}
-		</p>
+		<label class="call-field">
+			<span>Your email</span>
+			<input type="email" id="bold-reply" autocomplete="email" placeholder="you@yourbusiness.com" bind:value={replyTo} />
+		</label>
+		<!-- The honeypot: out of sight and out of the tab order, so only a
+		     bot filling every field it finds ever puts anything in it. -->
+		<input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" bind:value={website} />
 
 		<div class="call">
-			<p class="call-head"><strong>Prefer to talk it through?</strong> Book a free 30-minute call.</p>
-			<div class="call-row">
-				<label class="call-field call-phone">
-					<span>Phone</span>
+			<p class="call-note" class:bad={phoneWrong}>
+				{phoneWrong
+					? 'That doesn’t look like a US number yet: 10 digits, like (555) 234-5678.'
+					: 'Add your number for a free 30-minute call about your project.'}
+			</p>
+			<div class="fields">
+				<label class="call-field">
+					<span>Phone (optional)</span>
 					<input
 						type="tel"
 						id="call-phone"
@@ -231,43 +241,50 @@
 						inputmode="tel"
 						placeholder="(555) 234-5678"
 						aria-invalid={phoneWrong}
-						aria-describedby="call-phone-note"
 						value={callPhone}
 						oninput={typePhone}
 					/>
 				</label>
 				<label class="call-field">
-					<span>Day</span>
+					<span>Day (optional)</span>
 					<input type="date" id="call-day" bind:value={callDay} />
 				</label>
 				<label class="call-field">
 					<span>Time ({zone.split('/').pop()?.replace('_', ' ')})</span>
 					<select id="call-time" bind:value={callTime}>
-						{#each TIMES as t (t)}<option value={t}>{t}</option>{/each}
+						<option value="">Any time</option>
+						{#each TIMES as t (t.value)}<option value={t.value}>{t.label}</option>{/each}
 					</select>
 				</label>
-				<SendMenu
-					drafts={callDraft}
-					disabled={!callReady || !phoneOk}
-					heading="Request with…"
-					extras={callInvites
-						? [
-								{ label: 'Google Calendar invite', href: callInvites.google },
-								{ label: 'Outlook calendar invite', href: callInvites.outlook }
-							]
-						: []}
-				>
-					{#snippet trigger(props)}
-						<button class="btn-quiet" {...props}>Request a call →</button>
-					{/snippet}
-				</SendMenu>
 			</div>
-			<p class="call-note" id="call-phone-note" class:bad={phoneWrong}>
-				{phoneWrong
-					? 'That doesn’t look like a US number yet: 10 digits, like (555) 234-5678.'
-					: 'Enter a US phone number.'}
-			</p>
 		</div>
+
+		<button class="btn-bold" type="button" disabled={!canSend} onclick={contact}>
+			{sendState === 'sending' ? 'Sending…' : 'Contact me →'}
+		</button>
+
+		{#if sendState === 'sent' || sendState === 'failed'}
+			<p class="call-note" class:bad={sendState === 'failed'} role="status">
+				{#if sendState === 'sent'}
+					Sent. I'll reply to {replyTo.trim()}.
+				{:else}
+					{sendError}
+					<SendMenu drafts={draft} align="left" heading="Send it with…">
+						{#snippet trigger(props)}
+							<button class="link" {...props}>Send it from your own email instead</button>
+						{/snippet}
+					</SendMenu>
+				{/if}
+			</p>
+		{/if}
+
+		<p class="call-note">
+			Need help getting started? Use the
+			<a class="link" href="/plan" onclick={(e) => select(e, '/plan')}>plan a project</a> form.
+			Or copy my email,
+			<button class="link email" type="button" title="Copy address" onclick={copyAddress}>{CONTACT}</button>{addressCopied ? ' (copied)' : ''},
+			and send from your own email.
+		</p>
 	</div>
 </section>
 
@@ -554,15 +571,10 @@
 		outline-offset: 2px;
 	}
 
-	.send {
-		position: relative;
-		display: flex;
-		flex-wrap: wrap;
-		/* Bottoms aligned, so the address pill sits level with the buttons
-		   under its label. */
-		align-items: end;
-		justify-content: space-between;
-		gap: 1rem;
+	/* The call hint sits tight over the fields it explains. */
+	.call {
+		display: grid;
+		gap: 8px;
 	}
 
 	.email {
@@ -574,16 +586,8 @@
 		color: var(--color-ink);
 	}
 
-	.actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-	}
-
-	/* One size for every pill in the contact panel, link or button, filled
-	   or outlined, so the three line up as a set. */
-	.btn-bold,
-	.btn-quiet {
+	/* The panel's one button, the same height as the pills above it. */
+	.btn-bold {
 		box-sizing: border-box;
 		display: inline-flex;
 		align-items: center;
@@ -604,12 +608,6 @@
 		background-color: var(--color-accent);
 		color: var(--color-accent-ink);
 		cursor: pointer;
-	}
-
-	/* The reply address takes whatever the buttons leave of the row, and
-	   gets a row to itself on a phone. */
-	.reply {
-		flex: 1 1 16rem;
 	}
 
 	/* Off-screen rather than display: none, which some bots know to skip. */
@@ -638,22 +636,8 @@
 		cursor: default;
 	}
 
-	.btn-quiet {
-		border-color: var(--color-line);
-		color: var(--color-ink);
-		background-color: var(--color-surface);
-	}
-
-	.btn-quiet:hover {
-		border-color: var(--color-ink);
-	}
-
-	button.btn-quiet {
-		cursor: pointer;
-	}
-
-	/* Both ways in share one panel: a frosted sheet of the page's own ground
-	   laid over the tiles, the message on top and the call under a rule. */
+	/* The contact form: a frosted sheet of the page's own ground laid over
+	   the tiles. */
 	.panel {
 		display: grid;
 		gap: 1.25rem;
@@ -665,27 +649,19 @@
 		backdrop-filter: blur(8px);
 	}
 
-	.call {
+	/* Phone, day and time, a third of the row each; stacked on a narrow
+	   phone, where a third is too small for a date. */
+	.fields {
 		display: grid;
-		gap: 0.75rem;
-		padding-top: 1.25rem;
-		border-top: 1px solid var(--color-line);
-	}
-
-	.call-head {
-		margin: 0;
-		color: var(--color-muted);
-	}
-
-	.call-head strong {
-		color: var(--color-ink);
-	}
-
-	.call-row {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-end;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		align-items: end;
 		gap: 10px;
+	}
+
+	@media (max-width: 480px) {
+		.fields {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	.call-field {
@@ -708,12 +684,11 @@
 		background-color: var(--color-surface);
 	}
 
-	.call-row :global(.send) {
-		margin-left: auto;
-	}
-
-	.call-phone input {
-		width: 11rem;
+	.call-field input,
+	.call-field select {
+		box-sizing: border-box;
+		width: 100%;
+		min-width: 0;
 	}
 
 	.call-field input[aria-invalid='true'] {

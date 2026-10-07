@@ -80,30 +80,6 @@ export function formatUsPhone(raw: string): string {
 	return `${prefix}(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
-/** A calendar invite to the inbox above, in Google Calendar or Outlook on the web. */
-export interface Invites {
-	google: string;
-	outlook: string;
-}
-
-/**
- * The same meeting as a ready-made calendar event with CONTACT as the guest.
- * The visitor's calendar sends the invite, so a request needs no booking
- * service and no endpoint; `start` is in the visitor's own time zone.
- */
-export function invites(start: Date, minutes: number, title: string, details: string): Invites {
-	const end = new Date(start.getTime() + minutes * 60_000);
-	// Google wants UTC in its compact form, Outlook an ISO string.
-	const compact = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-	const t = encodeURIComponent(title);
-	const de = encodeURIComponent(details);
-	const to = encodeURIComponent(CONTACT);
-	return {
-		google: `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${t}&dates=${compact(start)}/${compact(end)}&details=${de}&add=${to}`,
-		outlook: `https://outlook.live.com/calendar/0/deeplink/compose?subject=${t}&startdt=${start.toISOString()}&enddt=${end.toISOString()}&body=${de}&to=${to}`
-	};
-}
-
 /** The same draft three ways: the mail app, Gmail, and Outlook on the web. */
 export function drafts(subject: string, body: string): Drafts {
 	const to = encodeURIComponent(CONTACT);
