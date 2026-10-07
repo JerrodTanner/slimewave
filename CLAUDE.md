@@ -148,5 +148,5 @@ with the visitor's email, which is required so there is someone to reply to.
   fake success and nothing is saved) and 5 messages per IP per hour, keyed on
   `CF-Connecting-IP` because the site sits behind the Cloudflare tunnel.
 - Config: `SLIMEWAVE_RESEND_API_KEY` in the host's `.env`; the from/to
-  addresses (`contact@jerrodtanner.com`) are set in `docker-compose.yml`.
+  addresses (from `contact@`, to `jerrod@jerrodtanner.com`) are set in `docker-compose.yml`.
   Without a key, messages are saved but not emailed, which is the dev default.

@@ -124,7 +124,7 @@ All optional; the defaults run from a fresh checkout.
 | `SLIMEWAVE_ADMIN_EMAIL` / `_PASSWORD` | — | seeds the owner account on first run |
 | `SLIMEWAVE_RESEND_API_KEY` | — | emails contact messages; without it they are only saved |
 | `SLIMEWAVE_CONTACT_FROM` | `ShineWave <contact@jerrodtanner.com>` | sender, on the domain verified in Resend |
-| `SLIMEWAVE_CONTACT_TO` | `contact@jerrodtanner.com` | the inbox messages go to |
+| `SLIMEWAVE_CONTACT_TO` | `jerrod@jerrodtanner.com` | the inbox messages go to |
 
 ## Deployment
 

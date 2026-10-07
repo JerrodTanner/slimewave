@@ -60,7 +60,7 @@ func Load() Config {
 		AdminPassword:     os.Getenv("SLIMEWAVE_ADMIN_PASSWORD"),
 		ResendAPIKey:      os.Getenv("SLIMEWAVE_RESEND_API_KEY"),
 		ContactFrom:       env("SLIMEWAVE_CONTACT_FROM", "ShineWave <contact@jerrodtanner.com>"),
-		ContactTo:         env("SLIMEWAVE_CONTACT_TO", "contact@jerrodtanner.com"),
+		ContactTo:         env("SLIMEWAVE_CONTACT_TO", "jerrod@jerrodtanner.com"),
 	}
 	return c
 }

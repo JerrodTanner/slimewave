@@ -13,7 +13,7 @@ services:
       # key lives in .env on the host; without it they are only saved.
       - SLIMEWAVE_RESEND_API_KEY=${SLIMEWAVE_RESEND_API_KEY:-}
       - SLIMEWAVE_CONTACT_FROM=ShineWave <contact@jerrodtanner.com>
-      - SLIMEWAVE_CONTACT_TO=contact@jerrodtanner.com
+      - SLIMEWAVE_CONTACT_TO=jerrod@jerrodtanner.com
     volumes:
       # The image is replaced on every deploy, so the database has to outlive it.
       - slimewave-data:/app/data
