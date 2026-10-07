@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { JOBS, type Job } from '$lib/content/jobs';
 	import { CONTACT, drafts, formatUsPhone, isEmail, isUsPhone, send, type SendState } from '$lib/contact';
-	import { callSlots, describeCall, easternToday, holiday, zoneName } from '$lib/callTimes';
+	import { describeCall, holiday, hoursIn, inHours, todayIn, zonedInstant, zoneName } from '$lib/callTimes';
 	import SendMenu from './SendMenu.svelte';
 
 	/**
@@ -28,19 +28,71 @@
 	let sendState = $state<SendState>('idle');
 	let sendError = $state('');
 
-	// Jerrod's hours in Eastern, shown on the visitor's clock (lib/callTimes).
+	// Jerrod's hours in Eastern, checked against the visitor's own clock
+	// (lib/callTimes). The day is a date on their calendar.
 	const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-	const today = easternToday();
+	const today = todayIn(zone);
 	let callDay = $state('');
-	let callTime = $state('');
-	const slots = $derived(callSlots(callDay, zone));
 	const dayOff = $derived(callDay ? holiday(callDay) : null);
 	const dayPast = $derived(!!callDay && callDay < today);
-	// A day change can take the picked time away (today's past hours), so
-	// the pick falls back to any time rather than naming a slot not offered.
-	$effect(() => {
-		if (callTime && !slots.some((s) => s.value === callTime)) callTime = '';
+
+	/**
+	 * The time is typed, as an hour and minutes, with AM or PM tapped beside
+	 * them, all in one field. Minutes left blank mean on the hour. A time
+	 * outside Jerrod's hours gets a warning naming those hours on the
+	 * visitor's clock, and holds the send until it is fixed or cleared.
+	 */
+	let typedHour = $state('');
+	let typedMinute = $state('');
+	let period = $state<'' | 'AM' | 'PM'>('');
+	let minuteInput: HTMLInputElement | undefined = $state();
+	// AM or PM alone is not a time yet; the digits are what start one.
+	const timeStarted = $derived(!!(typedHour || typedMinute));
+
+	/** The typed time as a moment, or the reason it isn't one yet. */
+	const callTime = $derived.by((): { at: Date } | { problem: string; quiet?: boolean } | null => {
+		if (!timeStarted) return null;
+		const hour = Number(typedHour);
+		const minute = typedMinute === '' ? 0 : Number(typedMinute);
+		if (!typedHour) return { problem: 'Enter an hour, or clear the minutes for any time.' };
+		if (!/^\d{1,2}$/.test(typedHour) || hour < 1 || hour > 12) return { problem: 'Enter an hour from 1 to 12.' };
+		if (!/^\d{0,2}$/.test(typedMinute) || minute > 59) return { problem: 'Enter minutes from 00 to 59.' };
+		// Asked for only once the minutes are in, so it never nags mid-typing.
+		if (!period) return { problem: 'Choose AM or PM.', quiet: typedMinute.length < 2 };
+		const h24 = (hour % 12) + (period === 'PM' ? 12 : 0);
+		const at = zonedInstant(callDay || today, `${String(h24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`, zone);
+		if (!inHours(at)) return { problem: `Calls are ${hoursIn(zone, callDay)}. Pick a time in that range.` };
+		if (callDay === today && at.getTime() <= Date.now()) return { problem: 'That time has already passed today. Pick a later time.' };
+		return { at };
 	});
+	const callAt = $derived(callTime && 'at' in callTime ? callTime.at : null);
+	const timeProblem = $derived(callTime && 'problem' in callTime ? callTime : null);
+
+	// Digits only, two at most. A full hour (or one that can't take a second
+	// digit, 2 to 9) moves straight on to the minutes.
+	function typeHour(e: Event & { currentTarget: HTMLInputElement }) {
+		typedHour = e.currentTarget.value.replace(/\D/g, '').slice(0, 2);
+		e.currentTarget.value = typedHour;
+		if (typedHour.length === 2 || Number(typedHour) > 1) minuteInput?.focus();
+	}
+
+	function typeMinute(e: Event & { currentTarget: HTMLInputElement }) {
+		typedMinute = e.currentTarget.value.replace(/\D/g, '').slice(0, 2);
+		e.currentTarget.value = typedMinute;
+	}
+
+	// A tap flips between AM and PM; on the keyboard, A or P sets it.
+	function flipPeriod() {
+		period = period === 'AM' ? 'PM' : 'AM';
+	}
+
+	function keyPeriod(e: KeyboardEvent) {
+		const key = e.key.toLowerCase();
+		if (key === 'a' || key === 'p') {
+			e.preventDefault();
+			period = key === 'a' ? 'AM' : 'PM';
+		}
+	}
 	let callPhone = $state('');
 	const phoneOk = $derived(isUsPhone(callPhone));
 	/**
@@ -64,7 +116,7 @@
 	}
 
 	/** The day and time as Jerrod reads them: Eastern, with the visitor's clock beside it. */
-	const callWhen = $derived(describeCall(callDay, callTime, zone));
+	const callWhen = $derived(describeCall(callDay, callAt, zone));
 
 	/** The whole email: the message, then whatever call details were given. */
 	const body = $derived(
@@ -82,6 +134,7 @@
 			(callPhone === '' || phoneOk) &&
 			!dayOff &&
 			!dayPast &&
+			!timeProblem &&
 			isEmail(replyTo) &&
 			sendState !== 'sending'
 	);
@@ -238,18 +291,49 @@
 					<span>Day (optional)</span>
 					<input type="date" id="call-day" min={today} aria-invalid={!!dayOff || dayPast} bind:value={callDay} />
 				</label>
-				<label class="call-field">
-					<span>Time ({zoneName(zone)})</span>
-					<select id="call-time" bind:value={callTime}>
-						<option value="">Any time</option>
-						{#each slots as t (t.value)}<option value={t.value}>{t.label}</option>{/each}
-					</select>
-				</label>
+				<fieldset class="call-field call-time">
+					<legend>Time, optional ({zoneName(zone)})</legend>
+					<!-- One pill cut in three: hour, minutes, then AM or PM. -->
+					<div class="clock" class:off={timeProblem && !timeProblem.quiet}>
+						<input
+							id="call-hour"
+							class="seg"
+							inputmode="numeric"
+							autocomplete="off"
+							placeholder="hr"
+							aria-label="Hour"
+							value={typedHour}
+							oninput={typeHour}
+						/>
+						<input
+							id="call-minute"
+							class="seg"
+							inputmode="numeric"
+							autocomplete="off"
+							placeholder="min"
+							aria-label="Minutes"
+							bind:this={minuteInput}
+							value={typedMinute}
+							oninput={typeMinute}
+						/>
+						<button
+							type="button"
+							id="call-period"
+							class="seg period"
+							class:unset={!period}
+							aria-label={period ? `${period}, tap to switch` : 'Choose AM or PM'}
+							onclick={flipPeriod}
+							onkeydown={keyPeriod}>{period || 'AM/PM'}</button
+						>
+					</div>
+				</fieldset>
 			</div>
 			{#if dayOff || dayPast}
 				<p class="call-note bad">
 					{dayOff ? `That day is ${dayOff}, so no calls. Pick another day.` : 'That day has passed. Pick today or later.'}
 				</p>
+			{:else if timeProblem && !timeProblem.quiet}
+				<p class="call-note bad" role="status">{timeProblem.problem}</p>
 			{/if}
 		</div>
 
@@ -667,8 +751,7 @@
 
 	/* The same pill as the buttons beside them, and the same white as the
 	   message box above. */
-	.call-field input,
-	.call-field select {
+	.call-field input {
 		padding: 12px 16px;
 		border: 1px solid var(--color-line);
 		border-radius: 999px;
@@ -678,11 +761,75 @@
 		background-color: var(--color-surface);
 	}
 
-	.call-field input,
-	.call-field select {
+	.call-field input {
 		box-sizing: border-box;
 		width: 100%;
 		min-width: 0;
+	}
+
+	/* The time is one pill cut in three, ( hr | min | AM/PM ), the same
+	   size as the pills beside it. */
+	.call-time {
+		margin: 0;
+		padding: 0;
+		border: 0;
+		min-width: 0;
+	}
+
+	.call-time legend {
+		padding: 0;
+		margin-bottom: 4px;
+	}
+
+	.clock {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
+		overflow: hidden;
+		border: 1px solid var(--color-line);
+		border-radius: 999px;
+		background-color: var(--color-surface);
+	}
+
+	.clock:focus-within {
+		border-color: var(--color-ink);
+	}
+
+	.clock.off {
+		border-color: var(--color-warn, var(--color-ink));
+	}
+
+	.clock .seg {
+		box-sizing: border-box;
+		width: 100%;
+		min-width: 0;
+		padding: 12px 6px;
+		border: 0;
+		border-radius: 0;
+		font: inherit;
+		font-size: 0.95rem;
+		text-align: center;
+		color: var(--color-ink);
+		background: none;
+	}
+
+	/* The cuts between the three parts. */
+	.clock .seg + .seg {
+		border-left: 1px solid var(--color-line);
+	}
+
+	.clock .seg:focus-visible {
+		outline: none;
+		background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+	}
+
+	.clock .period {
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	.clock .period.unset {
+		font-weight: 600;
+		color: var(--color-muted);
 	}
 
 	.call-field input[aria-invalid='true'] {

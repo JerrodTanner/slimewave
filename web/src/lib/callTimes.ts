@@ -1,24 +1,18 @@
 /**
  * Booking times for the free call. Jerrod takes calls from 7 AM to 9 PM
- * Eastern, every day but the US federal holidays. The visitor picks from
- * those hours shown on their own clock, and the email gives the time in
- * Eastern first, with theirs beside it.
+ * Eastern, every day but the US federal holidays. The visitor types a time
+ * on their own clock for a day on their own calendar; it is checked against
+ * those hours, and the email gives it in Eastern first, with theirs beside
+ * it.
  *
- * Days are 'YYYY-MM-DD' strings and mean the date in Eastern time, since
- * that is the calendar the call lands on. Times are 'HH:MM' in Eastern.
+ * Days are 'YYYY-MM-DD' strings on the visitor's calendar. Times are 'HH:MM'
+ * on a 24-hour clock.
  */
 
 export const EASTERN = 'America/New_York';
 
 const FIRST_HOUR = 7;
 const LAST_HOUR = 21;
-
-export interface Slot {
-	/** The Eastern time, 'HH:MM'. */
-	value: string;
-	/** The same moment on the visitor's clock, with a weekday when the date differs. */
-	label: string;
-}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -39,15 +33,20 @@ function offset(at: Date, timeZone: string): number {
 }
 
 /**
- * The moment a wall-clock time in Eastern falls on. The offset is taken
+ * The moment a wall-clock time in `zone` falls on. The offset is taken
  * twice so a time near a daylight-saving change settles on the right side.
  */
-export function easternInstant(day: string, time: string): Date {
+export function zonedInstant(day: string, time: string, zone: string): Date {
 	const [y, m, d] = day.split('-').map(Number);
 	const [h, mi] = time.split(':').map(Number);
 	const wall = Date.UTC(y, m - 1, d, h, mi);
-	const first = wall - offset(new Date(wall), EASTERN);
-	return new Date(wall - offset(new Date(first), EASTERN));
+	const first = wall - offset(new Date(wall), zone);
+	return new Date(wall - offset(new Date(first), zone));
+}
+
+/** Today's date in `zone`, 'YYYY-MM-DD'. */
+export function todayIn(zone: string): string {
+	return new Date().toLocaleDateString('en-CA', { timeZone: zone });
 }
 
 /**
@@ -63,43 +62,28 @@ export function zoneName(zone: string): string {
 	);
 }
 
-/** Today's date in Eastern, 'YYYY-MM-DD'. */
-export function easternToday(): string {
-	const now = new Date(Date.now() + offset(new Date(), EASTERN));
-	return `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}`;
-}
-
-/** A date as words, read in UTC so the visitor's zone can't shift it a day. */
-function longDate(day: string): string {
-	return new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', {
-		timeZone: 'UTC',
-		weekday: 'long',
-		month: 'long',
-		day: 'numeric'
-	});
+/** Whether a moment falls in Jerrod's hours, 7:00 AM to 9:00 PM Eastern. */
+export function inHours(at: Date): boolean {
+	const [h, m] = at
+		.toLocaleTimeString('en-GB', { timeZone: EASTERN, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+		.split(':')
+		.map(Number);
+	const minutes = h * 60 + m;
+	return minutes >= FIRST_HOUR * 60 && minutes <= LAST_HOUR * 60;
 }
 
 /**
- * Every half hour of Jerrod's day on `day` (today when no day is picked),
- * labelled in the visitor's zone. On today itself, times already gone are
- * left out.
+ * Jerrod's hours as the visitor's clock shows them on `day`, for the
+ * warning under a time outside them: "4:00 AM to 6:00 PM Pacific Time".
+ * A visitor already on Eastern gets just that.
  */
-export function callSlots(day: string, zone: string): Slot[] {
-	const today = easternToday();
-	const on = day || today;
-	const now = Date.now();
-	const slots: Slot[] = [];
-	for (let minutes = FIRST_HOUR * 60; minutes <= LAST_HOUR * 60; minutes += 30) {
-		const value = `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
-		const at = easternInstant(on, value);
-		if (day === today && at.getTime() <= now) continue;
-		const time = at.toLocaleTimeString('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit' });
-		// A visitor far enough east or west sees some of the day on another date.
-		const theirDay = at.toLocaleDateString('en-CA', { timeZone: zone });
-		const label = theirDay === on ? time : `${time} (${at.toLocaleDateString('en-US', { timeZone: zone, weekday: 'short' })})`;
-		slots.push({ value, label });
-	}
-	return slots;
+export function hoursIn(zone: string, day: string): string {
+	const on = day || todayIn(zone);
+	const start = zonedInstant(on, `${pad(FIRST_HOUR)}:00`, EASTERN);
+	const end = zonedInstant(on, `${pad(LAST_HOUR)}:00`, EASTERN);
+	const time = (at: Date) => at.toLocaleTimeString('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit' });
+	if (offset(start, zone) === offset(start, EASTERN)) return '7:00 AM to 9:00 PM Eastern Time';
+	return `${time(start)} to ${time(end)} ${zoneName(zone)} (7 AM to 9 PM Eastern)`;
 }
 
 function nthWeekday(year: number, month: number, weekday: number, n: number): number {
@@ -133,10 +117,22 @@ export function holiday(day: string): string | null {
 	return list.find(([hm, hd]) => hm === month && hd === d)?.[2] ?? null;
 }
 
-/** The pick as the email says it: Eastern first, the visitor's clock beside it. */
-export function describeCall(day: string, time: string, zone: string): string {
-	if (!time) return day ? `${longDate(day)}, any time` : '';
-	const at = easternInstant(day || easternToday(), time);
+/** A date as words, read in UTC so no zone can shift it a day. */
+function longDate(day: string): string {
+	return new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', {
+		timeZone: 'UTC',
+		weekday: 'long',
+		month: 'long',
+		day: 'numeric'
+	});
+}
+
+/**
+ * The pick as the email says it: Eastern first, the visitor's clock beside
+ * it. `at` is null when no time was given; `day` is empty when no day was.
+ */
+export function describeCall(day: string, at: Date | null, zone: string): string {
+	if (!at) return day ? `${longDate(day)}, any time` : '';
 	const clock = (timeZone: string, withDay: boolean) =>
 		at.toLocaleString('en-US', {
 			timeZone,
