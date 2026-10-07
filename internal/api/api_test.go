@@ -13,6 +13,7 @@ import (
 	"slimewave/internal/api"
 	"slimewave/internal/auth"
 	"slimewave/internal/config"
+	"slimewave/internal/mail"
 	"slimewave/internal/media"
 	"slimewave/internal/store"
 )
@@ -25,6 +26,11 @@ type testEnv struct {
 }
 
 func newTestEnv(t *testing.T) *testEnv {
+	t.Helper()
+	return newTestEnvWithMailer(t, nil)
+}
+
+func newTestEnvWithMailer(t *testing.T, mailer mail.Sender) *testEnv {
 	t.Helper()
 
 	dir := t.TempDir()
@@ -67,7 +73,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	}
 
 	am := auth.NewManager(st, cfg.SessionTTL, false)
-	return &testEnv{handler: api.NewServer(cfg, st, am, lib).Handler(), store: st}
+	return &testEnv{handler: api.NewServer(cfg, st, am, lib, mailer).Handler(), store: st}
 }
 
 func (e *testEnv) do(t *testing.T, method, path string, body any, cookies ...*http.Cookie) *httptest.ResponseRecorder {

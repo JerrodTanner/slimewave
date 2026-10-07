@@ -26,9 +26,9 @@ message box and my email), and three doors:
 default, keeps the corridor a backdrop. **On** adds "click to activate" and
 lets you walk in. The main menu is laid out the same either way.
 
-Both contact paths, the tile's button and the brief, open a `mailto:` draft
-for now. A real `POST /api/contact` is the next thing to build; the plan is in
-`CLAUDE.md`.
+Both contact paths, the contact box and the `/plan` brief, post to
+`POST /api/contact`, which saves the message to SQLite and emails it on through
+Resend. If the send fails, the visitor is offered the same text as a mail draft.
 
 ## Why it is built this way
 
@@ -99,6 +99,7 @@ back.
 | `GET`/`PUT` | `/api/preferences` | theme sync; requires a session |
 | `GET` | `/api/documents`, `/api/documents/{slug}` | published only, unless you are the owner |
 | `POST`/`PUT`/`DELETE` | `/api/documents[/{slug}]` | owner only |
+| `POST` | `/api/contact` | a contact message or project brief; saved, then emailed; honeypot and 5 per IP per hour |
 | `GET` | `/api/music/library`, `/artists`, `/artists/{a}`, `/artists/{a}/albums/{b}` | read from the on-disk index |
 | `POST` | `/api/music/rescan` | owner only |
 | `GET` | `/media/audio/...`, `/media/docs/...` | range requests supported, so seeking works |
@@ -121,6 +122,9 @@ All optional; the defaults run from a fresh checkout.
 | `SLIMEWAVE_SECURE_COOKIES` | `false` | set in production |
 | `SLIMEWAVE_ALLOW_REGISTRATION` | `false` | public sign-ups |
 | `SLIMEWAVE_ADMIN_EMAIL` / `_PASSWORD` | — | seeds the owner account on first run |
+| `SLIMEWAVE_RESEND_API_KEY` | — | emails contact messages; without it they are only saved |
+| `SLIMEWAVE_CONTACT_FROM` | `ShineWave <contact@jerrodtanner.com>` | sender, on the domain verified in Resend |
+| `SLIMEWAVE_CONTACT_TO` | `contact@jerrodtanner.com` | the inbox messages go to |
 
 ## Deployment
 

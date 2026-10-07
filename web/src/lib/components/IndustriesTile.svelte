@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { JOBS, type Stroke } from '$lib/content/jobs';
 	import { workMenu } from '$lib/state/workMenu.svelte';
-	import { CONTACT, drafts } from '$lib/contact';
+	import { CONTACT, drafts, isEmail, send, type SendState } from '$lib/contact';
 	import SendMenu from './SendMenu.svelte';
 
 	/**
@@ -16,10 +16,33 @@
 	 */
 	const strokeD = (stroke: Stroke) => (typeof stroke === 'string' ? stroke : stroke.d);
 
-	// Same inbox as the brief on /plan (lib/contact). A draft, so nothing is
-	// posted or stored.
+	// Same inbox and the same send as Bold's contact box (lib/contact): the
+	// message is posted, and the draft is only the fallback if that fails.
 	let message = $state('');
+	let replyTo = $state('');
+	/** The honeypot, hidden from people; see handleContact on the server. */
+	let website = $state('');
+	let sendState = $state<SendState>('idle');
+	let sendError = $state('');
+	const canSend = $derived(!!message.trim() && isEmail(replyTo) && sendState !== 'sending');
 	const draft = $derived(drafts('Inquiry from jerrodtanner.com', message.trim()));
+
+	async function contact() {
+		sendState = 'sending';
+		const error = await send('message', replyTo, message, website);
+		if (error) {
+			sendState = 'failed';
+			sendError = error;
+		} else {
+			sendState = 'sent';
+			message = '';
+		}
+	}
+
+	// Typing a new message clears the last one's status line.
+	$effect(() => {
+		if (sendState === 'sent' && message.trim()) sendState = 'idle';
+	});
 </script>
 
 {#snippet glyph(paths: Stroke[], size: number)}
@@ -74,17 +97,36 @@
 			placeholder="What would you like automated?"
 			bind:value={message}
 		></textarea>
+		<label class="sr-only" for="industries-reply">Your email, so I can reply</label>
+		<input
+			class="field"
+			type="email"
+			id="industries-reply"
+			autocomplete="email"
+			placeholder="Your email, so I can reply"
+			bind:value={replyTo}
+		/>
+		<!-- The honeypot: out of sight and out of the tab order. -->
+		<input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" bind:value={website} />
 		<div class="send">
 			<a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
-			<SendMenu drafts={draft} disabled={!message.trim()}>
-				{#snippet trigger(props)}
-					<button class="btn-accent cta" class:opacity-40={!message.trim()} {...props}>
-						CONTACT ME
-						{@render glyph(['M5 12h14', 'm13 6 6 6-6 6'], 14)}
-					</button>
-				{/snippet}
-			</SendMenu>
+			<button class="btn-accent cta" class:opacity-40={!canSend} type="button" disabled={!canSend} onclick={contact}>
+				{sendState === 'sending' ? 'SENDING…' : 'CONTACT ME'}
+				{@render glyph(['M5 12h14', 'm13 6 6 6-6 6'], 14)}
+			</button>
 		</div>
+		{#if sendState === 'sent'}
+			<p class="text-muted text-sm" role="status">Sent. I'll reply to {replyTo.trim()}.</p>
+		{:else if sendState === 'failed'}
+			<p class="text-sm" role="status">
+				{sendError}
+				<SendMenu drafts={draft} align="left" heading="Send it with…">
+					{#snippet trigger(props)}
+						<button class="link" {...props}>Send it from your own email instead</button>
+					{/snippet}
+				</SendMenu>
+			</p>
+		{/if}
 	</div>
 </section>
 
@@ -259,6 +301,26 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
+	}
+
+	/* Off-screen rather than display: none, which some bots know to skip. */
+	.trap {
+		position: absolute;
+		left: -10000px;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+	}
+
+	/* The fallback after a failed send reads as part of the sentence. */
+	.link {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--color-accent);
+		text-decoration: underline;
+		cursor: pointer;
 	}
 
 	/* --- the Homey style -------------------------------------------------

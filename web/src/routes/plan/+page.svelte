@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { drafts } from '$lib/contact';
+	import { drafts, isEmail, send, type SendState } from '$lib/contact';
 	import SendMenu from '$lib/components/SendMenu.svelte';
 	import { DESIGNS } from '$lib/content/designs';
 	import PageShell from '$lib/components/PageShell.svelte';
@@ -12,12 +12,10 @@
 	 * somewhere, then a free-text box for everything tokens cannot hold. The
 	 * answers become a work order.
 	 *
-	 * Nothing is posted: the button offers a mail draft with the brief already
-	 * written, in the visitor's mail app or in Gmail or Outlook on the web
-	 * (SendMenu), so this works with no endpoint, no stored
-	 * personal data. If it ever wants a real inbox, `brief` below is the whole
-	 * payload an /api/briefs handler would take — and it should, because a
-	 * mailto body this long is truncated by some clients.
+	 * The button posts `brief` below to /api/contact, which saves it and
+	 * emails it on, so a long brief arrives whole whatever mail setup the
+	 * visitor has. If that fails, the same brief is offered as a mail draft
+	 * (SendMenu), and it can always be copied.
 	 */
 
 	/**
@@ -219,6 +217,30 @@
 
 	const draft = $derived(drafts('Project brief', brief));
 
+	/** The honeypot, hidden from people; see handleContact on the server. */
+	let website = $state('');
+	let sendState = $state<SendState>('idle');
+	let sendError = $state('');
+	const fromOk = $derived(isEmail(from));
+	const canSend = $derived(ready && fromOk && sendState !== 'sending' && sendState !== 'sent');
+
+	async function sendBrief() {
+		sendState = 'sending';
+		const error = await send('brief', from, brief, website);
+		if (error) {
+			sendState = 'failed';
+			sendError = error;
+		} else {
+			sendState = 'sent';
+		}
+	}
+
+	// A changed answer after a send is a new brief, so the button comes back.
+	$effect(() => {
+		brief;
+		if (sendState === 'sent') sendState = 'idle';
+	});
+
 	let copied = $state(false);
 
 	async function copy() {
@@ -419,24 +441,35 @@
 				<span class="cap"></span>
 				<div class="sechead"><span class="secname">REPLY TO</span></div>
 				<div class="flex flex-col gap-1.5">
-					<label class="label" for="from">
-						Your email. Optional — your mail client will carry it anyway.
-					</label>
+					<label class="label" for="from">Your email, so I can reply.</label>
 					<input class="field" type="email" id="from" autocomplete="email" bind:value={from} />
+					<!-- The honeypot: out of sight and out of the tab order. -->
+					<input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" bind:value={website} />
 				</div>
 				<div class="mt-3.5 flex flex-wrap items-center gap-3">
-					<SendMenu drafts={draft} disabled={!ready} align="left">
-						{#snippet trigger(props)}
-							<button class="btn-accent" class:opacity-40={!ready} {...props}>SEND THE BRIEF</button>
-						{/snippet}
-					</SendMenu>
+					<button type="button" class="btn-accent" class:opacity-40={!canSend} disabled={!canSend} onclick={sendBrief}>
+						{sendState === 'sending' ? 'SENDING…' : sendState === 'sent' ? 'SENT' : 'SEND THE BRIEF'}
+					</button>
 					<button type="button" class="btn-ghost" onclick={copy}>
 						{copied ? 'COPIED' : 'COPY THE BRIEF'}
 					</button>
-					<span class="label">
-						{ready
-							? 'All four answered — the draft is ready.'
-							: 'Answer all four and the mail draft unlocks.'}
+					<span class="label" role="status">
+						{#if sendState === 'sent'}
+							Sent. I'll reply to {from.trim()}.
+						{:else if sendState === 'failed'}
+							{sendError}
+							<SendMenu drafts={draft} align="left" heading="Send it with…">
+								{#snippet trigger(props)}
+									<button class="link" {...props}>Send it from your own email instead</button>
+								{/snippet}
+							</SendMenu>
+						{:else if !ready}
+							Answer all four and the brief can be sent.
+						{:else if !fromOk}
+							Add your email and the brief can be sent.
+						{:else}
+							All four answered — the brief is ready.
+						{/if}
 					</span>
 				</div>
 			</div>
@@ -449,8 +482,8 @@
 				<span class="track"><span class="track-fill" style:width="{(answered / 4) * 100}%"></span></span>
 			</div>
 			<p class="text-muted text-sm leading-relaxed">
-				This is all that gets sent, and it fills in as you answer. Nothing is posted to the server
-				and nothing is stored in your browser.
+				This is all that gets sent, and it fills in as you answer. Nothing leaves your browser
+				until you press send.
 			</p>
 			<pre class="brief">{brief}</pre>
 		</aside>
@@ -832,6 +865,26 @@
 		height: 100%;
 		background-color: var(--color-accent);
 		transition: width 160ms ease;
+	}
+
+	/* Off-screen rather than display: none, which some bots know to skip. */
+	.trap {
+		position: absolute;
+		left: -10000px;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+	}
+
+	/* The fallback after a failed send reads as part of the sentence. */
+	.link {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--color-accent);
+		text-decoration: underline;
+		cursor: pointer;
 	}
 
 	.brief {

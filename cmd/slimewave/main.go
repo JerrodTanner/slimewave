@@ -15,6 +15,7 @@ import (
 	"slimewave/internal/api"
 	"slimewave/internal/auth"
 	"slimewave/internal/config"
+	"slimewave/internal/mail"
 	"slimewave/internal/media"
 	"slimewave/internal/store"
 )
@@ -55,10 +56,20 @@ func run() error {
 		log.Printf("music: indexed %d artist(s) from %s", len(lib.Artists()), cfg.AudioDir)
 	}
 
+	// Left as a nil interface, not a nil *Resend, so the API's nil check
+	// sees that there is no provider.
+	var mailer mail.Sender
+	if cfg.ResendAPIKey != "" {
+		mailer = mail.NewResend(cfg.ResendAPIKey, cfg.ContactFrom, cfg.ContactTo)
+		log.Printf("contact: emailing messages to %s", cfg.ContactTo)
+	} else {
+		log.Print("contact: SLIMEWAVE_RESEND_API_KEY not set; messages are saved but not emailed")
+	}
+
 	am := auth.NewManager(st, cfg.SessionTTL, cfg.SecureCookies)
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           api.NewServer(cfg, st, am, lib).Handler(),
+		Handler:           api.NewServer(cfg, st, am, lib, mailer).Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		// No WriteTimeout: audio range requests stream for as long as the

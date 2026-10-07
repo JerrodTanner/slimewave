@@ -11,6 +11,7 @@ import (
 	"slimewave/internal/auth"
 	"slimewave/internal/config"
 	"slimewave/internal/httpx"
+	"slimewave/internal/mail"
 	"slimewave/internal/media"
 	"slimewave/internal/store"
 )
@@ -20,10 +21,18 @@ type Server struct {
 	store   *store.Store
 	auth    *auth.Manager
 	library *media.Library
+	// mailer is nil when no provider is configured; contact messages are
+	// then only saved.
+	mailer       mail.Sender
+	contactLimit *rateLimit
 }
 
-func NewServer(cfg config.Config, st *store.Store, am *auth.Manager, lib *media.Library) *Server {
-	return &Server{cfg: cfg, store: st, auth: am, library: lib}
+func NewServer(cfg config.Config, st *store.Store, am *auth.Manager, lib *media.Library, mailer mail.Sender) *Server {
+	return &Server{
+		cfg: cfg, store: st, auth: am, library: lib,
+		mailer:       mailer,
+		contactLimit: newRateLimit(contactBurst, contactWindow),
+	}
 }
 
 // Handler builds the full routing tree.
@@ -46,6 +55,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/documents/{slug}", s.handleGetDocument)
 	mux.HandleFunc("PUT /api/documents/{slug}", s.handleUpdateDocument)
 	mux.HandleFunc("DELETE /api/documents/{slug}", s.handleDeleteDocument)
+
+	// --- contact ---
+	mux.HandleFunc("POST /api/contact", s.handleContact)
 
 	// --- music ---
 	mux.HandleFunc("GET /api/music/library", s.handleLibrary)

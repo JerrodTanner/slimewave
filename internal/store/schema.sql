@@ -42,3 +42,17 @@ CREATE TABLE IF NOT EXISTS preferences (
     data       TEXT    NOT NULL DEFAULT '{}',
     updated_at TEXT    NOT NULL
 );
+
+-- Every message sent through the contact form or the project planner. A row
+-- is written before the email goes out, so a provider outage never loses
+-- one; sent_at stays empty and send_error says why until a send succeeds.
+CREATE TABLE IF NOT EXISTS messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind       TEXT    NOT NULL,
+    email      TEXT    NOT NULL,
+    body       TEXT    NOT NULL,
+    ip         TEXT    NOT NULL DEFAULT '',
+    created_at TEXT    NOT NULL,
+    sent_at    TEXT    NOT NULL DEFAULT '',
+    send_error TEXT    NOT NULL DEFAULT ''
+);

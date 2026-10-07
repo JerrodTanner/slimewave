@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { JOBS, type Job } from '$lib/content/jobs';
-	import { CONTACT, drafts, formatUsPhone, invites, isUsPhone } from '$lib/contact';
+	import { CONTACT, drafts, formatUsPhone, invites, isEmail, isUsPhone, send, type SendState } from '$lib/contact';
 	import SendMenu from './SendMenu.svelte';
 
 	/**
@@ -15,10 +15,35 @@
 	let { select }: { select: (event: MouseEvent | null, href: string) => void } = $props();
 
 
-	// The same inbox and the same draft as the tile's contact box under the
-	// other styles (lib/contact): nothing is posted or stored.
+	// The same inbox as the tile's contact box under the other styles
+	// (lib/contact). The message is posted; the draft is only the fallback
+	// for when that fails.
 	let message = $state('');
+	let replyTo = $state('');
+	/** The honeypot, hidden from people; see handleContact on the server. */
+	let website = $state('');
+	let sendState = $state<SendState>('idle');
+	let sendError = $state('');
+	const canSend = $derived(!!message.trim() && isEmail(replyTo) && sendState !== 'sending');
 	const draft = $derived(drafts('Inquiry from jerrodtanner.com', message.trim()));
+
+	async function contact() {
+		sendState = 'sending';
+		const error = await send('message', replyTo, message, website);
+		if (error) {
+			sendState = 'failed';
+			sendError = error;
+		} else {
+			sendState = 'sent';
+			message = '';
+		}
+	}
+
+	// Typing again after a send starts a new message, so the status line from
+	// the last one clears.
+	$effect(() => {
+		if (sendState === 'sent' && message.trim()) sendState = 'idle';
+	});
 
 	/**
 	 * The free call. The visitor picks a day and a time in their own zone;
@@ -164,16 +189,35 @@
 		></textarea>
 
 		<div class="send">
-			<a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
+			<label class="call-field reply">
+				<span>Your email, so I can reply</span>
+				<input type="email" id="bold-reply" autocomplete="email" placeholder="you@yourbusiness.com" bind:value={replyTo} />
+			</label>
+			<!-- The honeypot: out of sight and out of the tab order, so only a
+			     bot filling every field it finds ever puts anything in it. -->
+			<input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" bind:value={website} />
 			<span class="actions">
 				<a class="btn-quiet" href="/plan" onclick={(e) => select(e, '/plan')}>Plan a Project</a>
-				<SendMenu drafts={draft} disabled={!message.trim()}>
-					{#snippet trigger(props)}
-						<button class="btn-bold" {...props}>Contact me →</button>
-					{/snippet}
-				</SendMenu>
+				<button class="btn-bold" type="button" disabled={!canSend} onclick={contact}>
+					{sendState === 'sending' ? 'Sending…' : 'Contact me →'}
+				</button>
 			</span>
 		</div>
+
+		<p class="call-note" class:bad={sendState === 'failed'} role="status">
+			{#if sendState === 'sent'}
+				Sent. I'll reply to {replyTo.trim()}.
+			{:else if sendState === 'failed'}
+				{sendError}
+				<SendMenu drafts={draft} align="left" heading="Send it with…">
+					{#snippet trigger(props)}
+						<button class="link" {...props}>Send it from your own email instead</button>
+					{/snippet}
+				</SendMenu>
+			{:else}
+				Or write to <a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
+			{/if}
+		</p>
 
 		<div class="call">
 			<p class="call-head"><strong>Prefer to talk it through?</strong> Book a free 30-minute call.</p>
@@ -511,9 +555,12 @@
 	}
 
 	.send {
+		position: relative;
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
+		/* Bottoms aligned, so the address pill sits level with the buttons
+		   under its label. */
+		align-items: end;
 		justify-content: space-between;
 		gap: 1rem;
 	}
@@ -559,7 +606,33 @@
 		cursor: pointer;
 	}
 
-	/* Nothing to send yet: the draft would open empty. */
+	/* The reply address takes whatever the buttons leave of the row, and
+	   gets a row to itself on a phone. */
+	.reply {
+		flex: 1 1 16rem;
+	}
+
+	/* Off-screen rather than display: none, which some bots know to skip. */
+	.trap {
+		position: absolute;
+		left: -10000px;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+	}
+
+	/* The fallback after a failed send reads as part of the sentence. */
+	.link {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--color-ink);
+		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	/* Nothing to send yet, or no address to reply to. */
 	.btn-bold:disabled {
 		opacity: 0.4;
 		cursor: default;

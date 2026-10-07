@@ -9,6 +9,11 @@ services:
       # Seeds the owner account on first run; ignored once it exists.
       - SLIMEWAVE_ADMIN_EMAIL=${SLIMEWAVE_ADMIN_EMAIL:-}
       - SLIMEWAVE_ADMIN_PASSWORD=${SLIMEWAVE_ADMIN_PASSWORD:-}
+      # Contact messages and project briefs are emailed through Resend. The
+      # key lives in .env on the host; without it they are only saved.
+      - SLIMEWAVE_RESEND_API_KEY=${SLIMEWAVE_RESEND_API_KEY:-}
+      - SLIMEWAVE_CONTACT_FROM=ShineWave <contact@jerrodtanner.com>
+      - SLIMEWAVE_CONTACT_TO=contact@jerrodtanner.com
     volumes:
       # The image is replaced on every deploy, so the database has to outlive it.
       - slimewave-data:/app/data

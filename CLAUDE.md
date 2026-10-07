@@ -37,8 +37,7 @@ the hero makes the pitch. The page sits on a fixed wall of big
 grey gradient tiles. The four things above describe Clean and Homey.
 
 `/plan` is a questionnaire (domain, web design, reporting, database) that
-builds a plain-text project brief. The brief goes out as a `mailto:` draft;
-nothing is posted or stored.
+builds a plain-text project brief and posts it to `/api/contact`.
 
 Never edit `resume.md` (or the resume PDF) unless Jerrod explicitly asks.
 Claims on the tile and the automation rows do not have to appear on the
@@ -134,22 +133,20 @@ lives on the `/app/data` volume.
 - Icons are stroked `d` strings on a 24×24 grid (`doorIcons.ts` convention), so
   one path works in both an `<svg>` and a canvas `Path2D`.
 
-## To do: email endpoint
+## Contact endpoint
 
-Both contact paths (the tile's CONTACT ME button and the `/plan` brief) use
-`mailto:`. They silently do nothing for visitors with no mail client configured
-(webmail-only users), and long briefs can be truncated. The planned fix:
+Both contact paths (the contact box, under Bold and on the Clean/Homey tile,
+and the `/plan` brief) post to `POST /api/contact` (`internal/api/contact.go`)
+with the visitor's email, which is required so there is someone to reply to.
 
-- `POST /api/contact` in `internal/api`. Validate the fields (required, length
-  caps, email format). **Save to SQLite first**, so nothing is lost, then send
-  through a transactional provider.
-- Spam protection: a honeypot field and a per-IP rate limit. The visitor's real
-  IP is in `CF-Connecting-IP`, because the site sits behind the Cloudflare tunnel.
-- Config through env vars in the existing `SLIMEWAVE_*` pattern (provider API
-  key, to/from address).
-- Frontend: both buttons `fetch` the endpoint and show sent/error states, with
-  the plain email address kept as a fallback. The `brief` string in `/plan` is
-  already the full payload.
-- Needs from Jerrod before it can go live: a provider account (Resend is the
-  suggested choice; its free tier covers the volume), the SPF/DKIM DNS records
-  on jerrodtanner.com in Cloudflare, and the API key in the host's `.env`.
+- The message is **saved to SQLite first** (the `messages` table), then sent
+  through Resend (`internal/mail`) to `SLIMEWAVE_CONTACT_TO`, with the
+  visitor's address as Reply-To. A failed send keeps the row with `sent_at`
+  empty and `send_error` filled in, and the visitor gets the `mailto:` /
+  Gmail / Outlook draft (`SendMenu`) as a fallback.
+- Spam protection: a hidden `website` honeypot field (a filled one gets a
+  fake success and nothing is saved) and 5 messages per IP per hour, keyed on
+  `CF-Connecting-IP` because the site sits behind the Cloudflare tunnel.
+- Config: `SLIMEWAVE_RESEND_API_KEY` in the host's `.env`; the from/to
+  addresses (`contact@jerrodtanner.com`) are set in `docker-compose.yml`.
+  Without a key, messages are saved but not emailed, which is the dev default.

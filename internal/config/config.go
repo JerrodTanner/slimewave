@@ -36,6 +36,14 @@ type Config struct {
 	// account already exists they are ignored.
 	AdminEmail    string
 	AdminPassword string
+
+	// ResendAPIKey sends contact messages through Resend. Without it they
+	// are still saved to the database, just not emailed.
+	ResendAPIKey string
+	// ContactFrom is the sender on those emails, on a domain verified in
+	// Resend; ContactTo is the inbox they are delivered to.
+	ContactFrom string
+	ContactTo   string
 }
 
 func Load() Config {
@@ -50,6 +58,9 @@ func Load() Config {
 		AllowRegistration: envBool("SLIMEWAVE_ALLOW_REGISTRATION", false),
 		AdminEmail:        os.Getenv("SLIMEWAVE_ADMIN_EMAIL"),
 		AdminPassword:     os.Getenv("SLIMEWAVE_ADMIN_PASSWORD"),
+		ResendAPIKey:      os.Getenv("SLIMEWAVE_RESEND_API_KEY"),
+		ContactFrom:       env("SLIMEWAVE_CONTACT_FROM", "ShineWave <contact@jerrodtanner.com>"),
+		ContactTo:         env("SLIMEWAVE_CONTACT_TO", "contact@jerrodtanner.com"),
 	}
 	return c
 }

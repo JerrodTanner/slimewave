@@ -1,14 +1,49 @@
 /**
- * The one inbox every contact path on the site writes to, and the drafts that
- * open on it.
+ * The one inbox every contact path on the site writes to, and the ways a
+ * message gets there.
  *
- * A `mailto:` link only works for a visitor whose computer has a mail app set
- * up, and webmail users mostly do not: the click does nothing. So every
- * contact path also offers the same draft in Gmail and Outlook on the web,
- * whose compose pages take the address, subject and body in the URL. Nothing
- * is posted or stored either way.
+ * The first way is `send`, which posts to /api/contact: the server saves the
+ * message and emails it on, so it works whatever mail setup the visitor has.
+ * If that fails, the drafts below are the fallback. A `mailto:` link only
+ * works for a visitor whose computer has a mail app set up, and webmail users
+ * mostly do not, so the same draft is also offered in Gmail and Outlook on
+ * the web, whose compose pages take the address, subject and body in the URL.
  */
 export const CONTACT = 'jerrod@jerrodtanner.com';
+
+/** What a contact form is doing, for its button and status line. */
+export type SendState = 'idle' | 'sending' | 'sent' | 'failed';
+
+/**
+ * Close enough to what the server accepts to catch a typo before the round
+ * trip: something, an @, something, a dot, something, and no spaces.
+ */
+export const isEmail = (value: string) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value.trim());
+
+/**
+ * Posts a message or a project brief to the inbox. `website` is the
+ * honeypot field, passed through as the form found it. Resolves to null on
+ * success, or to a sentence the visitor can read on failure.
+ */
+export async function send(
+	kind: 'message' | 'brief',
+	email: string,
+	message: string,
+	website = ''
+): Promise<string | null> {
+	try {
+		const res = await fetch('/api/contact', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ kind, email: email.trim(), message: message.trim(), website })
+		});
+		if (res.ok) return null;
+		const body = await res.json().catch(() => null);
+		return body?.error ?? 'The message did not go through.';
+	} catch {
+		return 'The message did not go through. Check your connection.';
+	}
+}
 
 export interface Drafts {
 	mailto: string;
