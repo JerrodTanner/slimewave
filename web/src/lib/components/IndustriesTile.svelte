@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { JOBS, type Stroke } from '$lib/content/jobs';
 	import { workMenu } from '$lib/state/workMenu.svelte';
+	import { CONTACT, drafts } from '$lib/contact';
+	import SendMenu from './SendMenu.svelte';
 
 	/**
 	 * The pitch in one tile, under Clean and Homey: the same time savers as
@@ -14,13 +16,10 @@
 	 */
 	const strokeD = (stroke: Stroke) => (typeof stroke === 'string' ? stroke : stroke.d);
 
-	// Same inbox as the brief on /plan. A mail draft, so nothing is posted or stored.
-	const CONTACT = 'jerrod@jerrodtanner.com';
-
+	// Same inbox as the brief on /plan (lib/contact). A draft, so nothing is
+	// posted or stored.
 	let message = $state('');
-	const mailto = $derived(
-		`mailto:${CONTACT}?subject=${encodeURIComponent('Inquiry from jerrodtanner.com')}&body=${encodeURIComponent(message.trim())}`
-	);
+	const draft = $derived(drafts('Inquiry from jerrodtanner.com', message.trim()));
 </script>
 
 {#snippet glyph(paths: Stroke[], size: number)}
@@ -77,16 +76,14 @@
 		></textarea>
 		<div class="send">
 			<a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
-			<a
-			class="btn-accent cta"
-			class:pointer-events-none={!message.trim()}
-			class:opacity-40={!message.trim()}
-			aria-disabled={!message.trim()}
-			href={mailto}
-		>
-			CONTACT ME
-			{@render glyph(['M5 12h14', 'm13 6 6 6-6 6'], 14)}
-		</a>
+			<SendMenu drafts={draft} disabled={!message.trim()}>
+				{#snippet trigger(props)}
+					<button class="btn-accent cta" class:opacity-40={!message.trim()} {...props}>
+						CONTACT ME
+						{@render glyph(['M5 12h14', 'm13 6 6 6-6 6'], 14)}
+					</button>
+				{/snippet}
+			</SendMenu>
 		</div>
 	</div>
 </section>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { drafts } from '$lib/contact';
+	import SendMenu from '$lib/components/SendMenu.svelte';
 	import { DESIGNS } from '$lib/content/designs';
 	import PageShell from '$lib/components/PageShell.svelte';
 
@@ -10,13 +12,13 @@
 	 * somewhere, then a free-text box for everything tokens cannot hold. The
 	 * answers become a work order.
 	 *
-	 * Nothing is posted: the button opens a mail draft with the brief already
-	 * written, so this works with no endpoint, no third party and no stored
+	 * Nothing is posted: the button offers a mail draft with the brief already
+	 * written, in the visitor's mail app or in Gmail or Outlook on the web
+	 * (SendMenu), so this works with no endpoint, no stored
 	 * personal data. If it ever wants a real inbox, `brief` below is the whole
 	 * payload an /api/briefs handler would take — and it should, because a
 	 * mailto body this long is truncated by some clients.
 	 */
-	const CONTACT = 'jerrod@jerrodtanner.com';
 
 	/**
 	 * Sample pages for the web design section, shown one at a time in a
@@ -215,9 +217,7 @@
 		return lines.join('\n');
 	});
 
-	const mailto = $derived(
-		`mailto:${CONTACT}?subject=${encodeURIComponent('Project brief')}&body=${encodeURIComponent(brief)}`
-	);
+	const draft = $derived(drafts('Project brief', brief));
 
 	let copied = $state(false);
 
@@ -425,15 +425,11 @@
 					<input class="field" type="email" id="from" autocomplete="email" bind:value={from} />
 				</div>
 				<div class="mt-3.5 flex flex-wrap items-center gap-3">
-					<a
-						class="btn-accent"
-						class:pointer-events-none={!ready}
-						class:opacity-40={!ready}
-						aria-disabled={!ready}
-						href={mailto}
-					>
-						OPEN THE BRIEF IN MAIL
-					</a>
+					<SendMenu drafts={draft} disabled={!ready} align="left">
+						{#snippet trigger(props)}
+							<button class="btn-accent" class:opacity-40={!ready} {...props}>SEND THE BRIEF</button>
+						{/snippet}
+					</SendMenu>
 					<button type="button" class="btn-ghost" onclick={copy}>
 						{copied ? 'COPIED' : 'COPY THE BRIEF'}
 					</button>

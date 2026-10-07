@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { JOBS, type Job } from '$lib/content/jobs';
+	import { CONTACT, drafts } from '$lib/contact';
+	import SendMenu from './SendMenu.svelte';
 
 	/**
 	 * The Bold front page: one huge line, then the jobs a business would hand
@@ -13,14 +15,10 @@
 	let { select }: { select: (event: MouseEvent | null, href: string) => void } = $props();
 
 
-	// The same inbox and the same mail draft as the tile's contact box under
-	// the other styles: nothing is posted or stored.
-	const CONTACT = 'jerrod@jerrodtanner.com';
-
+	// The same inbox and the same draft as the tile's contact box under the
+	// other styles (lib/contact): nothing is posted or stored.
 	let message = $state('');
-	const mailto = $derived(
-		`mailto:${CONTACT}?subject=${encodeURIComponent('Inquiry from jerrodtanner.com')}&body=${encodeURIComponent(message.trim())}`
-	);
+	const draft = $derived(drafts('Inquiry from jerrodtanner.com', message.trim()));
 
 	/** The camo band, which the hint under the headline scrolls into view. */
 	let band = $state<HTMLElement | null>(null);
@@ -110,7 +108,11 @@
 		<a class="email" href="mailto:{CONTACT}">{CONTACT}</a>
 		<span class="actions">
 			<a class="btn-quiet" href="/plan" onclick={(e) => select(e, '/plan')}>Plan a Project</a>
-			<a class="btn-bold" class:off={!message.trim()} aria-disabled={!message.trim()} href={mailto}>Contact me →</a>
+			<SendMenu drafts={draft} disabled={!message.trim()}>
+				{#snippet trigger(props)}
+					<button class="btn-bold" {...props}>Contact me →</button>
+				{/snippet}
+			</SendMenu>
 		</span>
 	</div>
 </section>
@@ -423,14 +425,16 @@
 	}
 
 	.btn-bold {
+		border: 0;
 		background-color: var(--color-accent);
 		color: var(--color-accent-ink);
+		cursor: pointer;
 	}
 
 	/* Nothing to send yet: the draft would open empty. */
-	.btn-bold.off {
-		pointer-events: none;
+	.btn-bold:disabled {
 		opacity: 0.4;
+		cursor: default;
 	}
 
 	.btn-quiet {
