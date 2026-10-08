@@ -200,11 +200,10 @@
 {/snippet}
 
 <section class="hero">
+	<h1 class="headline"><span>Less busywork.</span><span class="soft">More business.</span></h1>
 	<!-- The headline is a promise, not a job title, so this line says what
 	     the site is: a service a new visitor can hire. -->
-	<p class="eyebrow">Business automation, database &amp; reporting consulting</p>
-	<h1 class="headline"><span>Less busywork.</span><span class="soft">More business.</span></h1>
-	<p class="sub">Digitize your operations, move more work, and leave the paperwork behind.</p>
+	<p class="sub">Business automation, database &amp; reporting consulting</p>
 	<button type="button" class="hint" onclick={showExamples}>↓ BROWSE SOME EXAMPLES</button>
 </section>
 
@@ -370,13 +369,6 @@
 </section>
 
 <style>
-	.eyebrow {
-		font: 600 0.8rem var(--font-mono);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--color-muted);
-	}
-
 	.hero {
 		/* The first screen, less the least that can sit above it: the mat,
 		   the frame's padding and a one-line header come to about 7rem. Taken
