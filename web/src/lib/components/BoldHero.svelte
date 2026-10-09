@@ -11,7 +11,9 @@
 	 * The page is Apple-calm and the band is the one loud thing. The camo is
 	 * drawn here by hand (original work, so nothing to credit) as a few large
 	 * shapes in close tones, sliced to cover rather than tiled, so it never
-	 * reads as wallpaper.
+	 * reads as wallpaper. The shapes are straight-edged shards rather than
+	 * blobs, because the tile wall behind the page is all straight edges and
+	 * a soft shape was the one thing on the page that did not belong to it.
 	 */
 	let { select }: { select: (event: MouseEvent | null, href: string) => void } = $props();
 
@@ -217,11 +219,12 @@
 			</linearGradient>
 		</defs>
 		<rect width="1400" height="900" fill="var(--camo-2)" />
-		<path fill="var(--camo-1)" d="M-60 120C80 40 260 90 330 200S300 420 430 470 640 400 700 520 560 760 380 780 60 700-60 560Z" />
-		<path fill="var(--camo-3)" d="M520 -40C680 -80 860 20 900 150S820 330 940 400 1180 360 1230 470 1100 640 960 610 760 520 700 400 460 260 450 140 460 -20 520 -40Z" />
-		<path fill="var(--camo-1)" d="M1040 60C1180 0 1400 40 1460 160V520C1400 560 1300 520 1260 440S1120 360 1060 300 960 120 1040 60Z" />
-		<path fill="var(--camo-3)" d="M120 820C200 700 380 690 480 760S640 860 760 820 980 700 1100 760 1300 900 1260 960H80C60 920 80 870 120 820Z" />
-		<path fill="var(--camo-1)" d="M1180 640C1260 600 1400 620 1460 680V960H1240C1180 900 1100 820 1120 740S1140 660 1180 640Z" />
+		<path fill="var(--camo-1)" d="M-60 120L250 60 340 230 300 400 470 480 690 430 640 700 380 790-60 600Z" />
+		<path fill="var(--camo-3)" d="M500 -40L880 -40 900 180 820 300 990 420 1230 450 1120 650 860 560 700 420 460 250Z" />
+		<path fill="var(--camo-1)" d="M1030 40L1460 30V520L1290 500 1180 360 1020 270Z" />
+		<path fill="var(--camo-3)" d="M140 790L420 690 560 820 780 800 1000 700 1300 860 1300 960H60Z" />
+		<path fill="var(--camo-1)" d="M1180 620L1460 660V960H1220L1100 780Z" />
+		<path fill="var(--camo-1)" opacity=".55" d="M700 430L860 560 760 640 640 700Z" />
 		<rect width="1400" height="900" fill="url(#bold-sheen)" />
 	</svg>
 
