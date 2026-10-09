@@ -15,5 +15,5 @@
 </script>
 
 <svelte:head>
-	<title>ShineWave — Reporting, databases & workflow automation</title>
+	<title>ShineWave — Business automation, database & reporting consulting</title>
 </svelte:head>
